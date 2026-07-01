@@ -1,0 +1,298 @@
+================================================================================
+  CLOUD COMPUTING - II  |  UNIT - II
+  TOPIC: NETWORKING IN THE CLOUD
+  Institution: FIT & CS, Parul University
+================================================================================
+
+  HOW TO USE THIS FILE
+  --------------------
+  This study guide is built topic-by-topic from CC-II Unit-II. Each section
+  includes:
+    • Core concepts from the unit material
+    • Sub-topic breakdown
+    • Additional context for deeper understanding
+    • Exam preparation notes (short answers, definitions, comparisons)
+    • Future scope and career relevance
+
+  PROGRESS TRACKER
+  ----------------
+  [✓] Topic 1  — Google App Engine (GAE) & Cloud Service Models
+  [ ] Topic 2  — Compute Engine: Deploying Scalable Web Applications
+  [ ] Topic 3  — Cloud Networking (Firewall, Load Balancing, CDN, MIG)
+  [ ] Topic 4  — App Engine Flexible Environment & PaaS Deep Dive
+  [ ] Topic 5  — Event-Driven Architecture with Cloud Functions
+  [ ] Topic 6  — Google Kubernetes Engine (GKE) Overview
+  [ ] Topic 7  — Deploying Containerized Applications on GKE
+
+================================================================================
+TOPIC 1: GOOGLE APP ENGINE (GAE) & CLOUD SERVICE MODELS
+================================================================================
+
+--------------------------------------------------------------------------------
+1.1  What is Google App Engine (GAE)?
+--------------------------------------------------------------------------------
+
+Google App Engine (GAE) is a Platform-as-a-Service (PaaS) product offered by
+Google Cloud. It provides web application developers and enterprises with access
+to Google's scalable hosting infrastructure and Tier-1 internet connectivity.
+
+KEY POINTS:
+  • GAE is a fully managed platform — Google handles servers, OS patching,
+    scaling, and load balancing.
+  • Developers focus on writing application code, not managing infrastructure.
+  • Applications must follow GAE conventions (language runtimes, data storage
+    APIs, query languages). Non-compliant apps need modification before
+    deployment.
+  • GAE provides MORE infrastructure abstraction than raw IaaS services like
+    Amazon EC2, where you manage virtual machines yourself.
+  • GAE eliminates many system administration and development tasks, making
+    it easier to write scalable applications.
+
+ORIGINAL REQUIREMENTS (Classic/Standard Environment):
+  • Languages: Java or Python (originally)
+  • Data storage: Google Bigtable
+  • Query language: Google Query Language (GQL)
+
+  NOTE: Modern GAE supports additional languages (Go, PHP, Node.js) and
+  integrates with Cloud SQL, Firestore, Cloud Storage, and more.
+
+--------------------------------------------------------------------------------
+1.2  Cloud Service Models — Where GAE Fits (IaaS vs PaaS vs SaaS)
+--------------------------------------------------------------------------------
+
+Understanding service models is essential for exams and real-world architecture
+decisions.
+
+  ┌─────────────┬────────────────────────────────────────────────────────────┐
+  │ Model       │ Description                                                │
+  ├─────────────┼────────────────────────────────────────────────────────────┤
+  │ IaaS        │ Infrastructure as a Service                                │
+  │             │ You rent VMs, storage, networks (e.g., Compute Engine, EC2)│
+  │             │ YOU manage: OS, runtime, middleware, apps                  │
+  │             │ PROVIDER manages: hardware, virtualization, networking     │
+  ├─────────────┼────────────────────────────────────────────────────────────┤
+  │ PaaS        │ Platform as a Service  ← GAE belongs here                  │
+  │             │ You deploy application code only                           │
+  │             │ PROVIDER manages: runtime, scaling, OS, infrastructure     │
+  │             │ Examples: GAE, Heroku, Azure App Service                   │
+  ├─────────────┼────────────────────────────────────────────────────────────┤
+  │ SaaS        │ Software as a Service                                      │
+  │             │ Ready-to-use software over the internet                    │
+  │             │ Examples: Gmail, Google Docs, Salesforce                   │
+  └─────────────┴────────────────────────────────────────────────────────────┘
+
+GAE vs COMPUTE ENGINE (Exam Favorite Comparison):
+
+  ┌──────────────────┬─────────────────────────┬─────────────────────────────┐
+  │ Aspect           │ Google App Engine       │ Google Compute Engine       │
+  ├──────────────────┼─────────────────────────┼─────────────────────────────┤
+  │ Service Model    │ PaaS                    │ IaaS                        │
+  │ Control          │ Less (managed platform) │ Full VM control             │
+  │ Scaling          │ Automatic               │ Manual or via MIG/autoscale │
+  │ OS Management    │ Google manages          │ You manage                  │
+  │ Best For         │ Web apps, APIs          │ Custom configs, legacy apps │
+  │ Startup Time     │ Fast (deploy code)      │ Slower (configure VMs)      │
+  │ Networking       │ Abstracted              │ Full VPC, firewall control  │
+  └──────────────────┴─────────────────────────┴─────────────────────────────┘
+
+--------------------------------------------------------------------------------
+1.3  GAE Free Tier & Resource Quotas
+--------------------------------------------------------------------------------
+
+Google provides GAE free up to certain daily/minute limits for:
+
+  1. Processor (CPU) usage
+  2. Storage
+  3. Application Programming Interface (API) calls
+  4. Concurrent requests
+
+When limits are exceeded (per-day or per-minute rates), users pay for
+additional resources. This "freemium" model helps developers prototype before
+committing to paid usage.
+
+EXAM TIP: Know the four free-tier resource categories listed above.
+
+--------------------------------------------------------------------------------
+1.4  Key Features & Built-in APIs of GAE
+--------------------------------------------------------------------------------
+
+GAE includes several built-in APIs that reduce the need for third-party
+services:
+
+  1. BLOBSTORE
+     • Serves large binary data objects (images, videos, files)
+     • Handles efficient upload/download of large files
+     • Now largely superseded by Cloud Storage, but concept remains important
+
+  2. GAE CLOUD STORAGE (Google Cloud Storage integration)
+     • Stores data objects in durable, scalable object storage
+     • Accessible from GAE applications via API
+
+  3. PAGE SPEED SERVICE
+     • Automatically optimizes webpage load times
+     • Rewrites and compresses web content at Google's edge
+
+  4. URL FETCH SERVICE
+     • Allows GAE apps to issue HTTP/HTTPS requests to external URLs
+     • Handles efficiency and scaling of outbound HTTP calls
+     • Important because sandboxed environments restrict direct socket access
+
+  5. MEMCACHE
+     • Fully managed in-memory data store (caching layer)
+     • Reduces database load and improves response times
+     • Stores frequently accessed data temporarily (key-value cache)
+
+ADDITIONAL CONTEXT — Why These APIs Matter:
+  • In PaaS, direct system access (raw sockets, file system) is restricted.
+  • Built-in APIs are the approved way to perform common tasks.
+  • Memcache is critical for performance at scale (exam: "How to reduce DB
+    reads in GAE?" → Use Memcache).
+
+--------------------------------------------------------------------------------
+1.5  GAE Architecture — Sandboxing & Auto-Scaling
+--------------------------------------------------------------------------------
+
+The App Engine runs applications on multiple servers while "sandboxing" them:
+
+  SANDBOXING:
+    • Each application runs in an isolated environment
+    • Restricts access to the underlying OS and other apps
+    • Enforces security boundaries and resource limits
+
+  AUTO-SCALING:
+    • When demand increases, GAE automatically allocates more resources
+    • When demand drops, resources scale down
+    • No manual intervention required — true PaaS benefit
+
+  REAL-WORLD USERS:
+    • Snapchat, Rovio (Angry Birds), Khan Academy have used/ use App Engine
+    • Demonstrates GAE handles massive scale for consumer applications
+
+--------------------------------------------------------------------------------
+1.6  GAE Environments — Standard vs Flexible (Additional Context)
+--------------------------------------------------------------------------------
+
+Although the unit PDF introduces GAE broadly, exams often ask about environments:
+
+  STANDARD ENVIRONMENT:
+    • Sandboxed runtimes with strict limits
+    • Faster cold starts, lower cost
+    • Limited language versions
+    • Automatic scaling with fine-grained instance management
+
+  FLEXIBLE ENVIRONMENT:
+    • Runs applications in Docker containers on Compute Engine VMs
+    • More control over runtime, libraries, and OS
+    • Supports custom runtimes and longer request times
+    • You configure machine types and scaling behavior
+    • Covered in detail in Topic 4 of this guide
+
+  EXAM QUESTION EXAMPLE:
+    Q: "When would you choose App Engine Flexible over Standard?"
+    A: When you need custom system dependencies, longer request timeouts,
+       or specific OS-level packages not supported in Standard.
+
+--------------------------------------------------------------------------------
+1.7  Networking Context — Why "Networking in the Cloud" Matters for GAE
+--------------------------------------------------------------------------------
+
+Unit II is titled "Networking in the Cloud." Even for PaaS like GAE, networking
+concepts apply:
+
+  • GAE apps receive traffic through Google's global load balancing network
+  • Custom domains map to GAE via DNS and SSL certificate configuration
+  • GAE Standard uses Google's front-end infrastructure (Google Front Ends)
+  • Flexible Environment apps can connect to VPC networks for private resources
+  • URL Fetch Service handles outbound network calls securely
+
+  BRIDGE TO LATER TOPICS:
+    Topic 2–3 cover Compute Engine networking (firewalls, load balancers, CDN)
+    in hands-on detail. GAE abstracts most of this, but understanding CE
+    networking helps when using Flexible Environment or hybrid architectures.
+
+--------------------------------------------------------------------------------
+1.8  EXAM PREPARATION — Topic 1
+--------------------------------------------------------------------------------
+
+SHORT ANSWER QUESTIONS (2–5 marks):
+
+  Q1. What is Google App Engine?
+  A1. GAE is a PaaS product by Google that provides scalable hosting for web
+      applications using Google's infrastructure, eliminating most system admin
+      tasks and offering built-in APIs for storage, caching, and HTTP fetching.
+
+  Q2. List four resources covered under GAE free tier.
+  A2. CPU, storage, API calls, and concurrent requests.
+
+  Q3. Name five built-in APIs of GAE mentioned in the unit.
+  A3. Blobstore, Cloud Storage, Page Speed Service, URL Fetch Service, Memcache.
+
+  Q4. Differentiate between IaaS and PaaS with GAE and EC2 as examples.
+  A4. IaaS (EC2) provides virtual machines where users manage OS and runtime.
+      PaaS (GAE) provides a managed platform where users only deploy code and
+      Google manages infrastructure, scaling, and runtime.
+
+  Q5. What is sandboxing in App Engine?
+  A5. Sandboxing isolates each application in a restricted environment, limiting
+      direct OS access and ensuring security and fair resource sharing.
+
+  Q6. How does GAE handle increased traffic?
+  A6. GAE automatically scales by allocating more server resources to handle
+      increased demand without manual intervention.
+
+ONE-LINER DEFINITIONS (MCQ/Viva):
+
+  • PaaS        → Platform where provider manages infrastructure; user deploys apps
+  • Memcache    → In-memory cache to speed up reads and reduce DB load
+  • Blobstore   → Service for storing and serving large binary objects
+  • URL Fetch   → GAE API for making outbound HTTP requests at scale
+  • Sandboxing  → Isolation mechanism restricting app access to system resources
+  • Auto-scaling→ Automatic adjustment of resources based on traffic load
+
+POSSIBLE LONG ANSWER (10 marks):
+
+  "Explain Google App Engine, its features, and advantages over traditional
+   hosting."
+
+  Suggested structure:
+    1. Define GAE as PaaS
+    2. Explain sandboxing and auto-scaling
+    3. List built-in APIs (Blobstore, Memcache, URL Fetch, etc.)
+    4. Compare with IaaS (Compute Engine) — less admin, faster deployment
+    5. Mention real-world usage (Snapchat, Khan Academy)
+    6. Note free tier and pay-as-you-go beyond limits
+
+--------------------------------------------------------------------------------
+1.9  FUTURE SCOPE & CAREER RELEVANCE — Topic 1
+--------------------------------------------------------------------------------
+
+JOB ROLES USING GAE / PaaS KNOWLEDGE:
+  • Cloud Developer / Cloud Engineer
+  • Backend Developer (serverless & PaaS deployments)
+  • DevOps Engineer (choosing deployment models)
+  • Solutions Architect (IaaS vs PaaS vs serverless decisions)
+
+INDUSTRY TRENDS:
+  • Serverless and PaaS adoption is growing — GAE competes with AWS Elastic
+    Beanstalk, Azure App Service, and Cloud Run
+  • Modern apps often combine GAE/Cloud Run (containers) + Cloud Functions
+    (events) + GKE (orchestration) — this unit covers all three Google services
+  • Understanding when NOT to use PaaS (need full network control, custom
+    kernel modules) is as valuable as knowing when to use it
+
+SKILLS TO BUILD AFTER THIS TOPIC:
+  1. Deploy a simple Python/Node.js app on GAE Standard
+  2. Compare latency and cost: GAE vs Compute Engine vs Cloud Run
+  3. Integrate Memcache and Cloud Storage in a sample app
+  4. Map GAE services to AWS equivalents (Beanstalk, S3, ElastiCache)
+
+CERTIFICATION RELEVANCE:
+  • Google Cloud Associate Cloud Engineer — covers App Engine deployment
+  • Google Cloud Professional Cloud Developer — PaaS and serverless patterns
+
+================================================================================
+END OF TOPIC 1
+================================================================================
+
+NEXT: Topic 2 — Compute Engine: Deploying Scalable Web Applications
+      (Cloud Shell, startup scripts, microservices deployment, firewall rules)
