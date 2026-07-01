@@ -501,6 +501,12 @@ COPY APPLICATION CODE TO BUCKET:
   • -m flag enables parallel upload for speed
   • node_modules deleted before upload; recreated on instance via npm install
 
+CONFIGURATION VIA .env FILE:
+  Environment variables (backend URLs) are stored in react-app/.env. In production,
+  secrets and config are typically kept outside source code (Secret Manager, etc.);
+  the lab uses .env for simplicity. Toggle hidden files in the Cloud Shell Editor
+  (View > Toggle Hidden Files) to edit .env.
+
 EXAM TIP — Startup Script vs Custom Image:
   • Startup script: flexible, easy to update, runs on every boot
   • Custom image: faster boot, code baked in, harder to update
@@ -523,6 +529,7 @@ CREATE BACKEND INSTANCE:
   • e2-standard-2  → 2 vCPUs, 8 GB RAM (E2 general-purpose machine family)
   • --tags=backend → Network tag for firewall rule targeting
   • --metadata     → Passes startup script URL to the instance
+  • Instances access the bucket via their default service account (no browser access)
 
 NETWORK TAGS:
   • Tags are labels applied to VMs for firewall rule targeting
@@ -800,6 +807,11 @@ WHY STOP INSTANCES FIRST?
   Stopping ensures disk state is consistent when capturing the instance
   configuration into a template.
 
+DELETE BACKEND VM AFTER TEMPLATES (lab step):
+  gcloud compute instances delete backend --zone=$ZONE
+  The frontend VM is kept temporarily — it is used later to create an updated
+  instance template when changing machine type.
+
 EXAM TIP:
   Q: "Can you edit an instance template?"
   A: No. Create a new template and update the MIG to use it.
@@ -938,11 +950,17 @@ AUTOHEALING TIMELINE:
   • 3 consecutive failures → instance marked unhealthy → recreated
 
 SIMULATE FAILURE (Lab verification):
-  gcloud compute ssh INSTANCE_NAME --zone=$ZONE
+  gcloud compute instance-groups list-instances fancy-fe-mig --zone=$ZONE
+  gcloud compute ssh [INSTANCE_NAME] --zone=$ZONE
   sudo supervisorctl stop nodeapp; sudo killall node
   exit
-  # Watch repair: gcloud compute operations list \
-  #   --filter='operationType~compute.instances.repair.*'
+  watch -n 2 gcloud compute operations list \
+    --filter='operationType~compute.instances.repair.*'
+
+  The MIG recreates the instance (compute.instances.repair.recreateInstance).
+  Monitor via Console: Navigation menu > Compute Engine > VM instances.
+
+  Lab source: https://www.cloudskillsboost.google/focuses/11952?parent=catalog
 
 --------------------------------------------------------------------------------
 3.6  HTTP(S) Load Balancer Architecture
@@ -950,6 +968,17 @@ SIMULATE FAILURE (Lab verification):
 
 Google Cloud HTTP(S) Load Balancer is a GLOBAL, Layer 7 (HTTP) load balancer.
 It provides a single external IP for multiple backend services.
+
+OFFICIAL COMPONENT CHAIN (from unit):
+  1. Forwarding rule      → directs incoming requests to target HTTP proxy
+  2. Target HTTP proxy    → checks request against URL map
+  3. Backend service      → directs request to healthy backends (zone, capacity)
+  4. Backend instances    → serve the request
+
+PROTOCOLS:
+  Sessions between load balancer and instances can use HTTP, HTTPS, or HTTP/2.
+  For HTTPS/HTTP/2 backends, each instance needs an SSL certificate. The lab uses
+  HTTP on port 80 to avoid certificate complexity; production should use HTTPS.
 
 ARCHITECTURE (Top to Bottom):
 
@@ -1098,6 +1127,35 @@ INSTANCE TEMPLATE UPDATE (Machine type change):
   4. Monitor:
      watch -n 2 gcloud compute instance-groups managed list-instances fancy-fe-mig \
        --zone=$ZONE
+
+  Wait until STATUS=RUNNING, ACTION=None, INSTANCE_TEMPLATE=fancy-fe-new.
+
+  5. Verify new machine type on a recreated instance:
+     gcloud compute instances describe [VM_NAME] --zone=$ZONE | grep machineType
+     Expected: machineTypes/e2-small
+
+UPDATING WEBSITE CONTENT (Fancy Store homepage — Task 8):
+  Scenario: Marketing requests a more informative homepage. A developer left the
+  updated file as index.js.new in the React app.
+
+  cd ~/monolith-to-microservices/react-app/src/pages/Home
+  mv index.js.new index.js
+
+  The updated Home component uses React and Material UI (Typography) to display
+  "Welcome to the Fancy Store!" and product description text.
+
+  Rebuild and redeploy:
+    cd ~/monolith-to-microservices/react-app
+    npm install && npm run-script build
+    cd ~
+    rm -rf monolith-to-microservices/*/node_modules
+    gsutil -m cp -r monolith-to-microservices gs://fancy-store-$DEVSHELL_PROJECT_ID/
+
+  Rolling replace frontend MIG to pull new code:
+    gcloud compute instance-groups managed rolling-action replace fancy-fe-mig \
+      --zone=$ZONE --max-unavailable=100%
+
+  Verify health, then browse http://[LB_IP] — updated homepage should appear.
 
 ROLLING UPDATE vs ROLLING REPLACE:
   ┌────────────────────┬────────────────────────────────────────────────────┐
@@ -1445,8 +1503,9 @@ GENERALLY AVAILABLE (GA) FEATURES:
   Protected by SLA and deprecation policy. Stable, backward-compatible changes.
   Categories include:
     • Communications and process management
-    • Computing and application configuration
+    • Computing
     • Data storage, retrieval, and search
+    • App configuration and management
 
   Specific GA services:
     • Datastore (NoSQL document database)
@@ -1526,6 +1585,10 @@ Datastore vs Cloud SQL:
   Q5. Name two companies that use App Engine.
   A5. Snapchat and Khan Academy (also Rovio).
 
+HANDS-ON REFERENCE:
+  Video: https://www.youtube.com/watch?v=LNTVqqIhnZQ
+  Flex app docs: https://cloud.google.com/eclipse/docs/create-flex-app
+
 ================================================================================
 TOPIC 5: EVENT-DRIVEN ARCHITECTURE WITH CLOUD FUNCTIONS
 ================================================================================
@@ -1603,6 +1666,9 @@ SUPPORTED TRIGGERS (Cloud Functions triggers):
   • Firebase events
   • Audit logs
 
+The Google Events repository contains resources for working with CloudEvents
+issued by Google Cloud services.
+
 --------------------------------------------------------------------------------
 5.4  Background Functions (1st gen — Legacy)
 --------------------------------------------------------------------------------
@@ -1637,7 +1703,8 @@ FUNCTION TERMINATION:
 
 AUTOMATIC RETRIES:
   Event-driven functions can be configured to automatically retry failed
-  invocations. Retry behavior depends on the event type:
+  invocations. See "Retrying event-driven functions" in Google Cloud docs.
+  Retry behavior depends on the event type:
     • Pub/Sub → retries by default
     • HTTP → no automatic retry (client must retry)
     • Storage → configurable retry policy
@@ -1868,6 +1935,10 @@ Alpha clusters: access to experimental Kubernetes features (not for production).
   A5. Management nodes running Kubernetes system components (API server,
       scheduler, controller manager, etcd). In GKE, Google manages the control plane.
 
+HANDS-ON REFERENCE:
+  Video: https://www.youtube.com/watch?v=ZVcnsTCQASU
+  Tutorial: https://cloud.google.com/kubernetes-engine/docs/tutorials/hello-app
+
 ================================================================================
 TOPIC 7: DEPLOYING CONTAINERIZED APPLICATIONS ON GKE
 ================================================================================
@@ -1875,6 +1946,9 @@ TOPIC 7: DEPLOYING CONTAINERIZED APPLICATIONS ON GKE
 The unit's GKE lab walks through packaging a web app as a Docker image, pushing
 it to Artifact Registry, deploying on a GKE cluster, exposing it via a Load
 Balancer Service, autoscaling with HPA, and rolling out a new version.
+
+BILLABLE COMPONENTS IN THIS LAB: GKE cluster resources and Artifact Registry storage.
+Use the Google Cloud pricing calculator for estimates; delete resources after the lab.
 
 --------------------------------------------------------------------------------
 7.1  Prerequisites & Setup
@@ -2013,6 +2087,10 @@ EXPOSE TO INTERNET:
   • --port 80         → Load Balancer listens on port 80
   • --target-port 8080 → Container listens on port 8080
   • EXTERNAL-IP may show <pending> for a few minutes
+
+When browsing the EXTERNAL-IP, hello-app returns "Hello, World!" plus a Hostname
+field — the hostname identifies which Pod served the request (useful for verifying
+load distribution across replicas).
 
 DNS HOSTNAME: hello-app.default.svc.cluster.local (internal cluster DNS)
 
@@ -2182,6 +2260,50 @@ IMPORTANT EXAM QUESTIONS ACROSS THE UNIT:
   8. What is the Shared Responsibility Model in context of GAE vs GCE vs GKE?
   9. Explain cache hit vs cache miss in Cloud CDN.
   10. How do rolling updates work in both MIG and Kubernetes Deployments?
+
+--------------------------------------------------------------------------------
+UNIT-II PDF COVERAGE CHECKLIST (all topics & sub-topics verified)
+--------------------------------------------------------------------------------
+
+  [✓] Google App Engine — PaaS, Bigtable, GQL, free tier, 5 APIs, EC2 comparison
+  [✓] Development of scalable web apps on Google Cloud (Fancy Store lab, Tasks 1–8)
+      [✓] Lab sign-in, Cloud Console, temporary credentials
+      [✓] Cloud Shell activation, gcloud auth, PROJECT_ID
+      [✓] Regions, zones, export ZONE/REGION
+      [✓] Task 1: Enable Compute Engine API
+      [✓] Task 2: Cloud Storage bucket ($DEVSHELL_PROJECT_ID)
+      [✓] Task 3: Clone repo, setup.sh, nvm, npm start, web preview port 8080
+      [✓] Task 4: Startup script (Fluentd, Node.js, Supervisor, nodeapp user, LF/CRLF)
+      [✓] Task 4: Backend/frontend VMs, .env config, firewall rules fw-fe/fw-be
+      [✓] Task 5: Instance templates, MIG, named ports, autohealing health checks
+      [✓] Task 5: allow-health-check firewall, initial-delay 300
+      [✓] Task 6: HTTP(S) LB — health checks, backend services, URL map, path matcher
+      [✓] Task 6: Target HTTP proxy, forwarding rule, LB IP .env update, rolling replace
+      [✓] Task 7: Autoscaling 60% utilization, Cloud CDN enable, GFE cache hit/miss
+      [✓] Task 8: Instance template update (e2-small), fancy-fe-new rolling start-update
+      [✓] Task 8: Homepage update (index.js.new), rebuild, rolling replace
+      [✓] Task 8: Simulate failure — SSH, supervisorctl, instance repair
+  [✓] App Engine Flexible Environment — prerequisites, Cloud Build API, gcloud init
+      [✓] Eclipse wizard, Maven pom.xml, region selection (permanent)
+  [✓] Exploring PaaS with App Engine — SDK, sandboxing, languages, real-world apps
+      [✓] Runtimes (Java 7, Python 2.7, PHP 5.4, Go 1.2)
+      [✓] GA / Preview / Experimental / Third-party features
+      [✓] HRD migration tool, Datastore, Memcache, Blobstore, Search, Cloud SQL
+  [✓] Event-Driven Cloud Functions — 1st gen vs 2nd gen
+      [✓] CloudEvent functions, Background functions, function termination, retries
+  [✓] GKE Overview — Borg, control plane, nodes, Pods, Autopilot vs Standard
+      [✓] Benefits: security, cost, reliability, release channels, Migrate for GKE
+  [✓] Deploying containerized app — Dockerfile, Artifact Registry, hello-app
+      [✓] docker build/push, IAM binding, GKE Autopilot cluster
+      [✓] Deployment, scale replicas, HPA, LoadBalancer Service, ClusterIP
+      [✓] Rolling update v1→v2 (main.go 2.0.0), cleanup steps
+
+REFERENCE LINKS:
+  • GCE Lab: https://www.cloudskillsboost.google/focuses/11952?parent=catalog
+  • App Engine video: https://www.youtube.com/watch?v=LNTVqqIhnZQ
+  • GKE video: https://www.youtube.com/watch?v=ZVcnsTCQASU
+  • Cloud Functions: https://cloud.google.com/functions/docs/writing/write-event-driven-functions
+  • GKE tutorial: https://cloud.google.com/kubernetes-engine/docs/tutorials/hello-app
 
 ================================================================================
   END OF UNIT-II STUDY GUIDE — NETWORKING IN THE CLOUD
