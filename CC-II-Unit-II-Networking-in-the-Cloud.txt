@@ -19,6 +19,10 @@
   5. Event-Driven Architecture with Cloud Functions
   6. Google Kubernetes Engine (GKE) Overview
   7. Deploying Containerized Applications on GKE
+  8. Cloud Principles & Well-Architected Framework
+  9. Disaster Recovery in Cloud
+  10. Introduction to Infrastructure as Code (IaC)
+  11. Introduction to CI/CD
 
 ================================================================================
 TOPIC 1: GOOGLE APP ENGINE (GAE) & CLOUD SERVICE MODELS
@@ -2178,6 +2182,638 @@ Deleting the project removes all associated resources.
   A5. Kubernetes incrementally replaces old Pods with new ones. The Service
       continues routing traffic to healthy, ready Pods during the transition.
 
+--------------------------------------------------------------------------------
+7.12  Kubernetes Networking, Monitoring & Scaling (Syllabus sub-topics)
+--------------------------------------------------------------------------------
+
+KUBERNETES NETWORKING (beyond LoadBalancer):
+  • ClusterIP    — internal service discovery (default)
+  • Ingress      — HTTP(S) routing into cluster (like GCE URL map for K8s)
+  • Network Policies — firewall-like rules between Pods
+  • DNS          — CoreDNS resolves service names (hello-app.default.svc.cluster.local)
+  • GKE integrates with VPC for Pod-to-VM and hybrid connectivity
+
+MONITORING & SCALING WORKLOADS:
+  • kubectl top pods / kubectl top nodes — resource usage
+  • Google Cloud Operations suite — logs, metrics, alerts for GKE
+  • Horizontal Pod Autoscaler (HPA) — scale Pods on CPU/custom metrics
+  • Cluster Autoscaler — add/remove nodes when Pods cannot be scheduled
+  • Vertical Pod Autoscaler — adjust CPU/memory requests per Pod
+  • Readiness vs Liveness probes — control traffic routing and restarts
+
+SETTING UP & MANAGING CLUSTERS (summary):
+  • Autopilot: gcloud container clusters create-auto (Google manages nodes)
+  • Standard: gcloud container clusters create (you choose node pools, machine types)
+  • kubectl get nodes, kubectl get deployments — day-2 management
+  • Release channels (Rapid/Regular/Stable) control Kubernetes version upgrades
+
+================================================================================
+TOPIC 8: CLOUD PRINCIPLES & WELL-ARCHITECTED FRAMEWORK
+================================================================================
+
+Cloud architecture is guided by fundamental principles and structured frameworks
+that ensure applications are secure, reliable, performant, cost-effective, and
+sustainable. This topic covers the theory layer that supports all practical
+labs in this unit (GAE, GCE, GKE, Cloud Functions).
+
+--------------------------------------------------------------------------------
+8.1  Fundamental Principles of Cloud Computing
+--------------------------------------------------------------------------------
+
+  PRINCIPLE                    EXPLANATION
+  ─────────────────────────────────────────────────────────────────────────
+  On-demand self-service       Users provision resources automatically without
+                               human interaction with the provider
+  Broad network access         Services available over the network on any device
+  Resource pooling             Provider pools resources; multi-tenant sharing
+  Rapid elasticity             Scale up/down quickly based on demand
+  Measured service             Pay only for what you use (utility billing)
+
+ADDITIONAL CLOUD PRINCIPLES:
+  • Global reach — deploy in multiple regions worldwide
+  • Automation — reduce manual operations (startup scripts, IaC, CI/CD)
+  • Loose coupling — microservices, independent scaling (Fancy Store lab)
+  • Stateless design — VMs pull code from GCS; Pods are ephemeral
+  • Defense in depth — network tags, firewall rules, IAM, health checks
+
+--------------------------------------------------------------------------------
+8.2  Shared Responsibility Model
+--------------------------------------------------------------------------------
+
+  RESPONSIBILITY          CUSTOMER (YOU)              PROVIDER (GOOGLE)
+  ─────────────────────────────────────────────────────────────────────────
+  Application code        ✓                          
+  Data & access control   ✓                          
+  Runtime / OS (IaaS)     ✓ (Compute Engine)         
+  Runtime (PaaS)                                      ✓ (App Engine)
+  Infrastructure          ✓ (GCE VMs)                 ✓ (GAE, GKE control plane)
+  Physical security                                     ✓
+
+EXAM TIP: More managed service = less customer responsibility.
+  GAE/FaaS → customer manages app + data only
+  GCE      → customer manages OS, apps, data, networking config
+  GKE      → shared: Google manages control plane; you manage workloads/nodes
+
+--------------------------------------------------------------------------------
+8.3  Understanding Cloud-Native Architecture
+--------------------------------------------------------------------------------
+
+Cloud-native applications are designed to exploit cloud advantages:
+
+  CHARACTERISTIC           EXAMPLE IN THIS UNIT
+  ─────────────────────────────────────────────────────────────────────────
+  Microservices              Fancy Store: frontend, orders, products services
+  Containers                 GKE hello-app Docker image
+  DevOps / CI/CD             Build → push → deploy pipelines
+  Infrastructure as Code     gcloud scripts, Terraform (Topic 10)
+  Managed services           App Engine, Cloud Functions, GKE Autopilot
+  API-driven                 REST APIs on ports 8080–8082; kubectl API
+
+12-FACTOR APP METHOD (exam relevance):
+  • Codebase in version control (git clone monolith-to-microservices)
+  • Config in environment (.env files, env variables)
+  • Stateless processes (VMs pull from bucket at startup)
+  • Port binding (8080, 8081, 8082)
+  • Disposability (fast startup via startup scripts / containers)
+
+--------------------------------------------------------------------------------
+8.4  Well-Architected Framework Pillars
+--------------------------------------------------------------------------------
+
+Google Cloud and AWS both use similar pillars. Know all five for exams:
+
+  1. OPERATIONAL EXCELLENCE
+     • Automate operations (startup scripts, MIG autohealing, kubectl rollouts)
+     • Monitor and improve (Cloud Logging, Fluentd, health checks)
+     • Learn from failures (simulate failure lab — supervisorctl stop)
+
+  2. SECURITY
+     • Identity & access (IAM, service accounts for GCS bucket access)
+     • Network security (firewall rules, target tags, health check IP ranges)
+     • Least privilege (nodeapp non-root user on VMs)
+     • Encrypt data in transit (HTTPS in production LB)
+
+  3. RELIABILITY
+     • High availability (MIG with 2+ instances, multi-zone GKE)
+     • Autohealing & health checks
+     • Fault isolation (separate frontend/backend tags)
+     • Disaster recovery planning (Topic 9)
+
+  4. PERFORMANCE EFFICIENCY
+     • Right-size resources (e2-standard-2 → e2-small template update)
+     • Autoscaling (MIG 60% utilization, HPA 80% CPU)
+     • CDN for static content (Cloud CDN on frontend backend service)
+     • Caching (Memcache on App Engine)
+
+  5. COST OPTIMIZATION
+     • Pay-per-use (Cloud Functions invocations, Autopilot per-Pod billing)
+     • Delete unused resources (lab: delete backend VM, cleanup GKE cluster)
+     • Spot/Preemptible VMs and Spot Pods for batch workloads
+     • Right-size machine types
+
+  6. SUSTAINABILITY (Google adds this pillar)
+     • Use autoscaling to avoid idle resources
+     • Choose region with renewable energy where possible
+     • Serverless (Cloud Functions) runs only when needed
+
+--------------------------------------------------------------------------------
+8.5  Best Practices for Designing Scalable Cloud Applications
+--------------------------------------------------------------------------------
+
+  • Design for horizontal scaling (add instances/Pods, not bigger single server)
+  • Use load balancers to distribute traffic (HTTP(S) LB, K8s LoadBalancer)
+  • Decouple components (microservices over monolith)
+  • Use managed services to reduce ops burden
+  • Implement health checks at every tier
+  • Store state externally (Cloud Storage, Cloud SQL, not local VM disk)
+  • Plan for failure — assume instances/Pods will die
+  • Use rolling updates for zero-downtime deployments
+
+--------------------------------------------------------------------------------
+8.6  Exam Notes — Cloud Principles & Well-Architected
+--------------------------------------------------------------------------------
+
+  Q1. List the five essential characteristics of cloud computing (NIST).
+  A1. On-demand self-service, broad network access, resource pooling, rapid
+      elasticity, measured service.
+
+  Q2. What is the Shared Responsibility Model?
+  A2. A framework dividing security/operations duties between cloud provider
+      and customer based on service model (IaaS/PaaS/SaaS).
+
+  Q3. Name the five Well-Architected Framework pillars.
+  A3. Operational excellence, security, reliability, performance efficiency,
+      cost optimization (plus sustainability on Google Cloud).
+
+  Q4. What makes an application "cloud-native"?
+  A4. Designed for cloud using microservices, containers, automation, managed
+      services, and elastic scaling.
+
+================================================================================
+TOPIC 9: DISASTER RECOVERY IN CLOUD
+================================================================================
+
+Disaster recovery (DR) ensures business continuity when failures affect regions,
+data centers, or systems. Cloud DR builds on the HA patterns from Topics 3 and 6.
+
+--------------------------------------------------------------------------------
+9.1  Concepts of Backup & Disaster Recovery
+--------------------------------------------------------------------------------
+
+  TERM            DEFINITION
+  ─────────────────────────────────────────────────────────────────────────
+  Backup          Copy of data for restoration after loss/corruption
+  Disaster        Event causing system unavailability (outage, flood, cyberattack)
+  DR              Policies and procedures to restore operations after disaster
+  Business        Maximum acceptable downtime
+  Continuity      Keeping critical services running
+
+BACKUP TYPES:
+  • Full backup — entire dataset
+  • Incremental — changes since last backup
+  • Snapshot — point-in-time disk/image copy (Compute Engine snapshots, GCS versioning)
+
+CLOUD BACKUP SERVICES (GCP):
+  • Cloud Storage — object versioning, cross-region replication
+  • Compute Engine snapshots — disk backups
+  • Cloud SQL automated backups
+  • App Engine Datastore export/backup (experimental/admin features in unit)
+
+--------------------------------------------------------------------------------
+9.2  High Availability & Fault Tolerance in Cloud
+--------------------------------------------------------------------------------
+
+  CONCEPT              MEANING                         UNIT EXAMPLE
+  ─────────────────────────────────────────────────────────────────────────
+  High Availability    Minimize downtime via redundancy  MIG with 2+ instances
+  Fault Tolerance      Continue despite component failure Autohealing recreates VM
+  Redundancy           Duplicate components            Multiple Pods (replicas=3)
+  Single point of      One failure stops everything    Single VM → fixed by MIG
+  failure (SPOF)
+
+HA PATTERNS:
+  • Multi-instance — MIG, Kubernetes replicas
+  • Load balancing — distribute traffic across healthy instances
+  • Health checks — detect and remove failed instances
+  • Autohealing — automatic instance/Pod replacement
+  • Multi-zone — deploy across zones in one region (us-central1-a, -b, -c)
+  • Multi-region — deploy in multiple geographic regions for DR
+
+--------------------------------------------------------------------------------
+9.3  Disaster Recovery Strategies — RPO & RTO
+--------------------------------------------------------------------------------
+
+  METRIC   FULL NAME                        MEANING
+  ─────────────────────────────────────────────────────────────────────────
+  RTO      Recovery Time Objective          Max acceptable downtime
+  RPO      Recovery Point Objective         Max acceptable data loss (time)
+
+DR STRATEGY TIERS (know for exams):
+
+  ┌──────────────┬──────────┬──────────┬────────────────────────────────────┐
+  │ Strategy     │ RTO      │ RPO      │ Description                        │
+  ├──────────────┼──────────┼──────────┼────────────────────────────────────┤
+  │ Backup &     │ Hours    │ Hours    │ Backups restored when disaster hits│
+  │ Restore      │          │          │ Lowest cost, slowest recovery      │
+  │ Pilot Light  │ 10s min  │ Minutes  │ Minimal core systems always running│
+  │ Warm         │ Minutes  │ Minutes  │ Scaled-down copy always running    │
+  │ Standby      │          │          │                                    │
+  │ Hot          │ Near zero│ Near zero│ Full duplicate environment active  │
+  │ Standby      │          │          │ Highest cost, fastest recovery     │
+  │ Multi-site   │ ~zero    │ ~zero    │ Active-active across regions       │
+  │ Active-Active│          │          │ (global load balancing)            │
+  └──────────────┴──────────┴──────────┴────────────────────────────────────┘
+
+EXAM TIP:
+  • Lower RTO = faster recovery needed
+  • Lower RPO = less data loss acceptable = more frequent backups/replication
+
+--------------------------------------------------------------------------------
+9.4  Cloud-Based Backup Solutions & Snapshots
+--------------------------------------------------------------------------------
+
+COMPUTE ENGINE:
+  gcloud compute disks snapshot DISK --snapshot-names=SNAPSHOT_NAME --zone=ZONE
+  • Snapshots stored in Cloud Storage (incremental, compressed)
+  • Create new disk/VM from snapshot for recovery
+
+CLOUD STORAGE:
+  • Object versioning — recover previous file versions
+  • Cross-region / dual-region buckets — survive regional outage
+  • Lifecycle policies — move old data to Nearline/Coldline/Archive
+
+MANAGED DATABASES:
+  • Cloud SQL: automated daily backups, point-in-time recovery
+  • Firestore/Datastore: export to GCS
+
+GKE:
+  • etcd backups managed by Google (control plane)
+  • Application state in Persistent Volumes — snapshot PVs for DR
+  • Multi-cluster deployment for regional failover
+
+--------------------------------------------------------------------------------
+9.5  Case Studies — DR Implementation
+--------------------------------------------------------------------------------
+
+CASE 1 — Fancy Store on Compute Engine (this unit's lab):
+  Problem: Single VM failure takes down the store
+  Solution: MIG + health checks + autohealing + load balancer
+  DR level: HA within a zone; extend to multi-zone MIG for zone failure
+
+CASE 2 — Global e-commerce:
+  Problem: Regional outage affects all users
+  Solution: Multi-region deployment + global HTTP(S) load balancer + Cloud CDN
+  DR level: Hot standby or active-active across regions
+
+CASE 3 — Data-critical application:
+  Problem: Database corruption at 2 PM; need restore to 1:30 PM state
+  Solution: Cloud SQL point-in-time recovery (RPO = minutes)
+  DR level: Backup & restore with defined RTO/RPO SLAs
+
+CASE 4 — Batch analytics:
+  Problem: Job failure on one node
+  Solution: Spot VMs + retry logic; state in Cloud Storage
+  DR level: Fault tolerant, not mission-critical RTO
+
+--------------------------------------------------------------------------------
+9.6  Exam Notes — Disaster Recovery
+--------------------------------------------------------------------------------
+
+  Q1. Define RTO and RPO.
+  A1. RTO = max downtime tolerated. RPO = max data loss tolerated (time since
+      last good backup).
+
+  Q2. Differentiate HA and DR.
+  A2. HA handles component failures within normal operations (autohealing, MIG).
+      DR handles large-scale disasters (region loss) with backup/restore strategies.
+
+  Q3. What is a Pilot Light DR strategy?
+  A3. Core systems (e.g., database) run minimal version in DR region; full
+      environment scaled up only when disaster strikes.
+
+  Q4. How does MIG contribute to HA?
+  A4. Maintains desired instance count, replaces unhealthy instances via
+      autohealing, distributes load across healthy VMs.
+
+================================================================================
+TOPIC 10: INTRODUCTION TO INFRASTRUCTURE AS CODE (IaC)
+================================================================================
+
+Infrastructure as Code replaces manual console/gcloud clicks with declarative,
+version-controlled configuration files. The Fancy Store lab used imperative
+gcloud commands; IaC makes that repeatable and auditable.
+
+--------------------------------------------------------------------------------
+10.1  Overview of Infrastructure as Code
+--------------------------------------------------------------------------------
+
+DEFINITION:
+  Managing and provisioning infrastructure through machine-readable definition
+  files rather than manual processes.
+
+BENEFITS:
+  • Repeatability — same environment every time
+  • Version control — git tracks infrastructure changes
+  • Automation — CI/CD pipelines apply changes
+  • Reduced human error — no manual typos in console
+  • Documentation — code IS the documentation
+  • Disaster recovery — redeploy entire stack from code
+
+IaC IN THIS UNIT (what you already practiced imperatively):
+  • Startup scripts         → configuration management pattern
+  • gcloud commands         → imperative IaC
+  • Instance templates/MIG  → reusable infrastructure blueprints
+  • Kubernetes YAML/helm    → declarative container IaC
+
+IMPERATIVE vs DECLARATIVE:
+  Imperative  → "Create 2 instances" (gcloud compute instances create)
+  Declarative → "Desired state: 2 instances" (Terraform/MIG size=2)
+
+--------------------------------------------------------------------------------
+10.2  Tools for IaC — Terraform, AWS CloudFormation, Ansible
+--------------------------------------------------------------------------------
+
+  TOOL              TYPE           CLOUD        DESCRIPTION
+  ─────────────────────────────────────────────────────────────────────────
+  Terraform         Declarative    Multi-cloud  HashiCorp; HCL language; state file
+  CloudFormation    Declarative    AWS only     JSON/YAML templates
+  Google Deployment Declarative    GCP          YAML templates for GCP resources
+  Manager
+  Ansible           Procedural     Multi-cloud  Agentless config management; playbooks
+  Pulumi            Declarative    Multi-cloud  Use Python/Go/TS instead of HCL
+
+TERRAFORM EXAMPLE (conceptual — Fancy Store firewall):
+  resource "google_compute_firewall" "fw_fe" {
+    name    = "fw-fe"
+    network = "default"
+    allow {
+      protocol = "tcp"
+      ports    = ["8080"]
+    }
+    target_tags = ["frontend"]
+  }
+
+ANSIBLE — aligns with startup scripts in this unit:
+  • Install Node.js, pull code from GCS, configure Supervisor
+  • Runs over SSH on existing VMs (configuration management)
+  • Complements Terraform (Terraform creates VMs; Ansible configures them)
+
+CLOUDFORMATION — AWS equivalent; know name for exams even in GCP-focused unit.
+
+--------------------------------------------------------------------------------
+10.3  Configuration Management & Automation
+--------------------------------------------------------------------------------
+
+CONFIGURATION MANAGEMENT tools install and configure software on servers:
+
+  TOOL       APPROACH
+  ─────────────────────────────────────────────────────────────────────────
+  Ansible    Push-based; SSH; YAML playbooks
+  Chef       Pull/push; Ruby recipes
+  Puppet     Agent-based; declarative manifests
+  Supervisor   Process manager used in Fancy Store lab startup script
+
+THIS UNIT'S STARTUP SCRIPT = configuration management pattern:
+  1. Install packages (apt-get)
+  2. Install runtime (Node.js)
+  3. Pull application code (gsutil)
+  4. Configure process manager (Supervisor)
+  5. Run as non-root user (nodeapp)
+
+--------------------------------------------------------------------------------
+10.4  Writing & Managing Infrastructure as Code
+--------------------------------------------------------------------------------
+
+BEST PRACTICES:
+  • Store IaC in Git repositories (like monolith-to-microservices)
+  • Use modules/templates for reusable components
+  • Separate environments (dev/staging/prod) via variables/workspaces
+  • Never commit secrets — use Secret Manager or environment variables
+  • Plan before apply (terraform plan) — preview changes
+  • Use remote state with locking (prevent concurrent modifications)
+
+IaC WORKFLOW:
+  Write code → Version control (git) → Review (PR) → CI/CD pipeline →
+  Apply (terraform apply / gcloud deployment-manager) → Verify
+
+MAPPING LAB TO IaC:
+  Manual lab step                    IaC equivalent
+  ─────────────────────────────────────────────────────────────────────────
+  gcloud compute instances create    Terraform google_compute_instance
+  Firewall rules                     Terraform google_compute_firewall
+  MIG + autoscaling                  Terraform google_compute_region_autoscaler
+  GKE cluster                        Terraform google_container_cluster
+  kubectl apply                      Kubernetes YAML manifests in git
+
+--------------------------------------------------------------------------------
+10.5  Best Practices for Versioning & Scaling Infrastructure
+--------------------------------------------------------------------------------
+
+VERSIONING:
+  • Tag releases in git (v1.0, v2.0 — like hello-app:v1, hello-app:v2)
+  • Immutable instance templates (create new, don't edit)
+  • Kubernetes rolling updates with versioned container images
+
+SCALING INFRASTRUCTURE AS CODE:
+  • Parameterize instance counts (MIG size, replica count)
+  • Use autoscaling policies in IaC (HPA, MIG autoscaling)
+  • Environment variables for region/project-specific values ($DEVSHELL_PROJECT_ID)
+  • Terraform workspaces or separate state files per environment
+
+--------------------------------------------------------------------------------
+10.6  Exam Notes — Infrastructure as Code
+--------------------------------------------------------------------------------
+
+  Q1. What is Infrastructure as Code?
+  A1. Provisioning and managing infrastructure using machine-readable config
+      files under version control instead of manual processes.
+
+  Q2. Differentiate Terraform and Ansible.
+  A2. Terraform is declarative — creates cloud resources (VMs, networks).
+      Ansible is procedural — configures software on existing servers.
+
+  Q3. Why use IaC over manual gcloud commands?
+  A3. Repeatability, version control, automation, reduced errors, easier DR
+      (redeploy entire stack from code).
+
+  Q4. What is declarative vs imperative IaC?
+  A4. Declarative defines desired end state (Terraform). Imperative lists steps
+      to execute (gcloud commands, Ansible tasks).
+
+================================================================================
+TOPIC 11: INTRODUCTION TO CI/CD
+================================================================================
+
+CI/CD automates the path from code change to production deployment — connecting
+development (Fancy Store code updates, hello-app v2) to operations (rolling
+replace, kubectl set image).
+
+--------------------------------------------------------------------------------
+11.1  Understanding DevOps and CI/CD Concepts
+--------------------------------------------------------------------------------
+
+DEVOPS:
+  Culture and practice combining Development and Operations to deliver software
+  faster and more reliably through collaboration and automation.
+
+CI/CD PIPELINE STAGES:
+
+  Code → Build → Test → Deploy → Monitor
+   │       │       │        │        │
+   git    compile  unit    staging   Cloud
+   push   docker   tests   prod      Monitoring
+          build
+
+  CI (Continuous Integration):
+    Developers merge code frequently; each merge triggers automated build and test.
+    Catches bugs early. Example: npm install && npm run build on every git push.
+
+  CD (Continuous Delivery):
+    Code is always in a deployable state; release to production is a manual approval.
+
+  CD (Continuous Deployment):
+    Every passing build automatically deploys to production.
+    Example: rolling replace of MIG after gsutil upload to bucket.
+
+--------------------------------------------------------------------------------
+11.2  CI/CD Pipelines — Overview & Implementation
+--------------------------------------------------------------------------------
+
+TYPICAL PIPELINE FOR THIS UNIT'S APPS:
+
+  STAGE 1 — SOURCE
+    Developer pushes to git (index.js homepage change, main.go v2.0.0)
+
+  STAGE 2 — BUILD
+    • Node.js: npm install && npm run-script build
+    • Go/Docker: docker build -t IMAGE:TAG .
+
+  STAGE 3 — TEST
+    • Unit tests, integration tests
+    • Health check verification
+
+  STAGE 4 — ARTIFACT STORAGE
+    • Upload to Cloud Storage (Fancy Store code)
+    • Push to Artifact Registry (hello-app:v1, v2)
+
+  STAGE 5 — DEPLOY
+    • Compute Engine: gsutil cp + MIG rolling replace
+    • GKE: kubectl set image deployment/hello-app
+    • App Engine: gcloud app deploy
+    • Cloud Functions: gcloud functions deploy
+
+  STAGE 6 — VERIFY
+    • gcloud compute backend-services get-health
+    • kubectl get pods
+    • Browse http://[LB_IP]
+
+GCP CI/CD SERVICES:
+  • Cloud Build — build containers, run tests, trigger deploys
+  • Cloud Deploy — managed continuous delivery to GKE/Cloud Run
+  • Artifact Registry — store build artifacts
+  • GitHub Actions / GitLab CI — external CI integrating with GCP
+
+--------------------------------------------------------------------------------
+11.3  Tools for CI/CD — Jenkins, GitHub Actions, GitLab CI
+--------------------------------------------------------------------------------
+
+  TOOL              TYPE              DESCRIPTION
+  ─────────────────────────────────────────────────────────────────────────
+  Jenkins           Self-hosted CI/CD  Open-source automation server; plugins
+  GitHub Actions    Cloud CI/CD        YAML workflows in .github/workflows/
+  GitLab CI         Integrated CI/CD   Built into GitLab; .gitlab-ci.yml
+  Cloud Build       GCP native         Serverless build service; integrates with GCP
+  Google Cloud      GCP native         Delivery pipelines to GKE/Cloud Run
+  Deploy
+
+GITHUB ACTIONS EXAMPLE (conceptual):
+  on: push
+  jobs:
+    build:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v3
+        - run: docker build -t hello-app .
+        - run: docker push REGION-docker.pkg.dev/PROJECT/hello-repo/hello-app
+
+JENKINS — traditional enterprise choice; runs on VM or GKE; highly customizable.
+
+GITLAB CI — pipeline defined in .gitlab-ci.yml; stages: build, test, deploy.
+
+CO-PILOT / GITHUB COPILOT — AI-assisted code generation (mentioned in syllabus);
+  assists developers writing pipeline YAML and application code faster.
+
+--------------------------------------------------------------------------------
+11.4  Automated Testing & Deployment Strategies
+--------------------------------------------------------------------------------
+
+TESTING LEVELS IN CI/CD:
+  • Unit tests        — individual functions/components
+  • Integration tests — API endpoints (/api/orders, /api/products)
+  • End-to-end tests  — full user flow (browse Fancy Store, place order)
+  • Load tests        — verify autoscaling at 60% utilization threshold
+
+DEPLOYMENT STRATEGIES:
+
+  STRATEGY           DESCRIPTION                    UNIT EXAMPLE
+  ─────────────────────────────────────────────────────────────────────────
+  Rolling update     Replace instances gradually    MIG rolling replace
+  Blue-Green         Two identical envs; switch     Two MIGs, swap LB backend
+  Canary             Route small % traffic to new     URL map weighted backends
+                     version first
+  Recreate           Stop all, deploy new           --max-unavailable 100% (lab)
+
+ZERO-DOWNTIME DEPLOYMENT (exam):
+  • Keep minimum instances healthy during rolling update
+  • Health checks confirm new instances before receiving traffic
+  • GKE: Deployment controller replaces Pods incrementally
+  • MIG: rolling-action start-update with maxSurge/maxUnavailable
+
+--------------------------------------------------------------------------------
+11.5  Best Practices for Secure & Scalable CI/CD Pipelines
+--------------------------------------------------------------------------------
+
+SECURITY:
+  • Store secrets in Secret Manager (not in .env committed to git)
+  • Use least-privilege service accounts for Cloud Build
+  • Scan container images for vulnerabilities (Artifact Analysis)
+  • Sign artifacts; verify before deploy
+  • Separate dev/staging/prod pipelines and projects
+
+SCALABILITY:
+  • Parallelize build and test stages
+  • Cache dependencies (node_modules, Docker layers)
+  • Use autoscaling for build workers (Cloud Build is serverless)
+  • Deploy to MIG/GKE that auto-scale under load
+
+RELIABILITY:
+  • Automated rollback on health check failure
+  • Immutable artifacts (image tags v1, v2 — never overwrite)
+  • Infrastructure as Code for reproducible environments (Topic 10)
+
+--------------------------------------------------------------------------------
+11.6  Exam Notes — CI/CD
+--------------------------------------------------------------------------------
+
+  Q1. Differentiate CI and CD.
+  A1. CI continuously integrates code changes with automated build/test.
+      CD continuously delivers/deploys validated code to production environments.
+
+  Q2. Name three CI/CD tools.
+  A2. Jenkins, GitHub Actions, GitLab CI (also Cloud Build, Cloud Deploy).
+
+  Q3. What is a rolling deployment?
+  A3. Gradually replacing old application instances with new ones while keeping
+      enough healthy instances to serve traffic (zero downtime).
+
+  Q4. How does the Fancy Store lab demonstrate CI/CD concepts?
+  A4. Code change → build React app → upload to GCS → rolling replace MIG
+      instances that pull new code at startup.
+
+  Q5. Why should secrets not be stored in git?
+  A5. Version control is widely accessible; use Secret Manager or CI/CD secret
+      variables instead.
+
 ================================================================================
 UNIT-II REVISION SUMMARY & CROSS-TOPIC COMPARISON
 ================================================================================
@@ -2297,6 +2933,24 @@ UNIT-II PDF COVERAGE CHECKLIST (all topics & sub-topics verified)
       [✓] docker build/push, IAM binding, GKE Autopilot cluster
       [✓] Deployment, scale replicas, HPA, LoadBalancer Service, ClusterIP
       [✓] Rolling update v1→v2 (main.go 2.0.0), cleanup steps
+      [✓] K8s networking, monitoring, cluster management (syllabus sub-topics)
+  [✓] Cloud Principles & Well-Architected Framework
+      [✓] Fundamental cloud principles, shared responsibility model
+      [✓] Cloud-native architecture, WAF pillars (security, reliability, etc.)
+      [✓] Best practices for scalable cloud applications
+  [✓] Disaster Recovery in Cloud
+      [✓] Backup & DR concepts, HA & fault tolerance
+      [✓] DR strategies, RPO & RTO, cloud snapshots & backups
+      [✓] Case studies on DR implementation
+  [✓] Introduction to Infrastructure as Code (IaC)
+      [✓] IaC overview, Terraform, CloudFormation, Ansible
+      [✓] Configuration management & automation
+      [✓] Writing/managing IaC, versioning & scaling infrastructure
+  [✓] Introduction to CI/CD
+      [✓] DevOps and CI/CD concepts, pipeline implementation
+      [✓] Jenkins, GitHub Actions, GitLab CI, Cloud Build
+      [✓] Automated testing & deployment strategies
+      [✓] Secure & scalable CI/CD best practices
 
 REFERENCE LINKS:
   • GCE Lab: https://www.cloudskillsboost.google/focuses/11952?parent=catalog
