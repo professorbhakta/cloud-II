@@ -1,0 +1,712 @@
+================================================================================
+                    CC-II — UNIT I: STUDY NOTES
+         Introduction to Networking in the Cloud
+================================================================================
+
+Course Reference: CC-II (Cloud Computing – II)
+Document Purpose: Exam preparation + practical/future learning scope
+Based On: CC-II Unit-I lecture material (Networking in Cloud)
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+1.  Introduction to Networking in the Cloud
+2.  Local Area Network (LAN)
+3.  Wide Area Network (WAN)
+4.  Virtual Private Cloud (VPC)
+5.  Subnets in Cloud
+6.  IP Addresses in Cloud
+7.  Routes and Firewall Rules
+8.  VPC Firewall Rules — Characteristics & Behavior
+9.  Multiple VPC Networks
+10. Hybrid Cloud
+11. Load Balancing in Cloud
+12. Exam Quick-Revision (Important Questions)
+13. Future Scope & Industry Relevance
+
+================================================================================
+1. INTRODUCTION TO NETWORKING IN THE CLOUD
+================================================================================
+
+OVERVIEW
+--------
+Cloud networking is the foundation on which all cloud services run. Before
+deploying applications, databases, or Kubernetes clusters, you must understand
+how virtual networks, IP addressing, routing, firewalls, and load balancers
+work in a cloud environment.
+
+Unlike traditional on-premises networking (physical switches, routers, cables),
+cloud networking is:
+  • Software-defined — configured via APIs, consoles, or IaC (Terraform, etc.)
+  • Virtual — no physical hardware to manage
+  • Globally distributed — spans regions, zones, and data centers
+  • Elastic — scales on demand
+
+KEY CONCEPT
+-----------
+In cloud computing, networking connects:
+  • Virtual machines (VMs) and containers
+  • Cloud services (databases, storage, serverless functions)
+  • On-premises data centers (hybrid cloud)
+  • The public internet (users, clients, partners)
+
+Without proper networking design, even the best application will fail due to
+connectivity, security, or performance issues.
+
+ADDITIONAL CONTEXT (Exam + Future)
+----------------------------------
+  • Cloud networking is a core topic in AWS (VPC), Azure (Virtual Network),
+    and GCP (VPC Network) certifications.
+  • Modern roles (Cloud Engineer, DevOps, SRE) spend significant time on
+    network design, security groups, and connectivity troubleshooting.
+  • Networking mistakes (open ports, wrong subnets, no private connectivity)
+    are among the top causes of cloud security breaches.
+
+================================================================================
+2. LOCAL AREA NETWORK (LAN)
+================================================================================
+
+DEFINITION
+----------
+A Local Area Network (LAN) is a collection of devices connected together in
+one physical location — such as a building, office, or home.
+
+CHARACTERISTICS
+---------------
+  • Covers a small geographic area (single site)
+  • High speed, low latency (typically Ethernet, Wi-Fi)
+  • Owned and managed by a single organization
+  • Examples: office Wi-Fi, lab network, home router network
+
+LAN IN CLOUD CONTEXT
+--------------------
+  • Inside a data center, servers communicate over high-speed LANs.
+  • In cloud, the "LAN equivalent" is often the internal network within a
+    VPC/subnet where VMs talk to each other privately.
+  • Cloud providers abstract this — you define subnets and routing instead
+    of buying switches.
+
+EXAM POINTS
+-----------
+  • LAN = local, limited area, high speed
+  • Contrast with WAN (wide area, spans cities/countries)
+  • In hybrid cloud, LAN connects on-premises devices; WAN/VPN connects
+    on-premises LAN to cloud VPC
+
+FUTURE SCOPE
+------------
+  • Software-Defined Networking (SDN) replaces traditional LAN hardware.
+  • Zero Trust networking treats every connection as untrusted, even inside
+    a "local" network segment.
+
+================================================================================
+3. WIDE AREA NETWORK (WAN)
+================================================================================
+
+DEFINITION
+----------
+A Wide Area Network (WAN) is technology that connects offices, data centers,
+cloud applications, and cloud storage together across large geographic distances.
+
+CHARACTERISTICS
+---------------
+  • Spans cities, countries, or continents
+  • Uses leased lines, MPLS, internet VPN, or dedicated cloud interconnects
+  • Higher latency than LAN, but enables global connectivity
+  • Often managed by ISPs or cloud providers
+
+WAN IN CLOUD
+------------
+  • Public cloud regions are connected via provider backbone networks (WAN).
+  • Users access cloud apps over the internet (a form of WAN).
+  • Hybrid setups use WAN/VPN/Direct Connect/ExpressRoute/Cloud Interconnect
+    to link on-premises networks to cloud VPCs.
+
+EXAMPLES
+--------
+  • Company HQ (Mumbai) ↔ Branch office (Delhi) — corporate WAN
+  • On-premises data center ↔ AWS VPC — hybrid WAN via VPN or Direct Connect
+  • Multi-region cloud deployment — traffic between us-east1 and europe-west1
+
+EXAM POINTS
+-----------
+  • WAN = wide geographic coverage
+  • Critical for hybrid and multi-cloud architectures
+  • Cloud provider global backbone = high-performance WAN between regions
+
+ADDITIONAL TOPICS TO KNOW
+-------------------------
+  • VPN (Virtual Private Network) — encrypted tunnel over public internet
+  • Dedicated Interconnect — private, high-bandwidth link to cloud
+  • SD-WAN — software-defined WAN for optimized routing
+
+================================================================================
+4. VIRTUAL PRIVATE CLOUD (VPC)
+================================================================================
+
+DEFINITION
+----------
+A Virtual Private Cloud (VPC) is a logically isolated, private network
+environment within a public cloud. It is a type of hybrid cloud deployment
+where you get private cloud capabilities inside a remote public cloud provider.
+
+Think of VPC as: "Your own private data center network — but virtual and
+hosted by AWS/GCP/Azure."
+
+KEY FEATURES
+------------
+  • Isolated network space (your resources don't mix with other tenants')
+  • You define IP ranges, subnets, routes, firewalls
+  • Host VMs, containers, databases, load balancers
+  • Connect to internet, other VPCs, or on-premises via VPN/interconnect
+
+VPC vs PUBLIC CLOUD vs PRIVATE CLOUD
+-------------------------------------
+  Public Cloud    → Shared infrastructure, multi-tenant (e.g., S3, public APIs)
+  Private Cloud   → Dedicated infrastructure for one organization
+  VPC             → Private network segment INSIDE public cloud (best of both)
+
+GOOGLE CLOUD VPC (from lecture)
+-------------------------------
+  • Default VPC is created automatically in new GCP projects
+  • Custom mode VPC lets you define subnets manually
+  • Auto mode VPC creates subnets in every region automatically
+
+EXAM POINTS
+-----------
+  • VPC = isolated virtual network in public cloud
+  • You control: CIDR blocks, subnets, routing, firewall rules
+  • VPC is regional (GCP) or regional + AZ-specific (AWS)
+
+FUTURE SCOPE
+------------
+  • VPC is mandatory knowledge for every cloud certification
+  • Multi-VPC, shared VPC, and VPC peering are common in enterprise designs
+  • Service mesh (Istio, Linkerd) adds application-layer networking on top of VPC
+
+================================================================================
+5. SUBNETS IN CLOUD
+================================================================================
+
+DEFINITION
+----------
+A subnet (subnetwork) is a subdivision of a VPC's IP address range. Resources
+like VM instances are placed in subnets and receive IP addresses from the
+subnet's range.
+
+EXAMPLE FROM LECTURE (GCP)
+--------------------------
+  Subnet1: 10.240.0.0/24  in us-west1 region
+    → Two VMs in us-west1-a zone get IPs from this range
+
+  Subnet2: 192.168.1.0/24 in us-east1 region
+    → Two VMs in us-east1-b zone get IPs from this range
+
+  Subnet3: 10.2.0.0/16    in us-east1 region
+    → VMs in us-east1-b and us-east1-c zones share this subnet
+    → Subnets are REGIONAL — instances in any zone of that region can use it
+
+CIDR NOTATION (IMPORTANT FOR EXAMS)
+-----------------------------------
+  • 10.240.0.0/24 → 256 addresses (254 usable)
+  • 10.2.0.0/16   → 65,536 addresses
+  • /24 = 24 bits for network, 8 bits for hosts
+  • /16 = 16 bits for network, 16 bits for hosts
+
+PUBLIC vs PRIVATE SUBNETS
+-------------------------
+  Public Subnet  → Has route to internet gateway; resources can have public IPs
+  Private Subnet → No direct internet route; uses NAT for outbound access
+
+BEST PRACTICES
+--------------
+  • Separate subnets by tier: web (public), app (private), database (private)
+  • Use different subnets per availability zone for high availability
+  • Plan IP ranges carefully — avoid overlapping CIDR blocks in peered VPCs
+
+EXAM POINTS
+-----------
+  • Subnet = IP range slice within a VPC
+  • Regional resource in GCP (spans all zones in a region)
+  • CIDR notation calculations are frequently tested
+
+================================================================================
+6. IP ADDRESSES IN CLOUD
+================================================================================
+
+OVERVIEW
+--------
+Resources such as VM instances and load balancers have IP addresses that
+allow communication within Google Cloud, on-premises networks, or the public
+internet.
+
+TYPES OF IP ADDRESSES (4 categories from lecture)
+-------------------------------------------------
+
+┌─────────────────────┬──────────────────────────────────────────────────────┐
+│ Type                │ Description                                          │
+├─────────────────────┼──────────────────────────────────────────────────────┤
+│ External IP         │ Publicly advertised; reachable from the internet     │
+│ Internal IP         │ Not reachable from internet; used within cloud/VPC   │
+│ Private IP          │ Non-routable on internet (RFC 1918 ranges)           │
+│ Public IP           │ Internet-routable; can be external or internal use   │
+└─────────────────────┴──────────────────────────────────────────────────────┘
+
+EXTERNAL IP ADDRESS
+-------------------
+  • Publicly advertised on the internet
+  • Must be publicly routable
+  • Allows resources to communicate with the public internet
+  • Example: Web server with 34.xxx.xxx.xxx
+
+INTERNAL IP ADDRESS
+-------------------
+  • Cannot be reached directly from the internet
+  • Used for communication within VPC or via VPN/interconnect
+  • Can be private IPv4 OR privately used public IPv4
+  • Internal IPv6 addresses are unique within Google Cloud
+
+PRIVATE IP ADDRESS
+------------------
+  • Addresses that CANNOT be routed on the internet
+  • Standard private ranges (RFC 1918):
+      10.0.0.0/8
+      172.16.0.0/12
+      192.168.0.0/16
+  • Used for internal-only communication
+
+PUBLIC IP ADDRESS
+-----------------
+  • Internet-routable addresses
+  • In GCP, external IPv4 and IPv6 are always public
+  • Can also be used as INTERNAL addresses when configured as "privately used
+    public IP" in subnet primary/secondary ranges
+
+STATIC vs EPHEMERAL
+-------------------
+  Static   → Reserved, persists until released (good for servers, DNS)
+  Ephemeral → Assigned automatically, may change on restart
+
+EXAM TIPS
+---------
+  • Know RFC 1918 private ranges by heart
+  • Difference: External = internet-facing; Internal = VPC-only
+  • NAT Gateway allows private subnet instances to access internet without
+    public IP
+
+FUTURE SCOPE
+------------
+  • IPv6 adoption in cloud (dual-stack VPCs)
+  • IP address management (IPAM) tools for large enterprises
+  • Understanding NAT, Elastic IP (AWS), Cloud NAT (GCP) is essential
+
+================================================================================
+7. ROUTES AND FIREWALL RULES IN THE CLOUD
+================================================================================
+
+ROUTES
+------
+Routes determine where network traffic is directed. In cloud VPCs:
+  • Default routes often send 0.0.0.0/0 (all traffic) to internet gateway
+  • Custom routes can direct traffic to VPN tunnels, Cloud Routers, etc.
+  • Route tables are associated with subnets (AWS) or VPC (GCP)
+
+FIREWALL RULES
+--------------
+VPC firewall rules apply to a given project and network. They let you ALLOW
+or DENY connections to or from VM instances in your VPC network.
+
+KEY POINTS
+----------
+  • Enabled firewall rules are ALWAYS enforced
+  • Protection applies regardless of VM OS configuration
+  • Rules can be applied at VPC level; enforced at instance level
+  • For multiple VPC networks in an organization, rules apply per VPC
+
+CLOUD PROVIDER EQUIVALENTS
+--------------------------
+  GCP  → VPC Firewall Rules
+  AWS  → Security Groups (stateful) + Network ACLs (stateless)
+  Azure → Network Security Groups (NSGs)
+
+WHY FIREWALLS MATTER
+--------------------
+  • First line of defense against unauthorized access
+  • Principle of least privilege: only open required ports
+  • Common exam scenario: "Allow HTTP/HTTPS from internet, deny all else"
+
+================================================================================
+8. VPC FIREWALL RULES — CHARACTERISTICS & BEHAVIOR
+================================================================================
+
+CREATING A FIREWALL RULE
+------------------------
+When you create a VPC firewall rule, you specify:
+  • Target VPC network
+  • Direction: INGRESS (incoming) or EGRESS (outgoing) — NOT both in one rule
+  • Protocol (TCP, UDP, ICMP, etc.)
+  • Destination/source ports
+  • Source and destination IP ranges (CIDR notation)
+  • Action: ALLOW or DENY
+  • Priority (lower number = higher priority in GCP)
+
+CHARACTERISTICS (FROM LECTURE)
+------------------------------
+1. Each rule applies to INGRESS or EGRESS — not both
+2. Supports IPv4; IPv6 supported in IPv6-enabled VPCs
+3. Each rule contains IPv4 OR IPv6 ranges — not both in same rule
+4. Action is ALLOW or DENY; rules enforced until disabled
+5. Rules are associated with ONE VPC — cannot share across VPCs (even with
+   peering or VPN)
+6. Rules are enforced at instance level but configured at VPC level
+
+STATEFUL FIREWALL RULES (VERY IMPORTANT FOR EXAMS)
+-------------------------------------------------
+VPC firewall rules in Google Cloud are STATEFUL:
+
+  • When a connection is ALLOWED in one direction, RETURN traffic for that
+    connection is automatically ALLOWED
+  • You CANNOT configure a rule to deny associated response traffic
+  • Return traffic must match the 5-tuple with reversed src/dst:
+      - Source IP ↔ Destination IP
+      - Source Port ↔ Destination Port
+      - Protocol (same)
+
+5-TUPLE
+-------
+  1. Source IP
+  2. Destination IP
+  3. Source Port
+  4. Destination Port
+  5. Protocol (TCP/UDP/SCTP/ICMP)
+
+CONNECTION TRACKING
+-------------------
+  • Google Cloud uses a connection tracking table
+  • Supported protocols: TCP, UDP, SCTP, ICMP (IPv4); TCP, UDP, SCTP, ICMPv6
+  • Connection tracking applies even for connectionless protocols
+  • Tracking state is ACTIVE if at least one packet sent every 10 minutes
+  • Fragmented connections: only FIRST return fragment auto-allowed; add
+    explicit rule for subsequent fragments
+  • ICMP error responses (e.g., DESTINATION UNREACHABLE) allowed for
+    permitted TCP/UDP connections (RFC 792)
+
+EXAM SCENARIO EXAMPLE
+---------------------
+Q: You allow TCP port 443 ingress from 0.0.0.0/0. Is return traffic allowed?
+A: YES — stateful firewall automatically allows established connection replies.
+
+Q: Can you block return traffic while allowing inbound?
+A: NO — stateful rules always permit return traffic for allowed connections.
+
+ADDITIONAL CONTEXT
+------------------
+  • AWS Security Groups are also stateful
+  • AWS Network ACLs are STATELESS (different behavior — know the difference!)
+  • Azure NSGs can be stateful depending on configuration
+
+================================================================================
+9. MULTIPLE VPC NETWORKS
+================================================================================
+
+WHY MULTIPLE VPCs?
+------------------
+Organizations often create separate VPC networks for:
+  • Environment isolation (dev, staging, production)
+  • Team/project separation
+  • Security boundaries (management network vs application network)
+  • Compliance requirements
+
+EXAMPLE FROM LECTURE (Lab Scenario)
+-----------------------------------
+  Create two custom mode VPC networks:
+
+  1. managementnet — for administrative/management workloads
+  2. privatenet     — for private application workloads
+
+  Steps covered:
+    • Create managementnet network
+    • Create privatenet network
+    • Create firewall rules for managementnet
+    • Create firewall rules for privatenet
+    • Create managementnet-us-vm instance
+    • Create privatenet-us-vm instance
+    • Create VM with multiple network interfaces (multi-NIC VM)
+
+MULTI-NIC VMs
+-------------
+  • A VM can have network interfaces in DIFFERENT VPC networks
+  • Useful as a bridge/bastion between networks
+  • Each interface gets an IP from its subnet
+
+CONNECTING MULTIPLE VPCs
+------------------------
+  • VPC Peering — private connectivity between two VPCs
+  • Cloud VPN — encrypted tunnel (also for hybrid)
+  • Cloud Interconnect / Direct Connect — dedicated private link
+  • Shared VPC — central VPC shared across projects (GCP)
+
+EXAM POINTS
+-----------
+  • Firewall rules do NOT transfer across peered VPCs
+  • Plan non-overlapping IP ranges before peering
+  • Shared VPC vs VPC Peering — know when to use each
+
+================================================================================
+10. HYBRID CLOUD
+================================================================================
+
+DEFINITION
+----------
+A hybrid cloud is a mixed computing environment where applications run using
+a combination of computing, storage, and services across:
+  • Public clouds (AWS, Azure, GCP)
+  • Private clouds / on-premises data centers
+  • Edge locations
+
+Almost no organization today relies entirely on a single public cloud.
+
+HOW HYBRID CLOUD WORKS
+----------------------
+Hybrid clouds combine resources from two or more separate computing
+environments. They require:
+  • Integration
+  • Orchestration
+  • Coordination
+  → To share, shift, and synchronize information quickly
+
+CRITICAL COMPONENT: NETWORKING
+------------------------------
+Strong hybrid cloud networking is essential. Interconnectivity uses:
+  • LAN — local on-premises network
+  • WAN — wide area connectivity
+  • VPN — encrypted tunnels over internet
+  • APIs — programmatic integration between environments
+
+Technologies used:
+  • Virtualization
+  • Containerization
+  • Software-Defined Networking (SDN)
+  • Software-Defined Storage
+  • Dedicated management/orchestration software
+
+SETTING UP HYBRID CLOUD — STRATEGY STEPS
+----------------------------------------
+1. DEFINE YOUR VISION
+   • Evaluate current environments and goals
+   • What do you want to optimize? (cost, latency, compliance, agility)
+
+2. ASSESS WORKLOADS
+   • Decide which workloads run where (on-prem vs cloud)
+   • Wrong placement = inefficiency and complexity
+
+3. IDENTIFY PATTERNS
+   • Common hybrid architecture patterns:
+     - Rehost (lift-and-shift)
+     - Refactor (cloud-native rewrite)
+     - Burst to cloud (peak load handling)
+     - Data residency (keep sensitive data on-prem)
+
+4. CHOOSE TECHNOLOGY & NETWORK TOPOLOGY
+   • VPN for quick/cost-effective connectivity
+   • Dedicated interconnect for high bandwidth/low latency
+   • Multi-cloud management platforms
+
+HYBRID CLOUD USE CASES
+----------------------
+  • Legacy apps that cannot move to cloud immediately
+  • Regulatory data must stay on-premises
+  • Disaster recovery (on-prem primary, cloud backup)
+  • Cloud bursting during peak demand
+
+EXAM POINTS
+-----------
+  • Hybrid = public + private combined
+  • Networking is the hardest part of hybrid cloud
+  • Know VPN vs Direct Connect/Interconnect trade-offs
+
+FUTURE SCOPE
+------------
+  • Edge computing + hybrid cloud (IoT, 5G)
+  • Anthos, Azure Arc, AWS Outposts — hybrid management platforms
+  • FinOps — cost optimization across hybrid environments
+
+================================================================================
+11. LOAD BALANCING IN CLOUD
+================================================================================
+
+DEFINITION
+----------
+A load balancer distributes user traffic across multiple instances of your
+applications. By spreading the load, it:
+  • Reduces performance bottlenecks
+  • Improves availability (if one instance fails, others serve traffic)
+  • Enables horizontal scaling
+
+Google Cloud Load Balancing uses: Maglev, Andromeda, Google Front Ends,
+and Envoy (same tech powering Google's own products).
+
+TWO MAIN TYPES (GCP)
+--------------------
+
+┌──────────────────────────┬─────────────────────────────────────────────────┐
+│ Application Load Balancer│ Network Load Balancer                           │
+├──────────────────────────┼─────────────────────────────────────────────────┤
+│ Layer 7 (HTTP/HTTPS)     │ Layer 4 (TCP, UDP, other IP protocols)          │
+│ Proxy-based              │ Proxy or Passthrough modes                      │
+│ Content-based routing    │ Preserves client IP (passthrough mode)          │
+│ SSL termination          │ Direct server return possible                   │
+│ Backends: GCE, GKE,      │ Handles TCP, UDP, ESP, GRE, ICMP, ICMPv6        │
+│ Cloud Run, external      │                                                 │
+└──────────────────────────┴─────────────────────────────────────────────────┘
+
+APPLICATION LOAD BALANCER (Layer 7)
+-----------------------------------
+  • Proxy-based Layer 7 load balancer
+  • Single IP address for multiple backend services
+  • Distributes HTTP/HTTPS traffic
+  • Backends: Compute Engine, GKE, Cloud Run, external (on-prem/other cloud)
+  • Features: URL-based routing, SSL offloading, WebSocket support
+
+NETWORK LOAD BALANCER (Layer 4)
+-------------------------------
+  • Handles TCP, UDP, and other IP protocol traffic
+  • Two modes:
+    PROXY mode:
+      - Reverse proxy with advanced traffic controls
+      - Backends on-premises and other clouds supported
+    PASSTHROUGH mode:
+      - Preserves client source IP address
+      - Direct server return for responses
+      - Supports TCP, UDP, ESP, GRE, ICMP, ICMPv6
+
+OSI LAYER REFERENCE (EXAM ESSENTIAL)
+------------------------------------
+  Layer 4 (Transport) → TCP/UDP — Network Load Balancer
+  Layer 7 (Application) → HTTP/HTTPS — Application Load Balancer
+
+WHEN TO USE WHICH?
+------------------
+  Use Application LB when:
+    • HTTP/HTTPS traffic
+    • Need path/host-based routing
+    • SSL termination at load balancer
+
+  Use Network LB when:
+    • Non-HTTP protocols (TCP, UDP)
+    • Need to preserve client IP
+    • Gaming, IoT, custom protocols
+
+ADDITIONAL LOAD BALANCING CONCEPTS
+----------------------------------
+  • Health Checks — LB sends probes; unhealthy instances removed from pool
+  • Auto Scaling — add/remove instances based on traffic
+  • Global vs Regional LB — global for multi-region, regional for single region
+  • Internal vs External LB — internal for VPC-only traffic
+
+CLOUD PROVIDER EQUIVALENTS
+--------------------------
+  AWS:  ALB (L7), NLB (L4), CLB (classic)
+  Azure: Application Gateway (L7), Load Balancer (L4)
+  GCP:  Application LB, Network LB
+
+FUTURE SCOPE
+------------
+  • Kubernetes Ingress / Gateway API — L7 routing for containers
+  • Service mesh load balancing (Envoy sidecars)
+  • Global load balancing with CDN integration (Cloud CDN, CloudFront)
+
+================================================================================
+12. EXAM QUICK-REVISION — IMPORTANT QUESTIONS
+================================================================================
+
+SHORT ANSWER QUESTIONS
+----------------------
+1. What is a VPC?
+   → Logically isolated private network within a public cloud.
+
+2. Difference between LAN and WAN?
+   → LAN: small area, high speed. WAN: large geographic area, connects sites/cloud.
+
+3. What is CIDR notation?
+   → Method to define IP ranges (e.g., 10.0.0.0/24 = 256 addresses).
+
+4. Difference between public and private IP?
+   → Public: internet-routable. Private: RFC 1918, not routable on internet.
+
+5. Are GCP VPC firewall rules stateful or stateless?
+   → Stateful — return traffic auto-allowed for permitted connections.
+
+6. What is the 5-tuple?
+   → Src IP, Dst IP, Src Port, Dst Port, Protocol.
+
+7. Layer 7 vs Layer 4 load balancer?
+   → L7: HTTP/HTTPS, content routing. L4: TCP/UDP, faster, protocol-agnostic.
+
+8. What is hybrid cloud?
+   → Mix of public cloud + private/on-premises environments.
+
+9. Can firewall rules be shared between peered VPCs?
+   → No — each VPC has its own firewall rules.
+
+10. What is a subnet?
+    → Subdivision of VPC IP range; resources get IPs from subnet pool.
+
+MCQ-STYLE FACTS
+---------------
+  • Subnets in GCP are REGIONAL resources
+  • External IPs in GCP are always public
+  • Firewall rule: ingress OR egress, not both
+  • Connection tracking expires after ~10 min of inactivity
+  • Hybrid cloud requires VPN/interconnect for connectivity
+
+DIAGRAM QUESTIONS (PRACTICE)
+----------------------------
+  • Draw VPC with public/private subnets
+  • Show hybrid cloud: on-prem ↔ VPN ↔ cloud VPC
+  • Show load balancer distributing traffic to 3 VM instances
+
+================================================================================
+13. FUTURE SCOPE & INDUSTRY RELEVANCE
+================================================================================
+
+CERTIFICATIONS THAT COVER THIS UNIT
+-----------------------------------
+  • Google Cloud Associate Cloud Engineer
+  • Google Cloud Professional Cloud Network Engineer
+  • AWS Certified Solutions Architect (Associate/Professional)
+  • Azure Network Engineer Associate
+
+REAL-WORLD JOB SKILLS
+---------------------
+  • Designing secure VPC architectures
+  • Troubleshooting connectivity (can't reach database, timeout errors)
+  • Implementing zero-trust network access
+  • Setting up hybrid connectivity for enterprise migrations
+  • Configuring load balancers for high-traffic web applications
+
+EMERGING TRENDS
+---------------
+  • Infrastructure as Code for networking (Terraform VPC modules)
+  • Cloud-native networking (CNI in Kubernetes — preview for Unit IV)
+  • eBPF-based networking and security
+  • Multi-cloud networking (Aviatrix, Cisco Multi-Cloud)
+  • SASE (Secure Access Service Edge) — cloud-delivered network security
+
+RECOMMENDED HANDS-ON PRACTICE
+-----------------------------
+  1. Create a VPC with 2 subnets (public + private) in GCP/AWS free tier
+  2. Configure firewall rules: allow SSH from your IP only
+  3. Deploy 2 VMs behind a load balancer
+  4. Set up Cloud VPN or simulate hybrid with two VPCs + peering
+
+================================================================================
+                              END OF UNIT I
+================================================================================
+
+Note: Unit I PDF focuses on Cloud Networking (LAN, WAN, VPC, Subnets, IPs,
+Firewalls, Hybrid Cloud, Load Balancing). If your syllabus also lists
+"Cloud Principles & Well-Architected Framework" under Unit I, that may be
+covered in a separate module — confirm with your instructor.
+
+Next: Unit II — Disaster Recovery in Cloud (awaiting your command to proceed)
