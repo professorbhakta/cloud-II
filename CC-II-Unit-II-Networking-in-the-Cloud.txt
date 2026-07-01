@@ -6,23 +6,19 @@
 
   HOW TO USE THIS FILE
   --------------------
-  This study guide is built topic-by-topic from CC-II Unit-II. Each section
-  includes:
-    • Core concepts from the unit material
-    • Sub-topic breakdown
-    • Additional context for deeper understanding
-    • Exam preparation notes (short answers, definitions, comparisons)
-    • Future scope and career relevance
+  This study guide covers CC-II Unit-II end to end. Each section includes core
+  concepts, sub-topic breakdown, additional context, exam preparation notes, and
+  career relevance where it matters.
 
-  PROGRESS TRACKER
-  ----------------
-  [✓] Topic 1  — Google App Engine (GAE) & Cloud Service Models
-  [✓] Topic 2  — Compute Engine: Deploying Scalable Web Applications
-  [✓] Topic 3  — Cloud Networking (MIG, Load Balancers, CDN, Scaling)
-  [ ] Topic 4  — App Engine Flexible Environment & PaaS Deep Dive
-  [ ] Topic 5  — Event-Driven Architecture with Cloud Functions
-  [ ] Topic 6  — Google Kubernetes Engine (GKE) Overview
-  [ ] Topic 7  — Deploying Containerized Applications on GKE
+  CONTENTS
+  --------
+  1. Google App Engine (GAE) & Cloud Service Models
+  2. Compute Engine — Deploying Scalable Web Applications
+  3. Cloud Networking — MIG, Load Balancers, Autohealing & CDN
+  4. App Engine Flexible Environment & PaaS Deep Dive
+  5. Event-Driven Architecture with Cloud Functions
+  6. Google Kubernetes Engine (GKE) Overview
+  7. Deploying Containerized Applications on GKE
 
 ================================================================================
 TOPIC 1: GOOGLE APP ENGINE (GAE) & CLOUD SERVICE MODELS
@@ -291,17 +287,12 @@ CERTIFICATION RELEVANCE:
   • Google Cloud Professional Cloud Developer — PaaS and serverless patterns
 
 ================================================================================
-END OF TOPIC 1
-================================================================================
-
-================================================================================
 TOPIC 2: COMPUTE ENGINE — DEPLOYING SCALABLE WEB APPLICATIONS
 ================================================================================
 
-This topic covers the hands-on lab from the unit: deploying the "Fancy Store"
-e-commerce application (monolith-to-microservices) on Google Compute Engine.
-It introduces IaaS deployment, Cloud Shell, startup scripts, microservices
-architecture, and initial network configuration.
+Building on PaaS concepts from App Engine, Compute Engine shifts to full IaaS
+control. The Fancy Store lab deploys a monolith-to-microservices e-commerce app
+on virtual machines using Cloud Shell, startup scripts, and initial network setup.
 
 --------------------------------------------------------------------------------
 2.1  Google Cloud Console & Lab Environment Setup
@@ -750,19 +741,12 @@ CERTIFICATION RELEVANCE:
   • Google Cloud Professional Cloud Architect — multi-tier architecture design
 
 ================================================================================
-END OF TOPIC 2
-================================================================================
-
-NEXT: Topic 3 — Cloud Networking: Managed Instance Groups, Load Balancers,
-      Autohealing, Autoscaling & CDN
-
-================================================================================
 TOPIC 3: CLOUD NETWORKING — MIG, LOAD BALANCERS, AUTOHEALING & CDN
 ================================================================================
 
-This topic continues the Fancy Store lab: scaling from single VMs to production-
-grade architecture using Managed Instance Groups (MIG), HTTP(S) Load Balancers,
-health checks, autoscaling, Cloud CDN, and rolling updates.
+Once single VMs are running, the architecture scales to production patterns:
+Managed Instance Groups, HTTP(S) Load Balancers, health checks, autoscaling,
+Cloud CDN, and rolling updates on the same Fancy Store deployment.
 
 --------------------------------------------------------------------------------
 3.1  Why Move Beyond Single VMs?
@@ -1355,7 +1339,852 @@ CERTIFICATION RELEVANCE:
   • Google Cloud Professional Cloud Network Engineer — VPC, LB, hybrid connectivity
 
 ================================================================================
-END OF TOPIC 3
+TOPIC 4: APP ENGINE FLEXIBLE ENVIRONMENT & EXPLORING PAAS
 ================================================================================
 
-NEXT: Topic 4 — App Engine Flexible Environment & Exploring PaaS with App Engine
+After hands-on IaaS networking on Compute Engine, the unit returns to Platform-
+as-a-Service through App Engine — especially the Flexible Environment, which
+bridges PaaS convenience with greater runtime control.
+
+--------------------------------------------------------------------------------
+4.1  App Engine Standard vs Flexible Environment
+--------------------------------------------------------------------------------
+
+  ┌────────────────────┬─────────────────────────┬─────────────────────────────┐
+  │ Aspect             │ Standard Environment    │ Flexible Environment        │
+  ├────────────────────┼─────────────────────────┼─────────────────────────────┤
+  │ Infrastructure     │ Fully sandboxed         │ Docker containers on GCE VMs│
+  │ Scaling            │ Automatic, fine-grained │ Configurable auto-scaling   │
+  │ Request timeout    │ Short (60s default)     │ Longer (up to 60 minutes)   │
+  │ Custom runtime     │ Limited language versions│ Custom runtimes supported  │
+  │ SSH access         │ No                      │ Yes (into underlying VMs)   │
+  │ VPC networking     │ Limited (VPC connector) │ Full VPC integration        │
+  │ Cost model         │ Instance classes        │ Pay for vCPU + memory used  │
+  │ Best for           │ Stateless web apps, APIs│ Apps needing custom deps    │
+  └────────────────────┴─────────────────────────┴─────────────────────────────┘
+
+Flexible Environment runs your app inside Docker containers on Compute Engine
+virtual machines. Google still manages the infrastructure, but you gain more
+control over the runtime, libraries, and operating system packages.
+
+--------------------------------------------------------------------------------
+4.2  Creating an App Engine Flexible Application
+--------------------------------------------------------------------------------
+
+PREREQUISITES:
+  1. Select or create a Google Cloud project
+  2. Enable billing on the project
+  3. Enable the Cloud Build API
+  4. Install and initialize Google Cloud CLI: gcloud init
+  5. Create an App Engine application in the console (region is permanent)
+  6. Install Cloud Tools for Eclipse (for Java/Eclipse workflow)
+
+USING CLOUD TOOLS FOR ECLIPSE:
+  1. Click Google Cloud Platform toolbar button
+  2. Select Create New Project > Google App Engine Flexible Java Project
+  3. Enter Project name; optionally set Java package name
+  4. Check "Create as Maven project" for pom.xml and Maven builder
+  5. Enter Group ID and Artifact ID for Maven
+  6. Select required libraries → Finish
+
+The wizard generates a project structure ready for Flexible Environment deployment.
+Maven integration (pom.xml) standardizes dependency management and builds.
+
+IMPORTANT: App Engine region cannot be changed after creation. Choose the region
+closest to your users to minimize latency.
+
+--------------------------------------------------------------------------------
+4.3  Exploring PaaS with App Engine
+--------------------------------------------------------------------------------
+
+App Engine is a fully managed PaaS platform that uses built-in services to run
+applications. After creating a Cloud account, you can start building immediately
+using the SDK and developer documentation.
+
+SUPPORTED DEVELOPMENT APPROACHES:
+  • Go with template/HTML package
+  • Python with webapp2 and Jinja2
+  • PHP with Cloud SQL
+  • Java with Maven
+  • Node.js, Ruby, and more in modern runtimes
+
+SANDBOXING AND SCALING:
+  App Engine runs programs on multiple servers while sandboxing them — each app
+  is isolated and cannot interfere with others. When demand increases, the
+  platform allocates more resources automatically.
+
+REAL-WORLD APPS ON APP ENGINE:
+  Snapchat, Rovio (Angry Birds), and Khan Academy demonstrate App Engine's
+  ability to serve large-scale consumer applications.
+
+--------------------------------------------------------------------------------
+4.4  App Engine Runtimes and Languages
+--------------------------------------------------------------------------------
+
+CLASSIC RUNTIMES (from unit material):
+  • Java   → JRE version 7
+  • Python → Runtime 2.7
+  • PHP    → PHP 5.4 environment
+  • Go     → Go runtime 1.2
+
+MODERN NOTE: Current App Engine supports updated runtimes (Python 3, Java 11+,
+Node.js 18+, etc.). For exams based on this unit, know both the classic versions
+listed in the syllabus and the concept that each language has its own SDK.
+
+DEVELOPMENT WORKFLOW:
+  1. Choose language and SDK
+  2. Develop and test locally using the SDK deployment toolkit
+  3. Deploy to App Engine with gcloud app deploy
+  4. Google handles scaling, load balancing, and infrastructure
+
+--------------------------------------------------------------------------------
+4.5  App Engine Feature Categories
+--------------------------------------------------------------------------------
+
+GENERALLY AVAILABLE (GA) FEATURES:
+  Protected by SLA and deprecation policy. Stable, backward-compatible changes.
+  Categories include:
+    • Communications and process management
+    • Computing and application configuration
+    • Data storage, retrieval, and search
+
+  Specific GA services:
+    • Datastore (NoSQL document database)
+    • Memcached (in-memory cache)
+    • Dedicated Memcached
+    • Blobstore (large object storage)
+    • Search API
+    • Google Cloud SQL integration
+    • Logs and application management
+    • HRD (High Replication Datastore) migration tool
+
+FEATURES IN PREVIEW:
+  May become GA in future releases but implementation can change in backward-
+  incompatible ways. Examples:
+    • Sockets
+    • MapReduce
+    • Google Cloud Storage Client Library
+
+EXPERIMENTAL FEATURES:
+  May or may not become broadly available. Can change irreconcilably. Often
+  require "trusted tester" registration. Examples:
+    • Prospective Search
+    • Page Speed
+    • OpenID
+    • Datastore Admin / Backup / Restore
+    • Task Queue Tagging
+    • MapReduce
+    • Task Queue REST API
+    • OAuth
+    • App metrics analytics
+
+THIRD-PARTY SERVICES:
+  Google collaborates with partner organizations and provides documentation and
+  helper libraries to extend App Engine beyond core capabilities. Partners often
+  offer exclusive deals to App Engine users.
+
+EXAM TIP: Know the three tiers — GA (stable/SLA), Preview (may change), Experimental
+          (limited access, unstable).
+
+--------------------------------------------------------------------------------
+4.6  App Engine Data and Storage Services
+--------------------------------------------------------------------------------
+
+  SERVICE           PURPOSE
+  ─────────────────────────────────────────────────────────────────────────
+  Datastore         NoSQL document database; automatic scaling
+  Cloud SQL         Managed relational database (MySQL, PostgreSQL)
+  Memcache          Low-latency in-memory cache; reduces database reads
+  Blobstore         Store and serve large binary objects (images, files)
+  Cloud Storage     Object storage for static assets and user uploads
+  Search API        Full-text search across application data
+
+Datastore vs Cloud SQL:
+  • Datastore → Schema-flexible NoSQL, horizontal scaling, eventual consistency
+  • Cloud SQL → Relational data, ACID transactions, SQL queries
+
+--------------------------------------------------------------------------------
+4.7  Exam Notes — App Engine Flexible & PaaS
+--------------------------------------------------------------------------------
+
+  Q1. What is App Engine Flexible Environment?
+  A1. A PaaS deployment option where apps run in Docker containers on Compute
+      Engine VMs, offering more runtime control than Standard while remaining
+      managed by Google.
+
+  Q2. Can you change the App Engine region after creation?
+  A2. No. Region selection is permanent at app creation time.
+
+  Q3. List three GA features of App Engine.
+  A3. Datastore, Memcache, Blobstore (also acceptable: Cloud SQL, Search, Logs).
+
+  Q4. Differentiate Preview and Experimental features.
+  A4. Preview features are being stabilized for future GA release. Experimental
+      features are early-stage, often limited to trusted testers, and may never
+      become generally available.
+
+  Q5. Name two companies that use App Engine.
+  A5. Snapchat and Khan Academy (also Rovio).
+
+================================================================================
+TOPIC 5: EVENT-DRIVEN ARCHITECTURE WITH CLOUD FUNCTIONS
+================================================================================
+
+Serverless computing complements both PaaS (App Engine) and IaaS (Compute Engine).
+Cloud Functions executes code in response to events — no server management, pay
+only for execution time.
+
+--------------------------------------------------------------------------------
+5.1  What are Cloud Functions?
+--------------------------------------------------------------------------------
+
+Cloud Functions is a serverless execution environment where you write single-
+purpose functions that respond to cloud events. Google manages the infrastructure,
+scaling from zero to thousands of concurrent invocations automatically.
+
+EVENT-DRIVEN MODEL:
+  Event occurs (file upload, HTTP request, Pub/Sub message, Firestore change)
+       │
+       ▼
+  Cloud Function triggered automatically
+       │
+       ▼
+  Function executes → returns result or triggers downstream action
+
+USE CASES:
+  • Image processing on Cloud Storage upload
+  • Real-time file transformation
+  • Webhook handlers
+  • IoT data processing
+  • Lightweight APIs and microservices
+
+--------------------------------------------------------------------------------
+5.2  Cloud Functions Generations
+--------------------------------------------------------------------------------
+
+  CLOUD FUNCTIONS (1st gen):
+    • Original implementation
+    • Background functions for Node.js, Python, Go, Java
+    • CloudEvent functions for .NET, Ruby, PHP
+
+  CLOUD FUNCTIONS (2nd gen):
+    • Built on Cloud Run infrastructure
+    • Better performance, longer timeouts, more concurrency
+    • All runtimes use CloudEvent functions
+    • Recommended for new projects
+
+--------------------------------------------------------------------------------
+5.3  CloudEvent Functions (2nd gen — Recommended)
+--------------------------------------------------------------------------------
+
+CloudEvent functions follow the CloudEvents industry standard — a specification
+for describing event data in a common, interoperable format.
+
+NODE.JS EXAMPLE:
+  const functions = require('@google-cloud/functions-framework');
+
+  functions.cloudEvent('myCloudEventFunction', cloudEvent => {
+    // Your code here
+    // Access event data via cloudEvent.data
+  });
+
+KEY POINTS:
+  • Register handler with Functions Framework
+  • Handler receives a CloudEvent object
+  • Entry point = the name registered with Functions Framework
+  • Event data accessed via cloudEvent.data
+  • CloudEvents SDKs available for multiple languages
+
+SUPPORTED TRIGGERS (Cloud Functions triggers):
+  • HTTP requests
+  • Cloud Storage object changes
+  • Pub/Sub messages
+  • Firestore document changes
+  • Firebase events
+  • Audit logs
+
+--------------------------------------------------------------------------------
+5.4  Background Functions (1st gen — Legacy)
+--------------------------------------------------------------------------------
+
+Background functions in 1st gen Node.js, Python, Go, and Java use a different
+argument pattern than CloudEvent functions.
+
+NODE.JS EXAMPLE:
+  exports.myBackgroundFunction = (eventData, context, callback) => {
+    // eventData = event payload (format depends on trigger type)
+    // context    = metadata about the event
+    // callback   = optional completion signal
+    callback();  // call with no args = success; first arg = error
+  };
+
+ARGUMENTS:
+  • eventData → Object with event-specific payload
+  • context   → Metadata (event ID, timestamp, resource name)
+  • callback  → Optional; call to signal completion
+
+ENTRY POINT: Name of the exported function (myBackgroundFunction).
+
+--------------------------------------------------------------------------------
+5.5  Function Lifecycle & Execution
+--------------------------------------------------------------------------------
+
+FUNCTION TERMINATION:
+  Cloud Functions considers execution complete when the function returns.
+  If the function creates background tasks (threads, futures, Promises, callbacks,
+  child processes), you MUST resolve them before returning. Unresolved background
+  work may be terminated, causing undefined behavior.
+
+AUTOMATIC RETRIES:
+  Event-driven functions can be configured to automatically retry failed
+  invocations. Retry behavior depends on the event type:
+    • Pub/Sub → retries by default
+    • HTTP → no automatic retry (client must retry)
+    • Storage → configurable retry policy
+
+COLD START vs WARM START:
+  • Cold start → New instance spun up; higher latency (seconds)
+  • Warm start → Existing instance reused; lower latency (milliseconds)
+  • Minimize cold starts: keep functions small, use minimum instances (2nd gen)
+
+--------------------------------------------------------------------------------
+5.6  Cloud Functions vs App Engine vs Compute Engine
+--------------------------------------------------------------------------------
+
+  ┌──────────────────┬─────────────────┬─────────────────┬──────────────────┐
+  │ Aspect           │ Cloud Functions │ App Engine      │ Compute Engine   │
+  ├──────────────────┼─────────────────┼─────────────────┼──────────────────┤
+  │ Model            │ Serverless/FaaS │ PaaS            │ IaaS             │
+  │ Unit of deploy   │ Single function │ Application     │ Virtual machine  │
+  │ Scaling          │ Auto (0 to N)   │ Auto            │ Manual/MIG       │
+  │ Billing          │ Per invocation  │ Per instance-hr │ Per VM-hour      │
+  │ Max duration     │ 9 min (1st gen) │ Request-based   │ Unlimited        │
+  │                  │ 60 min (2nd gen)│                 │                  │
+  │ Best for         │ Event processing│ Web apps        │ Full control     │
+  └──────────────────┴─────────────────┴─────────────────┴──────────────────┘
+
+--------------------------------------------------------------------------------
+5.7  Exam Notes — Cloud Functions
+--------------------------------------------------------------------------------
+
+  Q1. When do you use event-driven Cloud Functions?
+  A1. When code should run automatically in response to cloud events (file uploads,
+      Pub/Sub messages, database changes) without managing servers.
+
+  Q2. What is a CloudEvent?
+  A2. An industry-standard specification for describing event data in a common
+      format, used by Cloud Functions 2nd gen for all runtimes.
+
+  Q3. What happens if background tasks are not completed before return?
+  A3. They may be terminated, causing incomplete processing or undefined behavior.
+
+  Q4. What is the difference between CloudEvent and Background functions?
+  A4. CloudEvent functions (2nd gen) receive a CloudEvent object following the
+      CloudEvents standard. Background functions (1st gen) receive eventData,
+      context, and an optional callback.
+
+  Q5. What is a cold start?
+  A5. Latency incurred when Cloud Functions spins up a new instance to handle a
+      request because no warm instance is available.
+
+================================================================================
+TOPIC 6: GOOGLE KUBERNETES ENGINE (GKE) OVERVIEW
+================================================================================
+
+Containers package applications with dependencies into portable units. Kubernetes
+orchestrates containers at scale. GKE is Google's managed Kubernetes service —
+the natural evolution from VMs (Compute Engine) and serverless (Cloud Functions)
+for production container workloads.
+
+--------------------------------------------------------------------------------
+6.1  What is GKE?
+--------------------------------------------------------------------------------
+
+Google Kubernetes Engine (GKE) is a managed implementation of the open-source
+Kubernetes container orchestration platform. Kubernetes was originally developed
+by Google based on Borg, Google's internal cluster management system.
+
+GKE lets you deploy and operate containerized applications at scale using
+Google's infrastructure while Google manages the control plane, upgrades, and
+many operational concerns.
+
+--------------------------------------------------------------------------------
+6.2  When to Use GKE
+--------------------------------------------------------------------------------
+
+Use GKE when you need:
+  • Full control over container infrastructure (networking, scaling, hardware)
+  • Multi-container applications with complex orchestration
+  • Portable workloads across cloud and on-premises
+  • Microservices at scale with service discovery and load balancing
+  • CI/CD pipelines deploying container images
+
+Compare:
+  • Simple web app, minimal ops     → App Engine or Cloud Run
+  • Event processing                → Cloud Functions
+  • Full VM control, legacy apps    → Compute Engine
+  • Container orchestration at scale → GKE
+
+--------------------------------------------------------------------------------
+6.3  GKE Architecture
+--------------------------------------------------------------------------------
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │                     GKE CLUSTER                             │
+  │  ┌─────────────────────────────────────────────────────┐   │
+  │  │  CONTROL PLANE (Google-managed)                      │   │
+  │  │  • API Server  • Scheduler  • Controller Manager    │   │
+  │  │  • etcd (cluster state)                             │   │
+  │  └─────────────────────────────────────────────────────┘   │
+  │                          │                                  │
+  │  ┌───────────┐  ┌───────────┐  ┌───────────┐               │
+  │  │  Node 1   │  │  Node 2   │  │  Node 3   │  (VMs)        │
+  │  │ ┌───┐┌───┐│  │ ┌───┐┌───┐│  │ ┌───┐    │               │
+  │  │ │Pod││Pod││  │ │Pod││Pod││  │ │Pod│    │               │
+  │  │ └───┘└───┘│  │ └───┘└───┘│  │ └───┘    │               │
+  │  └───────────┘  └───────────┘  └───────────┘               │
+  └─────────────────────────────────────────────────────────────┘
+
+KEY COMPONENTS:
+  • Cluster    → Set of nodes running containerized applications
+  • Node       → Compute Engine VM running Kubernetes kubelet agent
+  • Pod        → Smallest deployable unit; one or more containers
+  • Deployment → Manages a set of identical Pods (replicas, rolling updates)
+  • Service    → Stable network endpoint for a set of Pods
+  • Namespace  → Virtual cluster for resource isolation
+
+You interact with the cluster via the Kubernetes API (kubectl CLI or client libraries).
+
+--------------------------------------------------------------------------------
+6.4  GKE Modes of Operation
+--------------------------------------------------------------------------------
+
+AUTOPILOT MODE (Recommended):
+  • Google manages nodes AND control plane
+  • Pay only for Pod resource requests (CPU, memory)
+  • Built-in hardening and best-practice configurations
+  • Automatic node scaling based on Pod count
+  • Node auto-repair
+  • Pod-level SLA
+  • Less operational overhead
+
+STANDARD MODE:
+  • You manage node configuration and sizing
+  • Pay for all node resources regardless of Pod usage
+  • More flexibility: custom machine types, GPUs, taints, tolerations
+  • Node auto-provisioning available
+  • Choose release channels or manual version control
+
+  ┌────────────────────┬────────────────────────┬────────────────────────────┐
+  │ Aspect             │ Autopilot              │ Standard                   │
+  ├────────────────────┼────────────────────────┼────────────────────────────┤
+  │ Node management    │ Google                 │ You (or auto-provisioning) │
+  │ Cost model         │ Per Pod resources      │ Per node (all resources)   │
+  │ Configuration      │ Opinionated/safe defaults│ Full flexibility          │
+  │ Best for           │ Production, cost focus │ Custom hardware, GPUs      │
+  └────────────────────┴────────────────────────┴────────────────────────────┘
+
+CREATE AUTOPILOT CLUSTER:
+  gcloud container clusters create-auto hello-cluster --region=REGION
+
+--------------------------------------------------------------------------------
+6.5  GKE Benefits
+--------------------------------------------------------------------------------
+
+PLATFORM MANAGEMENT:
+  • Managed upgrades with release channels (Rapid, Regular, Stable)
+  • Flexible maintenance windows and exclusions
+  • Automatic node scaling (Autopilot) or node auto-provisioning (Standard)
+  • Node auto-repair
+  • Built-in logging and monitoring
+  • Integrated CI/CD with Cloud Build and Cloud Deploy
+
+SECURITY:
+  • Container-Optimized OS (hardened node OS)
+  • Automatic security patches and GKE version upgrades
+  • Security posture dashboard
+  • Integration with Google Cloud operations suite
+
+COST OPTIMIZATION:
+  • Autopilot: pay only for running Pod requests
+  • Spot Pods for fault-tolerant batch workloads (up to 90% savings)
+  • Minimal ops overhead in Autopilot
+
+RELIABILITY:
+  • >99% monthly uptime SLO
+  • Highly available control plane
+  • Regional clusters for multi-zone availability
+  • Multi-cluster Services for cross-cluster communication
+
+--------------------------------------------------------------------------------
+6.6  GKE Use Cases
+--------------------------------------------------------------------------------
+
+Industries: robotics, healthcare, retail, education, gaming, financial services.
+
+Applications:
+  • AI/ML operations (Kubeflow, TensorFlow Serving)
+  • Data processing at scale (Apache Spark, Apache Beam on GKE)
+  • Scalable online gaming platforms
+  • Reliable applications under heavy load
+  • Microservices migration from monoliths
+
+Migrate for GKE: tool to containerize VM workloads without rewriting source code.
+
+--------------------------------------------------------------------------------
+6.7  Kubernetes Versions & Release Channels
+--------------------------------------------------------------------------------
+
+GKE auto-upgrades the control plane based on the release channel selected at
+cluster creation:
+  • Rapid   → Latest versions; for testing new features
+  • Regular → Balance of features and stability (default)
+  • Stable  → Most stable; slowest rollout
+
+Standard mode without a release channel = no automatic upgrades (you manage versions).
+
+Alpha clusters: access to experimental Kubernetes features (not for production).
+
+--------------------------------------------------------------------------------
+6.8  Exam Notes — GKE Overview
+--------------------------------------------------------------------------------
+
+  Q1. What is GKE?
+  A1. Google Kubernetes Engine — a managed Kubernetes service for deploying and
+      operating containerized applications at scale on Google Cloud.
+
+  Q2. What is a Pod?
+  A2. The smallest deployable unit in Kubernetes, containing one or more
+      containers that share storage and network.
+
+  Q3. Differentiate GKE Autopilot and Standard.
+  A3. Autopilot: Google manages nodes, pay per Pod, built-in hardening. Standard:
+      you manage nodes, pay per node, full configuration flexibility.
+
+  Q4. What system did Kubernetes evolve from?
+  A4. Borg — Google's internal cluster management system.
+
+  Q5. What is the control plane?
+  A5. Management nodes running Kubernetes system components (API server,
+      scheduler, controller manager, etcd). In GKE, Google manages the control plane.
+
+================================================================================
+TOPIC 7: DEPLOYING CONTAINERIZED APPLICATIONS ON GKE
+================================================================================
+
+The unit's GKE lab walks through packaging a web app as a Docker image, pushing
+it to Artifact Registry, deploying on a GKE cluster, exposing it via a Load
+Balancer Service, autoscaling with HPA, and rolling out a new version.
+
+--------------------------------------------------------------------------------
+7.1  Prerequisites & Setup
+--------------------------------------------------------------------------------
+
+  1. Google Cloud project with billing enabled
+  2. Enable APIs: Compute Engine, Artifact Registry, Google Kubernetes Engine
+  3. Cloud Shell (pre-installed: gcloud, docker, kubectl)
+
+  export PROJECT_ID=your-project-id
+  gcloud config set project $PROJECT_ID
+
+--------------------------------------------------------------------------------
+7.2  Artifact Registry — Container Image Storage
+--------------------------------------------------------------------------------
+
+Container images must be stored in a registry before GKE can pull and run them.
+
+CREATE DOCKER REPOSITORY:
+  gcloud artifacts repositories create hello-repo \
+    --repository-format=docker \
+    --location=REGION \
+    --description="Docker repository"
+
+  gcloud artifacts locations list    # List available regions
+
+Artifact Registry is the modern replacement for Container Registry (gcr.io).
+
+--------------------------------------------------------------------------------
+7.3  Building a Docker Image
+--------------------------------------------------------------------------------
+
+SAMPLE APP: hello-app — a Go web server responding "Hello, World!" on port 8080.
+
+  git clone https://github.com/GoogleCloudPlatform/kubernetes-engine-samples
+  cd kubernetes-engine-samples/hello-app
+
+BUILD AND TAG:
+  docker build -t REGION-docker.pkg.dev/${PROJECT_ID}/hello-repo/hello-app:v1 .
+
+  • Dockerfile contains build instructions
+  • Tag format: REGION-docker.pkg.dev/PROJECT/REPO/IMAGE:VERSION
+  • docker images  → verify build
+
+TEST LOCALLY (optional):
+  docker run --rm -p 8080:8080 \
+    REGION-docker.pkg.dev/${PROJECT_ID}/hello-repo/hello-app:v1
+
+PUSH TO REGISTRY:
+  gcloud auth configure-docker REGION-docker.pkg.dev
+  docker push REGION-docker.pkg.dev/${PROJECT_ID}/hello-repo/hello-app:v1
+
+GRANT GKE ACCESS TO REGISTRY:
+  gcloud artifacts repositories add-iam-policy-binding hello-repo \
+    --location=REGION \
+    --member=serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com \
+    --role="roles/artifactregistry.reader"
+
+--------------------------------------------------------------------------------
+7.4  Creating a GKE Cluster
+--------------------------------------------------------------------------------
+
+  gcloud config set compute/region REGION
+
+  gcloud container clusters create-auto hello-cluster --region=REGION
+
+  • create-auto → Autopilot mode cluster
+  • Takes a few minutes for creation and health checks
+  • For Standard mode: gcloud container clusters create hello-cluster ...
+
+CONNECT TO CLUSTER:
+  gcloud container clusters get-credentials hello-cluster --region=REGION
+
+  kubectl get nodes    # Verify connection
+
+--------------------------------------------------------------------------------
+7.5  Deploying with Kubernetes Deployment
+--------------------------------------------------------------------------------
+
+A Deployment manages a set of identical Pods and handles rolling updates.
+
+  kubectl create deployment hello-app \
+    --image=REGION-docker.pkg.dev/${PROJECT_ID}/hello-repo/hello-app:v1
+
+  kubectl scale deployment hello-app --replicas=3
+
+  kubectl get pods
+
+  NAME                          READY   STATUS    RESTARTS   AGE
+  hello-app-784d7569bc-hgmpx    1/1     Running   0          90s
+  hello-app-784d7569bc-jfkz5    1/1     Running   0          90s
+  hello-app-784d7569bc-mnrrl    1/1     Running   0          95s
+
+Pods may show Pending for up to 2 minutes while GKE provisions resources.
+
+--------------------------------------------------------------------------------
+7.6  Horizontal Pod Autoscaler (HPA)
+--------------------------------------------------------------------------------
+
+HPA automatically scales the number of Pods based on observed metrics.
+
+  kubectl autoscale deployment hello-app --cpu-percent=80 --min=1 --max=5
+
+  • Scales between 1 and 5 Pods
+  • Adds Pods when average CPU > 80%
+  • Removes Pods when CPU drops below threshold
+
+This is the Kubernetes equivalent of Compute Engine MIG autoscaling (Topic 3),
+but at the Pod level instead of the VM level.
+
+--------------------------------------------------------------------------------
+7.7  Kubernetes Services & Networking
+--------------------------------------------------------------------------------
+
+PROBLEM: Pod IPs are ephemeral and only reachable inside the cluster. A Service
+provides a stable endpoint.
+
+SERVICE TYPES:
+  • ClusterIP     → Internal only (default)
+  • NodePort      → Exposes on each node's IP at a static port
+  • LoadBalancer  → Provisions cloud load balancer with external IP
+  • ExternalName  → Maps to external DNS name
+
+EXPOSE TO INTERNET:
+  kubectl expose deployment hello-app \
+    --name=hello-app-service \
+    --type=LoadBalancer \
+    --port 80 \
+    --target-port 8080
+
+  kubectl get service
+
+  NAME                CLUSTER-IP      EXTERNAL-IP     PORT(S)
+  hello-app-service   10.3.251.122    203.0.113.0     80:30877/TCP
+
+  • --port 80         → Load Balancer listens on port 80
+  • --target-port 8080 → Container listens on port 8080
+  • EXTERNAL-IP may show <pending> for a few minutes
+
+DNS HOSTNAME: hello-app.default.svc.cluster.local (internal cluster DNS)
+
+NETWORKING COMPARISON (connecting Topics 2, 3, and 7):
+  • Compute Engine → Firewall rules + external IPs per VM
+  • GCE + HTTP LB   → Global LB + URL maps + MIG (Topic 3)
+  • GKE LoadBalancer → Kubernetes Service type auto-provisions cloud LB
+
+--------------------------------------------------------------------------------
+7.8  Rolling Updates on GKE
+--------------------------------------------------------------------------------
+
+GKE supports zero-downtime rolling updates when deploying new image versions.
+
+  1. Update application code (e.g., change version in main.go to 2.0.0)
+  2. Build new image:
+     docker build -t REGION-docker.pkg.dev/${PROJECT_ID}/hello-repo/hello-app:v2 .
+  3. Push:
+     docker push REGION-docker.pkg.dev/${PROJECT_ID}/hello-repo/hello-app:v2
+  4. Apply rolling update:
+     kubectl set image deployment/hello-app \
+       hello-app=REGION-docker.pkg.dev/${PROJECT_ID}/hello-repo/hello-app:v2
+  5. Watch rollout:
+     watch kubectl get pods
+
+GKE incrementally replaces v1 Pods with v2 Pods. The LoadBalancer Service routes
+traffic only to available (ready) Pods throughout the update.
+
+This mirrors the MIG rolling update pattern from Topic 3, but managed by
+Kubernetes Deployment controller instead of gcloud commands.
+
+--------------------------------------------------------------------------------
+7.9  Cleanup
+--------------------------------------------------------------------------------
+
+  kubectl delete service hello-app-service
+  gcloud container clusters delete hello-cluster --region=REGION
+  gcloud artifacts docker images delete \
+    REGION-docker.pkg.dev/${PROJECT_ID}/hello-repo/hello-app:v1 \
+    --delete-tags --quiet
+  gcloud artifacts docker images delete \
+    REGION-docker.pkg.dev/${PROJECT_ID}/hello-repo/hello-app:v2 \
+    --delete-tags --quiet
+
+Deleting the project removes all associated resources.
+
+--------------------------------------------------------------------------------
+7.10  Key kubectl Commands Reference
+--------------------------------------------------------------------------------
+
+  COMMAND                                    PURPOSE
+  ─────────────────────────────────────────────────────────────────────────
+  kubectl create deployment NAME --image=IMG Create deployment from image
+  kubectl scale deployment NAME --replicas=N Set replica count
+  kubectl autoscale deployment NAME ...      Create HPA
+  kubectl get pods                           List running Pods
+  kubectl get service                        List services and external IPs
+  kubectl expose deployment NAME --type=LB   Create LoadBalancer service
+  kubectl set image deployment/NAME C=IMG    Rolling update to new image
+  kubectl delete service NAME                Delete service (free LB IP)
+  kubectl describe pod NAME                  Detailed Pod information
+  kubectl logs POD_NAME                      View container logs
+
+--------------------------------------------------------------------------------
+7.11  Exam Notes — GKE Deployment
+--------------------------------------------------------------------------------
+
+  Q1. What is Artifact Registry?
+  A1. Google Cloud's managed service for storing and managing container images
+      and other artifacts.
+
+  Q2. What is a Kubernetes Deployment?
+  A2. A resource that manages a set of identical Pods, providing declarative
+      updates, scaling, and rolling deployments.
+
+  Q3. Why use a LoadBalancer Service type?
+  A3. It provisions a cloud load balancer with an external IP, exposing Pods
+      to the internet. Pod IPs alone are internal and ephemeral.
+
+  Q4. What does HPA do?
+  A4. Horizontal Pod Autoscaler automatically increases or decreases the number
+      of Pods in a Deployment based on CPU utilization or custom metrics.
+
+  Q5. How does GKE rolling update achieve zero downtime?
+  A5. Kubernetes incrementally replaces old Pods with new ones. The Service
+      continues routing traffic to healthy, ready Pods during the transition.
+
+================================================================================
+UNIT-II REVISION SUMMARY & CROSS-TOPIC COMPARISON
+================================================================================
+
+SERVICE MODEL PROGRESSION IN THIS UNIT:
+
+  App Engine (PaaS)  →  Compute Engine (IaaS)  →  Cloud Functions (FaaS)
+        │                      │                         │
+        │               MIG + Load Balancer              │
+        │               + CDN + Autoscaling              │
+        │                      │                         │
+        └──────────────────────┴─────────────────────────┘
+                               │
+                    GKE (Managed Kubernetes)
+                    Containers + Orchestration
+
+DEPLOYMENT MODEL COMPARISON:
+
+  ┌──────────────┬─────────────┬──────────────┬──────────────┬─────────────┐
+  │              │ App Engine  │ Compute Eng. │ Cloud Funcs  │ GKE         │
+  ├──────────────┼─────────────┼──────────────┼──────────────┼─────────────┤
+  │ Abstraction  │ High (PaaS) │ Low (IaaS)   │ Highest(FaaS)│ Medium (CaaS)│
+  │ Scaling      │ Automatic   │ MIG/autoscale│ Per-event    │ HPA + nodes  │
+  │ Networking   │ Abstracted  │ VPC, FW, LB  │ Trigger-based│ K8s Services │
+  │ Billing      │ Instance-hr │ VM-hour     │ Per invoke   │ Pod/node-hr  │
+  │ Best for     │ Web apps    │ Custom infra │ Events       │ Containers   │
+  └──────────────┴─────────────┴──────────────┴──────────────┴─────────────┘
+
+PORT REFERENCE (Fancy Store Lab):
+  • Frontend  → 8080
+  • Orders    → 8081
+  • Products  → 8082
+  • HTTP LB   → 80 (external)
+
+KEY IP RANGES:
+  • Health check probes → 130.211.0.0/22, 35.191.0.0/16
+
+MASTER GLOSSARY:
+
+  Term              Definition
+  ─────────────────────────────────────────────────────────────────────────
+  PaaS              Platform as a Service; provider manages infrastructure
+  IaaS              Infrastructure as a Service; rent VMs and networks
+  FaaS              Function as a Service; event-triggered serverless code
+  MIG               Managed Instance Group of identical VMs
+  CDN               Content Delivery Network; edge caching for low latency
+  Pod               Smallest Kubernetes deployable unit (1+ containers)
+  HPA               Horizontal Pod Autoscaler
+  CloudEvent        Industry standard format for event data
+  Autopilot         Fully managed GKE mode; Google manages nodes
+  Startup Script    Bash script run at VM boot for auto-configuration
+  Named Port        service:port metadata on instance groups for LB routing
+  URL Map           Load balancer path-based routing configuration
+  Artifact Registry Managed container image storage on Google Cloud
+
+CAREER & CERTIFICATION PATH:
+
+  Role                    Skills from Unit II
+  ─────────────────────────────────────────────────────────────────────────
+  Cloud Engineer          GCE, GKE, firewall rules, load balancers
+  DevOps Engineer         CI/CD, rolling updates, startup scripts, kubectl
+  Cloud Architect         Choosing PaaS vs IaaS vs GKE vs Functions
+  SRE                     Health checks, autohealing, monitoring, failover
+
+  Certifications:
+    • Google Cloud Associate Cloud Engineer (all topics in this unit)
+    • Google Cloud Professional Cloud Architect (architecture decisions)
+    • Google Cloud Professional Cloud Developer (App Engine, Functions, GKE)
+    • Google Cloud Professional Cloud Network Engineer (Topic 3 networking)
+
+IMPORTANT EXAM QUESTIONS ACROSS THE UNIT:
+
+  1. Compare IaaS, PaaS, and FaaS with GCP examples.
+  2. Explain HTTP(S) Load Balancer component chain.
+  3. Differentiate autohealing vs load balancing health checks.
+  4. Describe microservices deployment on Compute Engine with startup scripts.
+  5. Explain CloudEvent vs Background functions.
+  6. Compare GKE Autopilot vs Standard mode.
+  7. Walk through container deployment: build → push → deploy → expose → update.
+  8. What is the Shared Responsibility Model in context of GAE vs GCE vs GKE?
+  9. Explain cache hit vs cache miss in Cloud CDN.
+  10. How do rolling updates work in both MIG and Kubernetes Deployments?
+
+================================================================================
+  END OF UNIT-II STUDY GUIDE — NETWORKING IN THE CLOUD
+  Source: CC-II-Unit-II.pdf | FIT & CS, Parul University
+================================================================================
+
