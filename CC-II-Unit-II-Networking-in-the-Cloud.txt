@@ -17,7 +17,7 @@
   PROGRESS TRACKER
   ----------------
   [✓] Topic 1  — Google App Engine (GAE) & Cloud Service Models
-  [ ] Topic 2  — Compute Engine: Deploying Scalable Web Applications
+  [✓] Topic 2  — Compute Engine: Deploying Scalable Web Applications
   [ ] Topic 3  — Cloud Networking (Firewall, Load Balancing, CDN, MIG)
   [ ] Topic 4  — App Engine Flexible Environment & PaaS Deep Dive
   [ ] Topic 5  — Event-Driven Architecture with Cloud Functions
@@ -294,5 +294,464 @@ CERTIFICATION RELEVANCE:
 END OF TOPIC 1
 ================================================================================
 
-NEXT: Topic 2 — Compute Engine: Deploying Scalable Web Applications
-      (Cloud Shell, startup scripts, microservices deployment, firewall rules)
+================================================================================
+TOPIC 2: COMPUTE ENGINE — DEPLOYING SCALABLE WEB APPLICATIONS
+================================================================================
+
+This topic covers the hands-on lab from the unit: deploying the "Fancy Store"
+e-commerce application (monolith-to-microservices) on Google Compute Engine.
+It introduces IaaS deployment, Cloud Shell, startup scripts, microservices
+architecture, and initial network configuration.
+
+--------------------------------------------------------------------------------
+2.1  Google Cloud Console & Lab Environment Setup
+--------------------------------------------------------------------------------
+
+Before deploying anything, you must access the Google Cloud environment.
+
+STEPS TO START:
+  1. Click "Start Lab" (in Qwiklabs/Skills Boost environment)
+  2. Click "Open Google Console" — lab spins up resources
+  3. Sign in using TEMPORARY lab credentials (NOT your personal Google account)
+  4. Accept terms; skip recovery options and free trials (temporary account)
+  5. Cloud Console opens with your project pre-configured
+
+IMPORTANT NOTES:
+  • Always use lab-provided Username and Password from the Lab Details panel
+  • Using your own account may incur extra charges
+  • Navigation menu (top-left) lists all Google Cloud products and services
+
+KEY CONCEPT — Google Cloud Project:
+  • A project is the top-level container for all GCP resources
+  • Each project has a unique PROJECT_ID
+  • Billing, APIs, and IAM permissions are scoped to projects
+
+--------------------------------------------------------------------------------
+2.2  Cloud Shell — Command-Line Access to GCP
+--------------------------------------------------------------------------------
+
+Cloud Shell is a browser-based virtual machine with development tools pre-
+installed, providing persistent command-line access to Google Cloud resources.
+
+FEATURES:
+  • Persistent 5 GB home directory
+  • Pre-installed: gcloud CLI, gsutil, kubectl, docker, git, npm, etc.
+  • Already authenticated to your active project
+  • Tab completion supported for gcloud commands
+
+ACTIVATION:
+  1. Click "Activate Cloud Shell" at the top of the Cloud Console
+  2. Click "Authorize" when prompted
+  3. Verify with: gcloud auth list
+
+USEFUL COMMANDS:
+  gcloud auth list                  # Show active account
+  gcloud config list project        # Show current project ID
+  gcloud config set project ID      # Set active project
+
+ENVIRONMENT VARIABLE (used throughout the lab):
+  $DEVSHELL_PROJECT_ID  →  Automatically set to your project ID in Cloud Shell
+                           Ensures unique resource names across all GCP users
+
+ADDITIONAL CONTEXT:
+  • Cloud Shell is equivalent to AWS CloudShell or Azure Cloud Shell
+  • Ideal for tutorials, scripting, and quick deployments without local setup
+  • Sessions time out after inactivity but home directory persists
+
+--------------------------------------------------------------------------------
+2.3  Regions, Zones & Project Configuration
+--------------------------------------------------------------------------------
+
+REGIONS AND ZONES:
+  • Region  → A geographic area (e.g., us-central1, asia-south1)
+  • Zone    → An isolated location within a region (e.g., us-central1-a)
+  • Compute Engine resources (VMs, disks) live in a specific zone
+  • Some services (Cloud Storage buckets, load balancers) can be regional/global
+
+SET DEFAULT REGION AND ZONE:
+  gcloud config set compute/zone "ZONE"
+  export ZONE=$(gcloud config get compute/zone)
+  gcloud config set compute/region "REGION"
+  export REGION=$(gcloud config get compute/region)
+
+EXAM TIP:
+  • Region = broad geography; Zone = specific data center within region
+  • High availability: deploy across multiple zones in one region
+  • Disaster recovery: deploy across multiple regions
+
+--------------------------------------------------------------------------------
+2.4  Enable Compute Engine API
+--------------------------------------------------------------------------------
+
+APIs must be enabled before using any GCP service.
+
+  gcloud services enable compute.googleapis.com
+
+WHY THIS MATTERS:
+  • GCP services are disabled by default to prevent accidental billing
+  • Enabling an API activates billing for that service's usage
+  • Other APIs used later in the unit: Cloud Build, Artifact Registry, GKE APIs
+
+--------------------------------------------------------------------------------
+2.5  Cloud Storage Bucket — Storing Application Code
+--------------------------------------------------------------------------------
+
+A Cloud Storage bucket stores the application source code and startup scripts.
+Instances pull code from the bucket at startup — a common pattern for stateless
+VM deployments.
+
+CREATE BUCKET:
+  gsutil mb gs://fancy-store-$DEVSHELL_PROJECT_ID
+
+  • gsutil  → Google Cloud Storage command-line tool
+  • mb      → Make bucket
+  • Bucket names must be globally unique across all of GCP
+
+WHY USE CLOUD STORAGE FOR CODE?
+  • Instances are stateless — code is not baked into the VM image
+  • Easy to update: push new code to bucket, restart/replace instances
+  • Startup scripts reference bucket URLs to pull latest code
+  • Production pattern: store artifacts in GCS, S3, or Artifact Registry
+
+ADDITIONAL CONTEXT — Cloud Storage Classes (Exam):
+  • Standard    → Frequently accessed data
+  • Nearline    → Accessed ~once/month
+  • Coldline    → Accessed ~once/quarter
+  • Archive     → Long-term archival, rarely accessed
+
+--------------------------------------------------------------------------------
+2.6  Clone Source Repository & Application Architecture
+--------------------------------------------------------------------------------
+
+The lab uses the "Fancy Store" e-commerce app from Google's monolith-to-
+microservices repository.
+
+CLONE AND BUILD:
+  git clone https://github.com/googlecodelabs/monolith-to-microservices.git
+  cd ~/monolith-to-microservices
+  ./setup.sh                          # Initial build (takes a few minutes)
+  nvm install --lts                     # Install compatible Node.js version
+
+TEST LOCALLY:
+  cd microservices
+  npm start
+
+  Expected output:
+    Products microservice listening on port 8082!
+    Frontend microservice listening on port 8080!
+    Orders microservice listening on port 8081!
+
+  Preview on port 8080 in Cloud Shell web preview.
+
+MICROSERVICES ARCHITECTURE:
+
+  ┌─────────────────────────────────────────────────────────────┐
+  │                    FANCY STORE APPLICATION                  │
+  ├─────────────────────────────────────────────────────────────┤
+  │  Frontend (React)     → Port 8080  → User interface         │
+  │  Orders Service       → Port 8081  → /api/orders           │
+  │  Products Service     → Port 8082  → /api/products          │
+  └─────────────────────────────────────────────────────────────┘
+
+  • Monolith decomposed into independent, loosely coupled services
+  • Each service runs on its own port and can scale independently
+  • Frontend calls backend APIs via HTTP (configured in .env file)
+
+KEY FILES:
+  • react-app/.env  → Backend URL configuration for frontend
+  • microservices/  → Node.js backend services
+  • react-app/      → React frontend (built to static files)
+
+EXAM RELEVANCE:
+  • Microservices vs Monolith: microservices allow independent scaling,
+    deployment, and technology choices per service
+  • Port mapping: frontend 8080, orders 8081, products 8082
+
+--------------------------------------------------------------------------------
+2.7  Startup Scripts — Automated Instance Configuration
+--------------------------------------------------------------------------------
+
+A startup script tells a VM what to do every time it starts. This automates
+configuration so instances are self-healing and reproducible.
+
+CREATE STARTUP SCRIPT (startup-script.sh):
+
+  The script performs these tasks:
+  1. Install Google Fluentd logging agent (collects syslog logs)
+  2. Install dependencies: git, build-essential, supervisor, psmisc
+  3. Install Node.js v16.14.0
+  4. Pull application code from Cloud Storage bucket
+  5. Run npm install to install dependencies
+  6. Create nodeapp user (app runs as non-root — security best practice)
+  7. Configure Supervisor to run the app as a daemon (auto-restart on crash)
+
+SUPERVISOR CONFIGURATION:
+  [program:nodeapp]
+  directory=/fancy-store
+  command=npm start
+  autostart=true
+  autorestart=true
+  user=nodeapp
+
+UPLOAD SCRIPT TO BUCKET:
+  gsutil cp ~/monolith-to-microservices/startup-script.sh \
+    gs://fancy-store-$DEVSHELL_PROJECT_ID
+
+IMPORTANT DETAILS:
+  • Replace [DEVSHELL_PROJECT_ID] in script with actual Project ID
+  • Set line endings to LF (not CRLF) — Windows CRLF breaks Linux scripts
+  • Script URL passed to VM via instance metadata
+
+COPY APPLICATION CODE TO BUCKET:
+  cd ~
+  rm -rf monolith-to-microservices/*/node_modules   # Faster upload
+  gsutil -m cp -r monolith-to-microservices gs://fancy-store-$DEVSHELL_PROJECT_ID/
+
+  • -m flag enables parallel upload for speed
+  • node_modules deleted before upload; recreated on instance via npm install
+
+EXAM TIP — Startup Script vs Custom Image:
+  • Startup script: flexible, easy to update, runs on every boot
+  • Custom image: faster boot, code baked in, harder to update
+  • Production: often combine both (custom image + startup script for config)
+
+--------------------------------------------------------------------------------
+2.8  Deploying Compute Engine Instances
+--------------------------------------------------------------------------------
+
+Compute Engine is Google Cloud's IaaS — you get full control over VMs.
+
+CREATE BACKEND INSTANCE:
+  gcloud compute instances create backend \
+    --zone=$ZONE \
+    --machine-type=e2-standard-2 \
+    --tags=backend \
+    --metadata=startup-script-url=https://storage.googleapis.com/fancy-store-\
+  PROJECT_ID/startup-script.sh
+
+  • e2-standard-2  → 2 vCPUs, 8 GB RAM (E2 general-purpose machine family)
+  • --tags=backend → Network tag for firewall rule targeting
+  • --metadata     → Passes startup script URL to the instance
+
+NETWORK TAGS:
+  • Tags are labels applied to VMs for firewall rule targeting
+  • A firewall rule with --target-tags=backend applies ONLY to VMs tagged "backend"
+  • Allows fine-grained network access control per role
+
+CONFIGURE FRONTEND TO POINT TO BACKEND:
+  1. Get backend external IP:
+     gcloud compute instances list
+
+  2. Edit react-app/.env:
+     REACT_APP_ORDERS_URL=http://[BACKEND_IP]:8081/api/orders
+     REACT_APP_PRODUCTS_URL=http://[BACKEND_IP]:8082/api/products
+
+  3. Rebuild React app:
+     cd ~/monolith-to-microservices/react-app
+     npm install && npm run-script build
+
+  4. Re-upload code to bucket
+
+CREATE FRONTEND INSTANCE:
+  gcloud compute instances create frontend \
+    --zone=$ZONE \
+    --machine-type=e2-standard-2 \
+    --tags=frontend \
+    --metadata=startup-script-url=https://storage.googleapis.com/fancy-store-\
+  PROJECT_ID/startup-script.sh
+
+INSTANCE IP ADDRESSES:
+  • Internal IP  → Private IP within VPC (e.g., 10.128.0.2) — not internet-facing
+  • External IP  → Public IP reachable from internet (ephemeral by default)
+
+  EXAM TIP: Internal IPs are used for VM-to-VM communication within VPC.
+            External IPs expose services to the internet.
+
+PRODUCTION NOTE:
+  In production, separate each microservice into its own instance group for
+  independent scaling. The lab combines Orders + Products on one backend VM
+  for simplicity.
+
+--------------------------------------------------------------------------------
+2.9  Network Configuration — Firewall Rules
+--------------------------------------------------------------------------------
+
+By default, GCP blocks all incoming traffic to VMs. Firewall rules explicitly
+allow required ports.
+
+CREATE FIREWALL RULES:
+
+  # Allow port 8080 for frontend VMs
+  gcloud compute firewall-rules create fw-fe \
+    --allow tcp:8080 \
+    --target-tags=frontend
+
+  # Allow ports 8081-8082 for backend VMs
+  gcloud compute firewall-rules create fw-be \
+    --allow tcp:8081-8082 \
+    --target-tags=backend
+
+FIREWALL RULE COMPONENTS:
+  • Name           → Unique rule identifier (fw-fe, fw-be)
+  • Direction      → INGRESS (incoming) or EGRESS (outgoing); default INGRESS
+  • Action         → allow or deny
+  • Targets        → target-tags (specific VMs) or all instances
+  • Source ranges  → IP ranges allowed to connect (default: 0.0.0.0/0 = all)
+  • Protocols/ports→ tcp:8080, udp:53, etc.
+
+VERIFY DEPLOYMENT:
+  gcloud compute instances list          # Get frontend EXTERNAL_IP
+  Browse to: http://[FRONTEND_IP]:8080
+  Test Products and Orders pages — should now work
+
+NETWORK FLOW (Initial Setup):
+
+  Internet
+     │
+     ▼
+  [Firewall: fw-fe allows tcp:8080]
+     │
+     ▼
+  Frontend VM (tag: frontend) :8080
+     │
+     │ HTTP calls to BACKEND_IP:8081, :8082
+     ▼
+  [Firewall: fw-be allows tcp:8081-8082]
+     │
+     ▼
+  Backend VM (tag: backend) :8081, :8082
+
+ADDITIONAL CONTEXT — VPC (Virtual Private Cloud):
+  • All GCP projects get a default VPC network
+  • VMs in the same VPC communicate via internal IPs
+  • Custom VPCs allow subnet design, private Google access, VPN, etc.
+  • Firewall rules are stateful — return traffic is automatically allowed
+
+SECURITY BEST PRACTICE:
+  • Never open all ports (avoid --allow tcp:0-65535)
+  • Use target tags to limit rules to specific VM roles
+  • Restrict source-ranges to known IPs in production (not 0.0.0.0/0)
+
+--------------------------------------------------------------------------------
+2.10  Key gcloud Commands Reference (Topic 2)
+--------------------------------------------------------------------------------
+
+  COMMAND                                          PURPOSE
+  ─────────────────────────────────────────────────────────────────────────
+  gcloud services enable compute.googleapis.com    Enable Compute Engine API
+  gsutil mb gs://BUCKET_NAME                       Create storage bucket
+  gsutil cp FILE gs://BUCKET                       Upload file to bucket
+  gsutil -m cp -r DIR gs://BUCKET                Parallel recursive upload
+  gcloud compute instances create NAME ...         Create VM instance
+  gcloud compute instances list                    List all VM instances
+  gcloud compute instances stop NAME --zone=Z      Stop a VM
+  gcloud compute instances delete NAME --zone=Z   Delete a VM
+  gcloud compute firewall-rules create NAME ...    Create firewall rule
+  gcloud config set compute/zone ZONE              Set default zone
+  gcloud config set compute/region REGION          Set default region
+
+--------------------------------------------------------------------------------
+2.11  EXAM PREPARATION — Topic 2
+--------------------------------------------------------------------------------
+
+SHORT ANSWER QUESTIONS (2–5 marks):
+
+  Q1. What is Cloud Shell and why is it used?
+  A1. Cloud Shell is a browser-based VM with pre-installed GCP tools (gcloud,
+      gsutil) providing authenticated command-line access to cloud resources
+      without local setup.
+
+  Q2. What is the purpose of a startup script in Compute Engine?
+  A2. A startup script automates VM configuration at boot time — installing
+      software, pulling code from Cloud Storage, and starting services — making
+      instances self-configuring and reproducible.
+
+  Q3. What are network tags and how are they used?
+  A3. Network tags are labels assigned to VM instances. Firewall rules use
+      --target-tags to apply rules only to VMs with matching tags, enabling
+      role-based network access control.
+
+  Q4. Differentiate Internal IP and External IP of a Compute Engine VM.
+  A4. Internal IP is a private address within the VPC for VM-to-VM communication.
+      External IP is a public address reachable from the internet for external
+      access.
+
+  Q5. Why store application code in Cloud Storage instead of the VM disk?
+  A5. Storing code in Cloud Storage makes VMs stateless — code can be updated
+      centrally in the bucket and instances pull the latest version at startup,
+      enabling easy rolling updates and auto-healing.
+
+  Q6. What ports are used by the Fancy Store microservices?
+  A6. Frontend: 8080, Orders service: 8081, Products service: 8082.
+
+  Q7. What is the difference between a Region and a Zone in GCP?
+  A7. A Region is a geographic area containing multiple isolated Zones. Zones
+      are specific data center locations within a region where resources like
+      VMs are deployed.
+
+ONE-LINER DEFINITIONS (MCQ/Viva):
+
+  • Compute Engine  → GCP IaaS service providing virtual machines
+  • gsutil          → CLI tool for Google Cloud Storage operations
+  • gcloud          → Primary CLI tool for Google Cloud Platform
+  • Startup script  → Script run automatically when a VM boots
+  • Network tag     → Label on VM used to target firewall rules
+  • Supervisor      → Process manager that keeps apps running as daemons
+  • DEVSHELL_PROJECT_ID → Env variable with current GCP project ID in Cloud Shell
+  • Microservices   → Architecture splitting app into independent services
+
+POSSIBLE LONG ANSWER (10 marks):
+
+  "Describe the steps to deploy a multi-tier web application on Google Compute
+   Engine using startup scripts and firewall rules."
+
+  Suggested structure:
+    1. Enable Compute Engine API
+    2. Create Cloud Storage bucket for code and startup script
+    3. Write startup script (install runtime, pull code, configure Supervisor)
+    4. Create backend VM with network tag and startup script metadata
+    5. Create frontend VM with separate network tag
+    6. Configure firewall rules using target tags for each tier's ports
+    7. Configure frontend .env to point to backend IP
+    8. Verify via browser using frontend external IP
+
+--------------------------------------------------------------------------------
+2.12  FUTURE SCOPE & CAREER RELEVANCE — Topic 2
+--------------------------------------------------------------------------------
+
+JOB ROLES:
+  • Cloud Engineer — VM provisioning, networking, deployment automation
+  • DevOps Engineer — startup scripts, CI/CD pipelines to GCE
+  • Backend Developer — microservices deployment and configuration
+  • Site Reliability Engineer (SRE) — instance health, logging, autohealing
+
+INDUSTRY PATTERNS:
+  • Stateless VMs + central artifact storage (GCS/S3) = cloud-native baseline
+  • Startup scripts evolve into configuration management (Ansible, Chef, Puppet)
+  • Microservices on VMs often migrate to containers (GKE/Cloud Run) for easier
+    scaling — Topics 6–7 of this unit cover that path
+  • Infrastructure as Code (Terraform) replaces manual gcloud commands in production
+
+SKILLS TO BUILD AFTER THIS TOPIC:
+  1. Write and test a startup script locally before deploying
+  2. Create custom VPC with subnets instead of using default network
+  3. Use Terraform to automate instance + firewall creation
+  4. Set up Cloud Logging and Monitoring for deployed instances
+  5. Compare this deployment with the same app on App Engine (Topic 1)
+
+COMMON INTERVIEW QUESTIONS:
+  • "How would you deploy a web app on GCP without using Kubernetes?"
+  • "Explain how firewall rules work in GCP VPC."
+  • "What is the advantage of stateless VMs?"
+  • "How do you update application code on running Compute Engine instances?"
+
+CERTIFICATION RELEVANCE:
+  • Google Cloud Associate Cloud Engineer — Compute Engine, VPC, Cloud Storage
+  • Google Cloud Professional Cloud Architect — multi-tier architecture design
+
+================================================================================
+END OF TOPIC 2
+================================================================================
+
+NEXT: Topic 3 — Cloud Networking: Managed Instance Groups, Load Balancers,
+      Autohealing, Autoscaling & CDN
