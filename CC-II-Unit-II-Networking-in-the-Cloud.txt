@@ -4,26 +4,6 @@
   Institution: FIT & CS, Parul University
 ================================================================================
 
-  HOW TO USE THIS FILE
-  --------------------
-  This study guide covers CC-II Unit-II end to end. Each section includes core
-  concepts, sub-topic breakdown, additional context, exam preparation notes, and
-  career relevance where it matters.
-
-  CONTENTS
-  --------
-  1. Google App Engine (GAE) & Cloud Service Models
-  2. Development of Scalable Web Applications on Google Cloud (Compute Engine Lab)
-  3. Cloud Networking — MIG, Load Balancers, Autohealing & CDN
-  4. App Engine Flexible Environment & PaaS Deep Dive
-  5. Event-Driven Architecture with Cloud Functions
-  6. Google Kubernetes Engine (GKE) Overview
-  7. Deploying Containerized Applications on GKE
-  8. Cloud Principles & Well-Architected Framework
-  9. Disaster Recovery in Cloud
-  10. Introduction to Infrastructure as Code (IaC)
-  11. Introduction to CI/CD
-
 ================================================================================
 TOPIC 1: GOOGLE APP ENGINE (GAE) & CLOUD SERVICE MODELS
 ================================================================================
@@ -60,7 +40,7 @@ ORIGINAL REQUIREMENTS (Classic/Standard Environment):
 1.2  Cloud Service Models — Where GAE Fits (IaaS vs PaaS vs SaaS)
 --------------------------------------------------------------------------------
 
-Understanding service models is essential for exams and real-world architecture
+Understanding service models is essential for real-world architecture
 decisions.
 
   ┌─────────────┬────────────────────────────────────────────────────────────┐
@@ -81,7 +61,7 @@ decisions.
   │             │ Examples: Gmail, Google Docs, Salesforce                   │
   └─────────────┴────────────────────────────────────────────────────────────┘
 
-GAE vs COMPUTE ENGINE (Exam Favorite Comparison):
+GAE vs COMPUTE ENGINE:
 
   ┌──────────────────┬─────────────────────────┬─────────────────────────────┐
   │ Aspect           │ Google App Engine       │ Google Compute Engine       │
@@ -110,7 +90,6 @@ When limits are exceeded (per-day or per-minute rates), users pay for
 additional resources. This "freemium" model helps developers prototype before
 committing to paid usage.
 
-EXAM TIP: Know the four free-tier resource categories listed above.
 
 --------------------------------------------------------------------------------
 1.4  Key Features & Built-in APIs of GAE
@@ -142,11 +121,10 @@ services:
      • Reduces database load and improves response times
      • Stores frequently accessed data temporarily (key-value cache)
 
-ADDITIONAL CONTEXT — Why These APIs Matter:
+WHY THESE APIs MATTER:
   • In PaaS, direct system access (raw sockets, file system) is restricted.
   • Built-in APIs are the approved way to perform common tasks.
-  • Memcache is critical for performance at scale (exam: "How to reduce DB
-    reads in GAE?" → Use Memcache).
+  • Memcache is critical for performance at scale — reduces database reads.
 
 --------------------------------------------------------------------------------
 1.5  GAE Architecture — Sandboxing & Auto-Scaling
@@ -169,10 +147,8 @@ The App Engine runs applications on multiple servers while "sandboxing" them:
     • Demonstrates GAE handles massive scale for consumer applications
 
 --------------------------------------------------------------------------------
-1.6  GAE Environments — Standard vs Flexible (Additional Context)
+1.6  GAE Environments — Standard vs Flexible
 --------------------------------------------------------------------------------
-
-Although the unit PDF introduces GAE broadly, exams often ask about environments:
 
   STANDARD ENVIRONMENT:
     • Sandboxed runtimes with strict limits
@@ -187,10 +163,6 @@ Although the unit PDF introduces GAE broadly, exams often ask about environments
     • You configure machine types and scaling behavior
     • Covered in detail in Topic 4 of this guide
 
-  EXAM QUESTION EXAMPLE:
-    Q: "When would you choose App Engine Flexible over Standard?"
-    A: When you need custom system dependencies, longer request timeouts,
-       or specific OS-level packages not supported in Standard.
 
 --------------------------------------------------------------------------------
 1.7  Networking Context — Why "Networking in the Cloud" Matters for GAE
@@ -205,98 +177,10 @@ concepts apply:
   • Flexible Environment apps can connect to VPC networks for private resources
   • URL Fetch Service handles outbound network calls securely
 
-  BRIDGE TO LATER TOPICS:
-    Topic 2–3 cover Compute Engine networking (firewalls, load balancers, CDN)
-    in hands-on detail. GAE abstracts most of this, but understanding CE
-    networking helps when using Flexible Environment or hybrid architectures.
-
---------------------------------------------------------------------------------
-1.8  EXAM PREPARATION — Topic 1
---------------------------------------------------------------------------------
-
-SHORT ANSWER QUESTIONS (2–5 marks):
-
-  Q1. What is Google App Engine?
-  A1. GAE is a PaaS product by Google that provides scalable hosting for web
-      applications using Google's infrastructure, eliminating most system admin
-      tasks and offering built-in APIs for storage, caching, and HTTP fetching.
-
-  Q2. List four resources covered under GAE free tier.
-  A2. CPU, storage, API calls, and concurrent requests.
-
-  Q3. Name five built-in APIs of GAE mentioned in the unit.
-  A3. Blobstore, Cloud Storage, Page Speed Service, URL Fetch Service, Memcache.
-
-  Q4. Differentiate between IaaS and PaaS with GAE and EC2 as examples.
-  A4. IaaS (EC2) provides virtual machines where users manage OS and runtime.
-      PaaS (GAE) provides a managed platform where users only deploy code and
-      Google manages infrastructure, scaling, and runtime.
-
-  Q5. What is sandboxing in App Engine?
-  A5. Sandboxing isolates each application in a restricted environment, limiting
-      direct OS access and ensuring security and fair resource sharing.
-
-  Q6. How does GAE handle increased traffic?
-  A6. GAE automatically scales by allocating more server resources to handle
-      increased demand without manual intervention.
-
-ONE-LINER DEFINITIONS (MCQ/Viva):
-
-  • PaaS        → Platform where provider manages infrastructure; user deploys apps
-  • Memcache    → In-memory cache to speed up reads and reduce DB load
-  • Blobstore   → Service for storing and serving large binary objects
-  • URL Fetch   → GAE API for making outbound HTTP requests at scale
-  • Sandboxing  → Isolation mechanism restricting app access to system resources
-  • Auto-scaling→ Automatic adjustment of resources based on traffic load
-
-POSSIBLE LONG ANSWER (10 marks):
-
-  "Explain Google App Engine, its features, and advantages over traditional
-   hosting."
-
-  Suggested structure:
-    1. Define GAE as PaaS
-    2. Explain sandboxing and auto-scaling
-    3. List built-in APIs (Blobstore, Memcache, URL Fetch, etc.)
-    4. Compare with IaaS (Compute Engine) — less admin, faster deployment
-    5. Mention real-world usage (Snapchat, Khan Academy)
-    6. Note free tier and pay-as-you-go beyond limits
-
---------------------------------------------------------------------------------
-1.9  FUTURE SCOPE & CAREER RELEVANCE — Topic 1
---------------------------------------------------------------------------------
-
-JOB ROLES USING GAE / PaaS KNOWLEDGE:
-  • Cloud Developer / Cloud Engineer
-  • Backend Developer (serverless & PaaS deployments)
-  • DevOps Engineer (choosing deployment models)
-  • Solutions Architect (IaaS vs PaaS vs serverless decisions)
-
-INDUSTRY TRENDS:
-  • Serverless and PaaS adoption is growing — GAE competes with AWS Elastic
-    Beanstalk, Azure App Service, and Cloud Run
-  • Modern apps often combine GAE/Cloud Run (containers) + Cloud Functions
-    (events) + GKE (orchestration) — this unit covers all three Google services
-  • Understanding when NOT to use PaaS (need full network control, custom
-    kernel modules) is as valuable as knowing when to use it
-
-SKILLS TO BUILD AFTER THIS TOPIC:
-  1. Deploy a simple Python/Node.js app on GAE Standard
-  2. Compare latency and cost: GAE vs Compute Engine vs Cloud Run
-  3. Integrate Memcache and Cloud Storage in a sample app
-  4. Map GAE services to AWS equivalents (Beanstalk, S3, ElastiCache)
-
-CERTIFICATION RELEVANCE:
-  • Google Cloud Associate Cloud Engineer — covers App Engine deployment
-  • Google Cloud Professional Cloud Developer — PaaS and serverless patterns
 
 ================================================================================
 TOPIC 2: COMPUTE ENGINE — DEPLOYING SCALABLE WEB APPLICATIONS
 ================================================================================
-
-Building on PaaS concepts from App Engine, Compute Engine shifts to full IaaS
-control. The Fancy Store lab deploys a monolith-to-microservices e-commerce app
-on virtual machines using Cloud Shell, startup scripts, and initial network setup.
 
 --------------------------------------------------------------------------------
 2.1  Google Cloud Console & Lab Environment Setup
@@ -348,7 +232,7 @@ ENVIRONMENT VARIABLE (used throughout the lab):
   $DEVSHELL_PROJECT_ID  →  Automatically set to your project ID in Cloud Shell
                            Ensures unique resource names across all GCP users
 
-ADDITIONAL CONTEXT:
+
   • Cloud Shell is equivalent to AWS CloudShell or Azure Cloud Shell
   • Ideal for tutorials, scripting, and quick deployments without local setup
   • Sessions time out after inactivity but home directory persists
@@ -369,7 +253,6 @@ SET DEFAULT REGION AND ZONE:
   gcloud config set compute/region "REGION"
   export REGION=$(gcloud config get compute/region)
 
-EXAM TIP:
   • Region = broad geography; Zone = specific data center within region
   • High availability: deploy across multiple zones in one region
   • Disaster recovery: deploy across multiple regions
@@ -408,7 +291,7 @@ WHY USE CLOUD STORAGE FOR CODE?
   • Startup scripts reference bucket URLs to pull latest code
   • Production pattern: store artifacts in GCS, S3, or Artifact Registry
 
-ADDITIONAL CONTEXT — Cloud Storage Classes (Exam):
+CLOUD STORAGE CLASSES:
   • Standard    → Frequently accessed data
   • Nearline    → Accessed ~once/month
   • Coldline    → Accessed ~once/quarter
@@ -457,7 +340,6 @@ KEY FILES:
   • microservices/  → Node.js backend services
   • react-app/      → React frontend (built to static files)
 
-EXAM RELEVANCE:
   • Microservices vs Monolith: microservices allow independent scaling,
     deployment, and technology choices per service
   • Port mapping: frontend 8080, orders 8081, products 8082
@@ -511,7 +393,6 @@ CONFIGURATION VIA .env FILE:
   the lab uses .env for simplicity. Toggle hidden files in the Cloud Shell Editor
   (View > Toggle Hidden Files) to edit .env.
 
-EXAM TIP — Startup Script vs Custom Image:
   • Startup script: flexible, easy to update, runs on every boot
   • Custom image: faster boot, code baked in, harder to update
   • Production: often combine both (custom image + startup script for config)
@@ -566,8 +447,6 @@ INSTANCE IP ADDRESSES:
   • Internal IP  → Private IP within VPC (e.g., 10.128.0.2) — not internet-facing
   • External IP  → Public IP reachable from internet (ephemeral by default)
 
-  EXAM TIP: Internal IPs are used for VM-to-VM communication within VPC.
-            External IPs expose services to the internet.
 
 PRODUCTION NOTE:
   In production, separate each microservice into its own instance group for
@@ -623,7 +502,7 @@ NETWORK FLOW (Initial Setup):
      ▼
   Backend VM (tag: backend) :8081, :8082
 
-ADDITIONAL CONTEXT — VPC (Virtual Private Cloud):
+VPC (Virtual Private Cloud):
   • All GCP projects get a default VPC network
   • VMs in the same VPC communicate via internal IPs
   • Custom VPCs allow subnet design, private Google access, VPN, etc.
@@ -652,112 +531,9 @@ SECURITY BEST PRACTICE:
   gcloud config set compute/zone ZONE              Set default zone
   gcloud config set compute/region REGION          Set default region
 
---------------------------------------------------------------------------------
-2.11  EXAM PREPARATION — Topic 2
---------------------------------------------------------------------------------
-
-SHORT ANSWER QUESTIONS (2–5 marks):
-
-  Q1. What is Cloud Shell and why is it used?
-  A1. Cloud Shell is a browser-based VM with pre-installed GCP tools (gcloud,
-      gsutil) providing authenticated command-line access to cloud resources
-      without local setup.
-
-  Q2. What is the purpose of a startup script in Compute Engine?
-  A2. A startup script automates VM configuration at boot time — installing
-      software, pulling code from Cloud Storage, and starting services — making
-      instances self-configuring and reproducible.
-
-  Q3. What are network tags and how are they used?
-  A3. Network tags are labels assigned to VM instances. Firewall rules use
-      --target-tags to apply rules only to VMs with matching tags, enabling
-      role-based network access control.
-
-  Q4. Differentiate Internal IP and External IP of a Compute Engine VM.
-  A4. Internal IP is a private address within the VPC for VM-to-VM communication.
-      External IP is a public address reachable from the internet for external
-      access.
-
-  Q5. Why store application code in Cloud Storage instead of the VM disk?
-  A5. Storing code in Cloud Storage makes VMs stateless — code can be updated
-      centrally in the bucket and instances pull the latest version at startup,
-      enabling easy rolling updates and auto-healing.
-
-  Q6. What ports are used by the Fancy Store microservices?
-  A6. Frontend: 8080, Orders service: 8081, Products service: 8082.
-
-  Q7. What is the difference between a Region and a Zone in GCP?
-  A7. A Region is a geographic area containing multiple isolated Zones. Zones
-      are specific data center locations within a region where resources like
-      VMs are deployed.
-
-ONE-LINER DEFINITIONS (MCQ/Viva):
-
-  • Compute Engine  → GCP IaaS service providing virtual machines
-  • gsutil          → CLI tool for Google Cloud Storage operations
-  • gcloud          → Primary CLI tool for Google Cloud Platform
-  • Startup script  → Script run automatically when a VM boots
-  • Network tag     → Label on VM used to target firewall rules
-  • Supervisor      → Process manager that keeps apps running as daemons
-  • DEVSHELL_PROJECT_ID → Env variable with current GCP project ID in Cloud Shell
-  • Microservices   → Architecture splitting app into independent services
-
-POSSIBLE LONG ANSWER (10 marks):
-
-  "Describe the steps to deploy a multi-tier web application on Google Compute
-   Engine using startup scripts and firewall rules."
-
-  Suggested structure:
-    1. Enable Compute Engine API
-    2. Create Cloud Storage bucket for code and startup script
-    3. Write startup script (install runtime, pull code, configure Supervisor)
-    4. Create backend VM with network tag and startup script metadata
-    5. Create frontend VM with separate network tag
-    6. Configure firewall rules using target tags for each tier's ports
-    7. Configure frontend .env to point to backend IP
-    8. Verify via browser using frontend external IP
-
---------------------------------------------------------------------------------
-2.12  FUTURE SCOPE & CAREER RELEVANCE — Topic 2
---------------------------------------------------------------------------------
-
-JOB ROLES:
-  • Cloud Engineer — VM provisioning, networking, deployment automation
-  • DevOps Engineer — startup scripts, CI/CD pipelines to GCE
-  • Backend Developer — microservices deployment and configuration
-  • Site Reliability Engineer (SRE) — instance health, logging, autohealing
-
-INDUSTRY PATTERNS:
-  • Stateless VMs + central artifact storage (GCS/S3) = cloud-native baseline
-  • Startup scripts evolve into configuration management (Ansible, Chef, Puppet)
-  • Microservices on VMs often migrate to containers (GKE/Cloud Run) for easier
-    scaling — Topics 6–7 of this unit cover that path
-  • Infrastructure as Code (Terraform) replaces manual gcloud commands in production
-
-SKILLS TO BUILD AFTER THIS TOPIC:
-  1. Write and test a startup script locally before deploying
-  2. Create custom VPC with subnets instead of using default network
-  3. Use Terraform to automate instance + firewall creation
-  4. Set up Cloud Logging and Monitoring for deployed instances
-  5. Compare this deployment with the same app on App Engine (Topic 1)
-
-COMMON INTERVIEW QUESTIONS:
-  • "How would you deploy a web app on GCP without using Kubernetes?"
-  • "Explain how firewall rules work in GCP VPC."
-  • "What is the advantage of stateless VMs?"
-  • "How do you update application code on running Compute Engine instances?"
-
-CERTIFICATION RELEVANCE:
-  • Google Cloud Associate Cloud Engineer — Compute Engine, VPC, Cloud Storage
-  • Google Cloud Professional Cloud Architect — multi-tier architecture design
-
 ================================================================================
 TOPIC 3: CLOUD NETWORKING — MIG, LOAD BALANCERS, AUTOHEALING & CDN
 ================================================================================
-
-Once single VMs are running, the architecture scales to production patterns:
-Managed Instance Groups, HTTP(S) Load Balancers, health checks, autoscaling,
-Cloud CDN, and rolling updates on the same Fancy Store deployment.
 
 --------------------------------------------------------------------------------
 3.1  Why Move Beyond Single VMs?
@@ -816,9 +592,6 @@ DELETE BACKEND VM AFTER TEMPLATES (lab step):
   The frontend VM is kept temporarily — it is used later to create an updated
   instance template when changing machine type.
 
-EXAM TIP:
-  Q: "Can you edit an instance template?"
-  A: No. Create a new template and update the MIG to use it.
 
 --------------------------------------------------------------------------------
 3.3  Managed Instance Groups (MIG)
@@ -884,14 +657,13 @@ WHY NAMED PORTS?
   • Backend apps may run on non-standard ports (8080, 8081, 8082)
   • Named ports bridge this gap — LB knows "frontend" = 8080
 
-EXAM TIP: Named ports are metadata on instance groups, used by load balancers
           and backend services to route traffic correctly.
 
 --------------------------------------------------------------------------------
 3.5  Health Checks & Autohealing
 --------------------------------------------------------------------------------
 
-TWO TYPES OF HEALTH CHECKS (Important distinction for exams):
+TWO TYPES OF HEALTH CHECKS (Important distinction):
 
   1. LOAD BALANCING HEALTH CHECKS
      • Determine if instance receives USER TRAFFIC
@@ -933,8 +705,6 @@ FIREWALL FOR HEALTH CHECK PROBES:
     --source-ranges 130.211.0.0/22,35.191.0.0/16 \
     --network default
 
-  EXAM TIP: Always allow health check IP ranges — without this rule, all
-            instances appear unhealthy.
 
 APPLY AUTOHEALING TO MIG:
   gcloud compute instance-groups managed update fancy-fe-mig \
@@ -964,8 +734,6 @@ SIMULATE FAILURE (Lab verification):
   The MIG recreates the instance (compute.instances.repair.recreateInstance).
   Monitor via Console: Navigation menu > Compute Engine > VM instances.
 
-  Lab source: https://www.cloudskillsboost.google/focuses/11952?parent=catalog
-
 --------------------------------------------------------------------------------
 3.6  HTTP(S) Load Balancer Architecture
 --------------------------------------------------------------------------------
@@ -973,7 +741,7 @@ SIMULATE FAILURE (Lab verification):
 Google Cloud HTTP(S) Load Balancer is a GLOBAL, Layer 7 (HTTP) load balancer.
 It provides a single external IP for multiple backend services.
 
-OFFICIAL COMPONENT CHAIN (from unit):
+OFFICIAL COMPONENT CHAIN:
   1. Forwarding rule      → directs incoming requests to target HTTP proxy
   2. Target HTTP proxy    → checks request against URL map
   3. Backend service      → directs request to healthy backends (zone, capacity)
@@ -1086,7 +854,6 @@ UPDATE FRONTEND CONFIG FOR LOAD BALANCER:
 
   Rebuild, re-upload to bucket, then rolling replace frontend MIG.
 
-EXAM TIP — URL Map:
   • default-service → catches all paths not explicitly matched
   • path-rules → map specific URL paths to specific backend services
   • Enables single IP to serve frontend + multiple API backends
@@ -1190,15 +957,12 @@ BEHAVIOR:
   • Removes instances when utilization < 60%
   • --max-num-replicas caps maximum instances
 
-OTHER AUTOSCALING METRICS (Additional context):
+OTHER AUTOSCALING METRICS:
   • CPU utilization
   • Custom metrics (Cloud Monitoring)
   • Schedule-based scaling (predictable traffic patterns)
   • Multi-zone regional MIGs for higher availability
 
-EXAM TIP:
-  Q: "What metric does the lab use for autoscaling?"
-  A: Target load balancing utilization at 60%.
 
 --------------------------------------------------------------------------------
 3.9  Cloud CDN (Content Delivery Network)
@@ -1238,10 +1002,6 @@ CDN BEST PRACTICES:
   • Set appropriate Cache-Control headers in application
   • Enable CDN only on services serving cacheable content (frontend, not APIs)
 
-EXAM TIP:
-  Q: "What is a cache hit?"
-  A: When the CDN edge server finds the requested content in its cache and
-     serves it directly without contacting the origin backend.
 
 --------------------------------------------------------------------------------
 3.10  Complete Network Architecture (After Topic 3)
@@ -1296,117 +1056,9 @@ EXAM TIP:
   gcloud compute instance-groups managed rolling-action start-update  Update template
   gcloud compute backend-services get-health ...       Check instance health
 
---------------------------------------------------------------------------------
-3.12  EXAM PREPARATION — Topic 3
---------------------------------------------------------------------------------
-
-SHORT ANSWER QUESTIONS (2–5 marks):
-
-  Q1. What is a Managed Instance Group (MIG)?
-  A1. A MIG is a collection of identical VM instances managed as a single unit,
-      providing autohealing, autoscaling, load balancing, and rolling updates.
-
-  Q2. What are named ports and why are they used?
-  A2. Named ports are key-value pairs (service-name:port) assigned to instance
-      groups. Load balancers use them to route traffic to the correct port on
-      backend instances.
-
-  Q3. Differentiate load balancing health checks and autohealing health checks.
-  A3. Load balancing health checks (aggressive) determine if an instance receives
-      traffic. Autohealing health checks (conservative) trigger instance
-      recreation when an app is unresponsive.
-
-  Q4. Explain the components of an HTTP(S) Load Balancer.
-  A4. Forwarding rule (public IP) → Target HTTP proxy → URL map (path routing)
-      → Backend services (with health checks) → Instance groups (VMs).
-
-  Q5. What is the purpose of a URL map?
-  A5. A URL map routes incoming HTTP requests to appropriate backend services
-      based on URL path (e.g., /api/orders → orders backend).
-
-  Q6. How does Cloud CDN improve performance?
-  A6. CDN caches content at edge locations near users. Cache hits serve content
-      directly from edge, reducing latency and backend load.
-
-  Q7. Can instance templates be edited? How do you apply changes?
-  A7. No. Create a new template and perform a rolling update on the MIG to use
-      the new template version.
-
-  Q8. What IP ranges must be allowed for health check probes?
-  A8. 130.211.0.0/22 and 35.191.0.0/16 (Google's health check probe ranges).
-
-ONE-LINER DEFINITIONS (MCQ/Viva):
-
-  • MIG              → Managed Instance Group; auto-managed identical VMs
-  • Instance Template→ Blueprint defining VM configuration
-  • Named Port       → service:port metadata on instance groups
-  • URL Map          → Path-based routing rules for load balancer
-  • Backend Service  → Group of instances serving load-balanced traffic
-  • Forwarding Rule  → Maps external IP:port to load balancer proxy
-  • Autohealing      → Automatic recreation of failed instances
-  • Cloud CDN        → Content caching at Google's global edge network
-  • Cache Hit        → Content served from CDN edge cache
-  • Rolling Update   → Gradual deployment of new template/version to MIG
-
-POSSIBLE LONG ANSWER (10 marks):
-
-  "Explain how to scale a web application on Google Cloud using Managed Instance
-   Groups, Load Balancer, and Cloud CDN."
-
-  Suggested structure:
-    1. Create instance templates from configured VMs
-    2. Create MIGs with desired size, named ports, autohealing
-    3. Configure firewall for app ports and health check probes
-    4. Create HTTP(S) LB: health checks → backend services → URL map → proxy
-       → forwarding rule
-    5. Update app config to use LB IP; rolling replace instances
-    6. Enable autoscaling based on utilization threshold
-    7. Enable Cloud CDN on frontend backend service
-    8. Verify health and test failover
-
---------------------------------------------------------------------------------
-3.13  FUTURE SCOPE & CAREER RELEVANCE — Topic 3
---------------------------------------------------------------------------------
-
-JOB ROLES:
-  • Cloud Network Engineer — VPC design, load balancers, CDN, firewall rules
-  • Site Reliability Engineer (SRE) — autohealing, health checks, incident response
-  • Cloud Architect — designing highly available, scalable architectures
-  • DevOps Engineer — rolling deployments, autoscaling policies
-
-INDUSTRY RELEVANCE:
-  • Every production web app uses load balancing + auto-scaling (AWS ALB/ELB,
-    Azure Load Balancer, GCP HTTP LB — concepts transfer across clouds)
-  • CDN is standard for global apps (Cloudflare, Akamai, Cloud CDN, CloudFront)
-  • MIG patterns map to AWS Auto Scaling Groups, Azure VM Scale Sets
-  • Health check design is critical — too aggressive causes flapping; too
-    conservative delays failure detection
-
-SKILLS TO BUILD AFTER THIS TOPIC:
-  1. Configure HTTPS load balancer with SSL certificates
-  2. Set up multi-region MIG behind global load balancer
-  3. Use Cloud Monitoring alerts on health check failure rates
-  4. Implement blue-green or canary deployments with MIG rolling updates
-  5. Compare Cloud CDN with Cloudflare or AWS CloudFront
-
-COMMON INTERVIEW QUESTIONS:
-  • "Design a highly available 3-tier architecture on GCP."
-  • "What happens when a health check fails in a MIG?"
-  • "Explain the difference between Layer 4 and Layer 7 load balancing."
-  • "How would you deploy a new version with zero downtime?"
-
-CERTIFICATION RELEVANCE:
-  • Google Cloud Associate Cloud Engineer — MIG, LB, CDN, autoscaling
-  • Google Cloud Professional Cloud Architect — HA architecture, disaster recovery
-  • Google Cloud Professional Cloud Network Engineer — VPC, LB, hybrid connectivity
-
 ================================================================================
 TOPIC 4: APP ENGINE FLEXIBLE ENVIRONMENT & EXPLORING PAAS
 ================================================================================
-
-After hands-on IaaS networking on Compute Engine, the unit returns to Platform-
-as-a-Service through App Engine — especially the Flexible Environment, which
-bridges PaaS convenience with greater runtime control.
 
 --------------------------------------------------------------------------------
 4.1  App Engine Standard vs Flexible Environment
@@ -1489,9 +1141,8 @@ CLASSIC RUNTIMES (from unit material):
   • PHP    → PHP 5.4 environment
   • Go     → Go runtime 1.2
 
-MODERN NOTE: Current App Engine supports updated runtimes (Python 3, Java 11+,
-Node.js 18+, etc.). For exams based on this unit, know both the classic versions
-listed in the syllabus and the concept that each language has its own SDK.
+NOTE: Current App Engine supports updated runtimes (Python 3, Java 11+,
+Node.js 18+, etc.). Each language has its own SDK and runtime.
 
 DEVELOPMENT WORKFLOW:
   1. Choose language and SDK
@@ -1546,8 +1197,6 @@ THIRD-PARTY SERVICES:
   helper libraries to extend App Engine beyond core capabilities. Partners often
   offer exclusive deals to App Engine users.
 
-EXAM TIP: Know the three tiers — GA (stable/SLA), Preview (may change), Experimental
-          (limited access, unstable).
 
 --------------------------------------------------------------------------------
 4.6  App Engine Data and Storage Services
@@ -1566,40 +1215,9 @@ Datastore vs Cloud SQL:
   • Datastore → Schema-flexible NoSQL, horizontal scaling, eventual consistency
   • Cloud SQL → Relational data, ACID transactions, SQL queries
 
---------------------------------------------------------------------------------
-4.7  Exam Notes — App Engine Flexible & PaaS
---------------------------------------------------------------------------------
-
-  Q1. What is App Engine Flexible Environment?
-  A1. A PaaS deployment option where apps run in Docker containers on Compute
-      Engine VMs, offering more runtime control than Standard while remaining
-      managed by Google.
-
-  Q2. Can you change the App Engine region after creation?
-  A2. No. Region selection is permanent at app creation time.
-
-  Q3. List three GA features of App Engine.
-  A3. Datastore, Memcache, Blobstore (also acceptable: Cloud SQL, Search, Logs).
-
-  Q4. Differentiate Preview and Experimental features.
-  A4. Preview features are being stabilized for future GA release. Experimental
-      features are early-stage, often limited to trusted testers, and may never
-      become generally available.
-
-  Q5. Name two companies that use App Engine.
-  A5. Snapchat and Khan Academy (also Rovio).
-
-HANDS-ON REFERENCE:
-  Video: https://www.youtube.com/watch?v=LNTVqqIhnZQ
-  Flex app docs: https://cloud.google.com/eclipse/docs/create-flex-app
-
 ================================================================================
 TOPIC 5: EVENT-DRIVEN ARCHITECTURE WITH CLOUD FUNCTIONS
 ================================================================================
-
-Serverless computing complements both PaaS (App Engine) and IaaS (Compute Engine).
-Cloud Functions executes code in response to events — no server management, pay
-only for execution time.
 
 --------------------------------------------------------------------------------
 5.1  What are Cloud Functions?
@@ -1734,38 +1352,9 @@ COLD START vs WARM START:
   │ Best for         │ Event processing│ Web apps        │ Full control     │
   └──────────────────┴─────────────────┴─────────────────┴──────────────────┘
 
---------------------------------------------------------------------------------
-5.7  Exam Notes — Cloud Functions
---------------------------------------------------------------------------------
-
-  Q1. When do you use event-driven Cloud Functions?
-  A1. When code should run automatically in response to cloud events (file uploads,
-      Pub/Sub messages, database changes) without managing servers.
-
-  Q2. What is a CloudEvent?
-  A2. An industry-standard specification for describing event data in a common
-      format, used by Cloud Functions 2nd gen for all runtimes.
-
-  Q3. What happens if background tasks are not completed before return?
-  A3. They may be terminated, causing incomplete processing or undefined behavior.
-
-  Q4. What is the difference between CloudEvent and Background functions?
-  A4. CloudEvent functions (2nd gen) receive a CloudEvent object following the
-      CloudEvents standard. Background functions (1st gen) receive eventData,
-      context, and an optional callback.
-
-  Q5. What is a cold start?
-  A5. Latency incurred when Cloud Functions spins up a new instance to handle a
-      request because no warm instance is available.
-
 ================================================================================
 TOPIC 6: GOOGLE KUBERNETES ENGINE (GKE) OVERVIEW
 ================================================================================
-
-Containers package applications with dependencies into portable units. Kubernetes
-orchestrates containers at scale. GKE is Google's managed Kubernetes service —
-the natural evolution from VMs (Compute Engine) and serverless (Cloud Functions)
-for production container workloads.
 
 --------------------------------------------------------------------------------
 6.1  What is GKE?
@@ -1916,43 +1505,9 @@ Standard mode without a release channel = no automatic upgrades (you manage vers
 
 Alpha clusters: access to experimental Kubernetes features (not for production).
 
---------------------------------------------------------------------------------
-6.8  Exam Notes — GKE Overview
---------------------------------------------------------------------------------
-
-  Q1. What is GKE?
-  A1. Google Kubernetes Engine — a managed Kubernetes service for deploying and
-      operating containerized applications at scale on Google Cloud.
-
-  Q2. What is a Pod?
-  A2. The smallest deployable unit in Kubernetes, containing one or more
-      containers that share storage and network.
-
-  Q3. Differentiate GKE Autopilot and Standard.
-  A3. Autopilot: Google manages nodes, pay per Pod, built-in hardening. Standard:
-      you manage nodes, pay per node, full configuration flexibility.
-
-  Q4. What system did Kubernetes evolve from?
-  A4. Borg — Google's internal cluster management system.
-
-  Q5. What is the control plane?
-  A5. Management nodes running Kubernetes system components (API server,
-      scheduler, controller manager, etcd). In GKE, Google manages the control plane.
-
-HANDS-ON REFERENCE:
-  Video: https://www.youtube.com/watch?v=ZVcnsTCQASU
-  Tutorial: https://cloud.google.com/kubernetes-engine/docs/tutorials/hello-app
-
 ================================================================================
 TOPIC 7: DEPLOYING CONTAINERIZED APPLICATIONS ON GKE
 ================================================================================
-
-The unit's GKE lab walks through packaging a web app as a Docker image, pushing
-it to Artifact Registry, deploying on a GKE cluster, exposing it via a Load
-Balancer Service, autoscaling with HPA, and rolling out a new version.
-
-BILLABLE COMPONENTS IN THIS LAB: GKE cluster resources and Artifact Registry storage.
-Use the Google Cloud pricing calculator for estimates; delete resources after the lab.
 
 --------------------------------------------------------------------------------
 7.1  Prerequisites & Setup
@@ -2098,7 +1653,7 @@ load distribution across replicas).
 
 DNS HOSTNAME: hello-app.default.svc.cluster.local (internal cluster DNS)
 
-NETWORKING COMPARISON (connecting Topics 2, 3, and 7):
+NETWORKING COMPARISON:
   • Compute Engine → Firewall rules + external IPs per VM
   • GCE + HTTP LB   → Global LB + URL maps + MIG (Topic 3)
   • GKE LoadBalancer → Kubernetes Service type auto-provisions cloud LB
@@ -2159,31 +1714,7 @@ Deleting the project removes all associated resources.
   kubectl logs POD_NAME                      View container logs
 
 --------------------------------------------------------------------------------
-7.11  Exam Notes — GKE Deployment
---------------------------------------------------------------------------------
-
-  Q1. What is Artifact Registry?
-  A1. Google Cloud's managed service for storing and managing container images
-      and other artifacts.
-
-  Q2. What is a Kubernetes Deployment?
-  A2. A resource that manages a set of identical Pods, providing declarative
-      updates, scaling, and rolling deployments.
-
-  Q3. Why use a LoadBalancer Service type?
-  A3. It provisions a cloud load balancer with an external IP, exposing Pods
-      to the internet. Pod IPs alone are internal and ephemeral.
-
-  Q4. What does HPA do?
-  A4. Horizontal Pod Autoscaler automatically increases or decreases the number
-      of Pods in a Deployment based on CPU utilization or custom metrics.
-
-  Q5. How does GKE rolling update achieve zero downtime?
-  A5. Kubernetes incrementally replaces old Pods with new ones. The Service
-      continues routing traffic to healthy, ready Pods during the transition.
-
---------------------------------------------------------------------------------
-7.12  Kubernetes Networking, Monitoring & Scaling (Syllabus sub-topics)
+7.12  Kubernetes Networking, Monitoring & Scaling
 --------------------------------------------------------------------------------
 
 KUBERNETES NETWORKING (beyond LoadBalancer):
@@ -2210,11 +1741,6 @@ SETTING UP & MANAGING CLUSTERS (summary):
 ================================================================================
 TOPIC 8: CLOUD PRINCIPLES & WELL-ARCHITECTED FRAMEWORK
 ================================================================================
-
-Cloud architecture is guided by fundamental principles and structured frameworks
-that ensure applications are secure, reliable, performant, cost-effective, and
-sustainable. This topic covers the theory layer that supports all practical
-labs in this unit (GAE, GCE, GKE, Cloud Functions).
 
 --------------------------------------------------------------------------------
 8.1  Fundamental Principles of Cloud Computing
@@ -2249,7 +1775,6 @@ ADDITIONAL CLOUD PRINCIPLES:
   Infrastructure          ✓ (GCE VMs)                 ✓ (GAE, GKE control plane)
   Physical security                                     ✓
 
-EXAM TIP: More managed service = less customer responsibility.
   GAE/FaaS → customer manages app + data only
   GCE      → customer manages OS, apps, data, networking config
   GKE      → shared: Google manages control plane; you manage workloads/nodes
@@ -2269,7 +1794,7 @@ Cloud-native applications are designed to exploit cloud advantages:
   Managed services           App Engine, Cloud Functions, GKE Autopilot
   API-driven                 REST APIs on ports 8080–8082; kubectl API
 
-12-FACTOR APP METHOD (exam relevance):
+12-FACTOR APP METHOD:
   • Codebase in version control (git clone monolith-to-microservices)
   • Config in environment (.env files, env variables)
   • Stateless processes (VMs pull from bucket at startup)
@@ -2280,7 +1805,7 @@ Cloud-native applications are designed to exploit cloud advantages:
 8.4  Well-Architected Framework Pillars
 --------------------------------------------------------------------------------
 
-Google Cloud and AWS both use similar pillars. Know all five for exams:
+Google Cloud and AWS both use similar pillars. Pillars:
 
   1. OPERATIONAL EXCELLENCE
      • Automate operations (startup scripts, MIG autohealing, kubectl rollouts)
@@ -2329,32 +1854,9 @@ Google Cloud and AWS both use similar pillars. Know all five for exams:
   • Plan for failure — assume instances/Pods will die
   • Use rolling updates for zero-downtime deployments
 
---------------------------------------------------------------------------------
-8.6  Exam Notes — Cloud Principles & Well-Architected
---------------------------------------------------------------------------------
-
-  Q1. List the five essential characteristics of cloud computing (NIST).
-  A1. On-demand self-service, broad network access, resource pooling, rapid
-      elasticity, measured service.
-
-  Q2. What is the Shared Responsibility Model?
-  A2. A framework dividing security/operations duties between cloud provider
-      and customer based on service model (IaaS/PaaS/SaaS).
-
-  Q3. Name the five Well-Architected Framework pillars.
-  A3. Operational excellence, security, reliability, performance efficiency,
-      cost optimization (plus sustainability on Google Cloud).
-
-  Q4. What makes an application "cloud-native"?
-  A4. Designed for cloud using microservices, containers, automation, managed
-      services, and elastic scaling.
-
 ================================================================================
 TOPIC 9: DISASTER RECOVERY IN CLOUD
 ================================================================================
-
-Disaster recovery (DR) ensures business continuity when failures affect regions,
-data centers, or systems. Cloud DR builds on the HA patterns from Topics 3 and 6.
 
 --------------------------------------------------------------------------------
 9.1  Concepts of Backup & Disaster Recovery
@@ -2408,7 +1910,7 @@ HA PATTERNS:
   RTO      Recovery Time Objective          Max acceptable downtime
   RPO      Recovery Point Objective         Max acceptable data loss (time)
 
-DR STRATEGY TIERS (know for exams):
+DR STRATEGY TIERS:
 
   ┌──────────────┬──────────┬──────────┬────────────────────────────────────┐
   │ Strategy     │ RTO      │ RPO      │ Description                        │
@@ -2424,7 +1926,6 @@ DR STRATEGY TIERS (know for exams):
   │ Active-Active│          │          │ (global load balancing)            │
   └──────────────┴──────────┴──────────┴────────────────────────────────────┘
 
-EXAM TIP:
   • Lower RTO = faster recovery needed
   • Lower RPO = less data loss acceptable = more frequent backups/replication
 
@@ -2475,33 +1976,9 @@ CASE 4 — Batch analytics:
   Solution: Spot VMs + retry logic; state in Cloud Storage
   DR level: Fault tolerant, not mission-critical RTO
 
---------------------------------------------------------------------------------
-9.6  Exam Notes — Disaster Recovery
---------------------------------------------------------------------------------
-
-  Q1. Define RTO and RPO.
-  A1. RTO = max downtime tolerated. RPO = max data loss tolerated (time since
-      last good backup).
-
-  Q2. Differentiate HA and DR.
-  A2. HA handles component failures within normal operations (autohealing, MIG).
-      DR handles large-scale disasters (region loss) with backup/restore strategies.
-
-  Q3. What is a Pilot Light DR strategy?
-  A3. Core systems (e.g., database) run minimal version in DR region; full
-      environment scaled up only when disaster strikes.
-
-  Q4. How does MIG contribute to HA?
-  A4. Maintains desired instance count, replaces unhealthy instances via
-      autohealing, distributes load across healthy VMs.
-
 ================================================================================
 TOPIC 10: INTRODUCTION TO INFRASTRUCTURE AS CODE (IaC)
 ================================================================================
-
-Infrastructure as Code replaces manual console/gcloud clicks with declarative,
-version-controlled configuration files. The Fancy Store lab used imperative
-gcloud commands; IaC makes that repeatable and auditable.
 
 --------------------------------------------------------------------------------
 10.1  Overview of Infrastructure as Code
@@ -2558,7 +2035,7 @@ ANSIBLE — aligns with startup scripts in this unit:
   • Runs over SSH on existing VMs (configuration management)
   • Complements Terraform (Terraform creates VMs; Ansible configures them)
 
-CLOUDFORMATION — AWS equivalent; know name for exams even in GCP-focused unit.
+CLOUDFORMATION — AWS equivalent; AWS equivalent for multi-cloud comparison.
 
 --------------------------------------------------------------------------------
 10.3  Configuration Management & Automation
@@ -2620,33 +2097,9 @@ SCALING INFRASTRUCTURE AS CODE:
   • Environment variables for region/project-specific values ($DEVSHELL_PROJECT_ID)
   • Terraform workspaces or separate state files per environment
 
---------------------------------------------------------------------------------
-10.6  Exam Notes — Infrastructure as Code
---------------------------------------------------------------------------------
-
-  Q1. What is Infrastructure as Code?
-  A1. Provisioning and managing infrastructure using machine-readable config
-      files under version control instead of manual processes.
-
-  Q2. Differentiate Terraform and Ansible.
-  A2. Terraform is declarative — creates cloud resources (VMs, networks).
-      Ansible is procedural — configures software on existing servers.
-
-  Q3. Why use IaC over manual gcloud commands?
-  A3. Repeatability, version control, automation, reduced errors, easier DR
-      (redeploy entire stack from code).
-
-  Q4. What is declarative vs imperative IaC?
-  A4. Declarative defines desired end state (Terraform). Imperative lists steps
-      to execute (gcloud commands, Ansible tasks).
-
 ================================================================================
 TOPIC 11: INTRODUCTION TO CI/CD
 ================================================================================
-
-CI/CD automates the path from code change to production deployment — connecting
-development (Fancy Store code updates, hello-app v2) to operations (rolling
-replace, kubectl set image).
 
 --------------------------------------------------------------------------------
 11.1  Understanding DevOps and CI/CD Concepts
@@ -2763,7 +2216,7 @@ DEPLOYMENT STRATEGIES:
                      version first
   Recreate           Stop all, deploy new           --max-unavailable 100% (lab)
 
-ZERO-DOWNTIME DEPLOYMENT (exam):
+ZERO-DOWNTIME DEPLOYMENT:
   • Keep minimum instances healthy during rolling update
   • Health checks confirm new instances before receiving traffic
   • GKE: Deployment controller replaces Pods incrementally
@@ -2790,177 +2243,3 @@ RELIABILITY:
   • Automated rollback on health check failure
   • Immutable artifacts (image tags v1, v2 — never overwrite)
   • Infrastructure as Code for reproducible environments (Topic 10)
-
---------------------------------------------------------------------------------
-11.6  Exam Notes — CI/CD
---------------------------------------------------------------------------------
-
-  Q1. Differentiate CI and CD.
-  A1. CI continuously integrates code changes with automated build/test.
-      CD continuously delivers/deploys validated code to production environments.
-
-  Q2. Name three CI/CD tools.
-  A2. Jenkins, GitHub Actions, GitLab CI (also Cloud Build, Cloud Deploy).
-
-  Q3. What is a rolling deployment?
-  A3. Gradually replacing old application instances with new ones while keeping
-      enough healthy instances to serve traffic (zero downtime).
-
-  Q4. How does the Fancy Store lab demonstrate CI/CD concepts?
-  A4. Code change → build React app → upload to GCS → rolling replace MIG
-      instances that pull new code at startup.
-
-  Q5. Why should secrets not be stored in git?
-  A5. Version control is widely accessible; use Secret Manager or CI/CD secret
-      variables instead.
-
-================================================================================
-UNIT-II REVISION SUMMARY & CROSS-TOPIC COMPARISON
-================================================================================
-
-SERVICE MODEL PROGRESSION IN THIS UNIT:
-
-  App Engine (PaaS)  →  Compute Engine (IaaS)  →  Cloud Functions (FaaS)
-        │                      │                         │
-        │               MIG + Load Balancer              │
-        │               + CDN + Autoscaling              │
-        │                      │                         │
-        └──────────────────────┴─────────────────────────┘
-                               │
-                    GKE (Managed Kubernetes)
-                    Containers + Orchestration
-
-DEPLOYMENT MODEL COMPARISON:
-
-  ┌──────────────┬─────────────┬──────────────┬──────────────┬─────────────┐
-  │              │ App Engine  │ Compute Eng. │ Cloud Funcs  │ GKE         │
-  ├──────────────┼─────────────┼──────────────┼──────────────┼─────────────┤
-  │ Abstraction  │ High (PaaS) │ Low (IaaS)   │ Highest(FaaS)│ Medium (CaaS)│
-  │ Scaling      │ Automatic   │ MIG/autoscale│ Per-event    │ HPA + nodes  │
-  │ Networking   │ Abstracted  │ VPC, FW, LB  │ Trigger-based│ K8s Services │
-  │ Billing      │ Instance-hr │ VM-hour     │ Per invoke   │ Pod/node-hr  │
-  │ Best for     │ Web apps    │ Custom infra │ Events       │ Containers   │
-  └──────────────┴─────────────┴──────────────┴──────────────┴─────────────┘
-
-PORT REFERENCE (Fancy Store Lab):
-  • Frontend  → 8080
-  • Orders    → 8081
-  • Products  → 8082
-  • HTTP LB   → 80 (external)
-
-KEY IP RANGES:
-  • Health check probes → 130.211.0.0/22, 35.191.0.0/16
-
-MASTER GLOSSARY:
-
-  Term              Definition
-  ─────────────────────────────────────────────────────────────────────────
-  PaaS              Platform as a Service; provider manages infrastructure
-  IaaS              Infrastructure as a Service; rent VMs and networks
-  FaaS              Function as a Service; event-triggered serverless code
-  MIG               Managed Instance Group of identical VMs
-  CDN               Content Delivery Network; edge caching for low latency
-  Pod               Smallest Kubernetes deployable unit (1+ containers)
-  HPA               Horizontal Pod Autoscaler
-  CloudEvent        Industry standard format for event data
-  Autopilot         Fully managed GKE mode; Google manages nodes
-  Startup Script    Bash script run at VM boot for auto-configuration
-  Named Port        service:port metadata on instance groups for LB routing
-  URL Map           Load balancer path-based routing configuration
-  Artifact Registry Managed container image storage on Google Cloud
-
-CAREER & CERTIFICATION PATH:
-
-  Role                    Skills from Unit II
-  ─────────────────────────────────────────────────────────────────────────
-  Cloud Engineer          GCE, GKE, firewall rules, load balancers
-  DevOps Engineer         CI/CD, rolling updates, startup scripts, kubectl
-  Cloud Architect         Choosing PaaS vs IaaS vs GKE vs Functions
-  SRE                     Health checks, autohealing, monitoring, failover
-
-  Certifications:
-    • Google Cloud Associate Cloud Engineer (all topics in this unit)
-    • Google Cloud Professional Cloud Architect (architecture decisions)
-    • Google Cloud Professional Cloud Developer (App Engine, Functions, GKE)
-    • Google Cloud Professional Cloud Network Engineer (Topic 3 networking)
-
-IMPORTANT EXAM QUESTIONS ACROSS THE UNIT:
-
-  1. Compare IaaS, PaaS, and FaaS with GCP examples.
-  2. Explain HTTP(S) Load Balancer component chain.
-  3. Differentiate autohealing vs load balancing health checks.
-  4. Describe microservices deployment on Compute Engine with startup scripts.
-  5. Explain CloudEvent vs Background functions.
-  6. Compare GKE Autopilot vs Standard mode.
-  7. Walk through container deployment: build → push → deploy → expose → update.
-  8. What is the Shared Responsibility Model in context of GAE vs GCE vs GKE?
-  9. Explain cache hit vs cache miss in Cloud CDN.
-  10. How do rolling updates work in both MIG and Kubernetes Deployments?
-
---------------------------------------------------------------------------------
-UNIT-II PDF COVERAGE CHECKLIST (all topics & sub-topics verified)
---------------------------------------------------------------------------------
-
-  [✓] Google App Engine — PaaS, Bigtable, GQL, free tier, 5 APIs, EC2 comparison
-  [✓] Development of scalable web apps on Google Cloud (Fancy Store lab, Tasks 1–8)
-      [✓] Lab sign-in, Cloud Console, temporary credentials
-      [✓] Cloud Shell activation, gcloud auth, PROJECT_ID
-      [✓] Regions, zones, export ZONE/REGION
-      [✓] Task 1: Enable Compute Engine API
-      [✓] Task 2: Cloud Storage bucket ($DEVSHELL_PROJECT_ID)
-      [✓] Task 3: Clone repo, setup.sh, nvm, npm start, web preview port 8080
-      [✓] Task 4: Startup script (Fluentd, Node.js, Supervisor, nodeapp user, LF/CRLF)
-      [✓] Task 4: Backend/frontend VMs, .env config, firewall rules fw-fe/fw-be
-      [✓] Task 5: Instance templates, MIG, named ports, autohealing health checks
-      [✓] Task 5: allow-health-check firewall, initial-delay 300
-      [✓] Task 6: HTTP(S) LB — health checks, backend services, URL map, path matcher
-      [✓] Task 6: Target HTTP proxy, forwarding rule, LB IP .env update, rolling replace
-      [✓] Task 7: Autoscaling 60% utilization, Cloud CDN enable, GFE cache hit/miss
-      [✓] Task 8: Instance template update (e2-small), fancy-fe-new rolling start-update
-      [✓] Task 8: Homepage update (index.js.new), rebuild, rolling replace
-      [✓] Task 8: Simulate failure — SSH, supervisorctl, instance repair
-  [✓] App Engine Flexible Environment — prerequisites, Cloud Build API, gcloud init
-      [✓] Eclipse wizard, Maven pom.xml, region selection (permanent)
-  [✓] Exploring PaaS with App Engine — SDK, sandboxing, languages, real-world apps
-      [✓] Runtimes (Java 7, Python 2.7, PHP 5.4, Go 1.2)
-      [✓] GA / Preview / Experimental / Third-party features
-      [✓] HRD migration tool, Datastore, Memcache, Blobstore, Search, Cloud SQL
-  [✓] Event-Driven Cloud Functions — 1st gen vs 2nd gen
-      [✓] CloudEvent functions, Background functions, function termination, retries
-  [✓] GKE Overview — Borg, control plane, nodes, Pods, Autopilot vs Standard
-      [✓] Benefits: security, cost, reliability, release channels, Migrate for GKE
-  [✓] Deploying containerized app — Dockerfile, Artifact Registry, hello-app
-      [✓] docker build/push, IAM binding, GKE Autopilot cluster
-      [✓] Deployment, scale replicas, HPA, LoadBalancer Service, ClusterIP
-      [✓] Rolling update v1→v2 (main.go 2.0.0), cleanup steps
-      [✓] K8s networking, monitoring, cluster management (syllabus sub-topics)
-  [✓] Cloud Principles & Well-Architected Framework
-      [✓] Fundamental cloud principles, shared responsibility model
-      [✓] Cloud-native architecture, WAF pillars (security, reliability, etc.)
-      [✓] Best practices for scalable cloud applications
-  [✓] Disaster Recovery in Cloud
-      [✓] Backup & DR concepts, HA & fault tolerance
-      [✓] DR strategies, RPO & RTO, cloud snapshots & backups
-      [✓] Case studies on DR implementation
-  [✓] Introduction to Infrastructure as Code (IaC)
-      [✓] IaC overview, Terraform, CloudFormation, Ansible
-      [✓] Configuration management & automation
-      [✓] Writing/managing IaC, versioning & scaling infrastructure
-  [✓] Introduction to CI/CD
-      [✓] DevOps and CI/CD concepts, pipeline implementation
-      [✓] Jenkins, GitHub Actions, GitLab CI, Cloud Build
-      [✓] Automated testing & deployment strategies
-      [✓] Secure & scalable CI/CD best practices
-
-REFERENCE LINKS:
-  • GCE Lab: https://www.cloudskillsboost.google/focuses/11952?parent=catalog
-  • App Engine video: https://www.youtube.com/watch?v=LNTVqqIhnZQ
-  • GKE video: https://www.youtube.com/watch?v=ZVcnsTCQASU
-  • Cloud Functions: https://cloud.google.com/functions/docs/writing/write-event-driven-functions
-  • GKE tutorial: https://cloud.google.com/kubernetes-engine/docs/tutorials/hello-app
-
-================================================================================
-  END OF UNIT-II STUDY GUIDE — NETWORKING IN THE CLOUD
-  Source: CC-II-Unit-II.pdf | FIT & CS, Parul University
-================================================================================
-
