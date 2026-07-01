@@ -18,7 +18,7 @@
   ----------------
   [✓] Topic 1  — Google App Engine (GAE) & Cloud Service Models
   [✓] Topic 2  — Compute Engine: Deploying Scalable Web Applications
-  [ ] Topic 3  — Cloud Networking (Firewall, Load Balancing, CDN, MIG)
+  [✓] Topic 3  — Cloud Networking (MIG, Load Balancers, CDN, Scaling)
   [ ] Topic 4  — App Engine Flexible Environment & PaaS Deep Dive
   [ ] Topic 5  — Event-Driven Architecture with Cloud Functions
   [ ] Topic 6  — Google Kubernetes Engine (GKE) Overview
@@ -755,3 +755,607 @@ END OF TOPIC 2
 
 NEXT: Topic 3 — Cloud Networking: Managed Instance Groups, Load Balancers,
       Autohealing, Autoscaling & CDN
+
+================================================================================
+TOPIC 3: CLOUD NETWORKING — MIG, LOAD BALANCERS, AUTOHEALING & CDN
+================================================================================
+
+This topic continues the Fancy Store lab: scaling from single VMs to production-
+grade architecture using Managed Instance Groups (MIG), HTTP(S) Load Balancers,
+health checks, autoscaling, Cloud CDN, and rolling updates.
+
+--------------------------------------------------------------------------------
+3.1  Why Move Beyond Single VMs?
+--------------------------------------------------------------------------------
+
+Single VM deployments (Topic 2) have limitations:
+
+  PROBLEM                          SOLUTION IN TOPIC 3
+  ─────────────────────────────────────────────────────────────────────────
+  Single point of failure          Managed Instance Groups (multiple VMs)
+  No load distribution             HTTP(S) Load Balancer
+  Manual scaling                   Autoscaling policies
+  No automatic recovery            Autohealing with health checks
+  Slow global content delivery     Cloud CDN caching at edge
+  Risky deployments                Rolling updates / rolling replace
+
+This is the core of "Networking in the Cloud" — connecting, distributing,
+protecting, and scaling traffic across multiple compute resources.
+
+--------------------------------------------------------------------------------
+3.2  Instance Templates
+--------------------------------------------------------------------------------
+
+An instance template defines the blueprint for creating VM instances:
+machine type, boot disk, network, metadata (startup script), and tags.
+
+KEY PROPERTIES:
+  • Templates are immutable — you cannot edit an existing template
+  • To change settings, create a NEW template and roll it out
+  • Used by Managed Instance Groups to create identical instances
+  • Can be created from scratch or from an existing VM (source instance)
+
+CREATE TEMPLATE FROM EXISTING INSTANCE:
+  # Stop source instances first
+  gcloud compute instances stop frontend --zone=$ZONE
+  gcloud compute instances stop backend --zone=$ZONE
+
+  # Create templates from running instances
+  gcloud compute instance-templates create fancy-fe \
+    --source-instance-zone=$ZONE \
+    --source-instance=frontend
+
+  gcloud compute instance-templates create fancy-be \
+    --source-instance-zone=$ZONE \
+    --source-instance=backend
+
+  # Verify
+  gcloud compute instance-templates list
+
+WHY STOP INSTANCES FIRST?
+  Stopping ensures disk state is consistent when capturing the instance
+  configuration into a template.
+
+EXAM TIP:
+  Q: "Can you edit an instance template?"
+  A: No. Create a new template and update the MIG to use it.
+
+--------------------------------------------------------------------------------
+3.3  Managed Instance Groups (MIG)
+--------------------------------------------------------------------------------
+
+A Managed Instance Group (MIG) contains identical VM instances managed as a
+single entity. Google proactively keeps instances in the RUNNING state.
+
+BENEFITS:
+  • High availability — replaces failed instances automatically
+  • Load balancing — distributes traffic across group members
+  • Autoscaling — adds/removes instances based on load
+  • Rolling updates — deploy new versions without downtime
+  • Autohealing — recreates unhealthy instances
+
+CREATE MANAGED INSTANCE GROUPS:
+  gcloud compute instance-groups managed create fancy-fe-mig \
+    --zone=$ZONE \
+    --base-instance-name fancy-fe \
+    --size 2 \
+    --template fancy-fe
+
+  gcloud compute instance-groups managed create fancy-be-mig \
+    --zone=$ZONE \
+    --base-instance-name fancy-be \
+    --size 2 \
+    --template fancy-be
+
+  • --size 2        → Start with 2 instances per group
+  • --base-instance-name → Prefix for auto-generated instance names
+    (e.g., fancy-fe-x151, fancy-fe-cgrt)
+
+MIG vs UNMANAGED INSTANCE GROUP:
+  ┌────────────────────┬──────────────────────┬────────────────────────────┐
+  │ Feature            │ Managed (MIG)      │ Unmanaged                  │
+  ├────────────────────┼──────────────────────┼────────────────────────────┤
+  │ Autohealing        │ Yes                │ No                         │
+  │ Autoscaling        │ Yes                │ No                         │
+  │ Rolling updates    │ Yes                │ No                         │
+  │ Template-based     │ Yes                │ No (add existing VMs)      │
+  │ Use case           │ Production apps    │ Ad-hoc grouping            │
+  └────────────────────┴──────────────────────┴────────────────────────────┘
+
+--------------------------------------------------------------------------------
+3.4  Named Ports
+--------------------------------------------------------------------------------
+
+Named ports map a service name to a port number on instances in a group.
+Load balancers use named ports to know which port to send traffic to.
+
+  gcloud compute instance-groups set-named-ports fancy-fe-mig \
+    --zone=$ZONE \
+    --named-ports frontend:8080
+
+  gcloud compute instance-groups set-named-ports fancy-be-mig \
+    --zone=$ZONE \
+    --named-ports orders:8081,products:8082
+
+FORMAT: service-name:port-number
+
+WHY NAMED PORTS?
+  • HTTP Load Balancer uses standard port 80/443 externally
+  • Backend apps may run on non-standard ports (8080, 8081, 8082)
+  • Named ports bridge this gap — LB knows "frontend" = 8080
+
+EXAM TIP: Named ports are metadata on instance groups, used by load balancers
+          and backend services to route traffic correctly.
+
+--------------------------------------------------------------------------------
+3.5  Health Checks & Autohealing
+--------------------------------------------------------------------------------
+
+TWO TYPES OF HEALTH CHECKS (Important distinction for exams):
+
+  1. LOAD BALANCING HEALTH CHECKS
+     • Determine if instance receives USER TRAFFIC
+     • Should be AGGRESSIVE (fast detection)
+     • Unhealthy instances are removed from load balancer rotation
+
+  2. AUTOHEALING HEALTH CHECKS
+     • Cause Compute Engine to RECREATE failing instances
+     • Should be CONSERVATIVE (avoid false positives)
+     • Proactive instance replacement
+
+CREATE AUTOHEALING HEALTH CHECKS:
+  gcloud compute health-checks create http fancy-fe-hc \
+    --port 8080 \
+    --check-interval 30s \
+    --healthy-threshold 1 \
+    --timeout 10s \
+    --unhealthy-threshold 3
+
+  gcloud compute health-checks create http fancy-be-hc \
+    --port 8081 \
+    --request-path=/api/orders \
+    --check-interval 30s \
+    --healthy-threshold 1 \
+    --timeout 10s \
+    --unhealthy-threshold 3
+
+HEALTH CHECK PARAMETERS:
+  • check-interval       → Time between checks (30s)
+  • healthy-threshold    → Consecutive successes to mark HEALTHY (1)
+  • unhealthy-threshold  → Consecutive failures to mark UNHEALTHY (3)
+  • timeout              → Max wait for response (10s)
+  • request-path         → URL path to probe (e.g., /api/orders)
+
+FIREWALL FOR HEALTH CHECK PROBES:
+  Google health check probes come from specific IP ranges:
+  gcloud compute firewall-rules create allow-health-check \
+    --allow tcp:8080-8081 \
+    --source-ranges 130.211.0.0/22,35.191.0.0/16 \
+    --network default
+
+  EXAM TIP: Always allow health check IP ranges — without this rule, all
+            instances appear unhealthy.
+
+APPLY AUTOHEALING TO MIG:
+  gcloud compute instance-groups managed update fancy-fe-mig \
+    --zone=$ZONE \
+    --health-check fancy-fe-hc \
+    --initial-delay 300
+
+  gcloud compute instance-groups managed update fancy-be-mig \
+    --zone=$ZONE \
+    --health-check fancy-be-hc \
+    --initial-delay 300
+
+  • --initial-delay 300 → Wait 5 minutes before monitoring (allows startup)
+
+AUTOHEALING TIMELINE:
+  • Takes ~15 minutes before autohealing begins monitoring
+  • 3 consecutive failures → instance marked unhealthy → recreated
+
+SIMULATE FAILURE (Lab verification):
+  gcloud compute ssh INSTANCE_NAME --zone=$ZONE
+  sudo supervisorctl stop nodeapp; sudo killall node
+  exit
+  # Watch repair: gcloud compute operations list \
+  #   --filter='operationType~compute.instances.repair.*'
+
+--------------------------------------------------------------------------------
+3.6  HTTP(S) Load Balancer Architecture
+--------------------------------------------------------------------------------
+
+Google Cloud HTTP(S) Load Balancer is a GLOBAL, Layer 7 (HTTP) load balancer.
+It provides a single external IP for multiple backend services.
+
+ARCHITECTURE (Top to Bottom):
+
+  Internet Request
+       │
+       ▼
+  ┌─────────────────────────┐
+  │  Global Forwarding Rule │  ← Public IP + Port 80/443
+  └───────────┬─────────────┘
+              ▼
+  ┌─────────────────────────┐
+  │  Target HTTP Proxy      │  ← Terminates HTTP, reads URL map
+  └───────────┬─────────────┘
+              ▼
+  ┌─────────────────────────┐
+  │  URL Map                │  ← Routes paths to backend services
+  │  /        → frontend    │
+  │  /api/orders → orders   │
+  │  /api/products → products│
+  └───────────┬─────────────┘
+              ▼
+  ┌─────────────────────────┐
+  │  Backend Services       │  ← Groups of MIG instances
+  │  + Health Checks        │
+  └───────────┬─────────────┘
+              ▼
+  ┌─────────────────────────┐
+  │  Managed Instance Group │  ← Actual VM instances
+  └─────────────────────────┘
+
+STEP-BY-STEP CREATION:
+
+  1. CREATE LB HEALTH CHECKS (separate from autohealing checks):
+     gcloud compute http-health-checks create fancy-fe-frontend-hc \
+       --request-path / --port 8080
+
+     gcloud compute http-health-checks create fancy-be-orders-hc \
+       --request-path /api/orders --port 8081
+
+     gcloud compute http-health-checks create fancy-be-products-hc \
+       --request-path /api/products --port 8082
+
+  2. CREATE BACKEND SERVICES:
+     gcloud compute backend-services create fancy-fe-frontend \
+       --http-health-checks fancy-fe-frontend-hc \
+       --port-name frontend \
+       --global
+
+     gcloud compute backend-services create fancy-be-orders \
+       --http-health-checks fancy-be-orders-hc \
+       --port-name orders \
+       --global
+
+     gcloud compute backend-services create fancy-be-products \
+       --http-health-checks fancy-be-products-hc \
+       --port-name products \
+       --global
+
+  3. ADD MIGs TO BACKEND SERVICES:
+     gcloud compute backend-services add-backend fancy-fe-frontend \
+       --instance-group-zone=$ZONE \
+       --instance-group fancy-fe-mig \
+       --global
+
+     gcloud compute backend-services add-backend fancy-be-orders \
+       --instance-group-zone=$ZONE \
+       --instance-group fancy-be-mig \
+       --global
+
+     gcloud compute backend-services add-backend fancy-be-products \
+       --instance-group-zone=$ZONE \
+       --instance-group fancy-be-mig \
+       --global
+
+  4. CREATE URL MAP (routing rules):
+     gcloud compute url-maps create fancy-map \
+       --default-service fancy-fe-frontend
+
+     gcloud compute url-maps add-path-matcher fancy-map \
+       --default-service fancy-fe-frontend \
+       --path-matcher-name orders \
+       --path-rules "/api/orders=fancy-be-orders,/api/products=fancy-be-products"
+
+  5. CREATE HTTP PROXY:
+     gcloud compute target-http-proxies create fancy-proxy \
+       --url-map fancy-map
+
+  6. CREATE GLOBAL FORWARDING RULE (public IP):
+     gcloud compute forwarding-rules create fancy-http-rule \
+       --global \
+       --target-http-proxy fancy-proxy \
+       --ports 80
+
+  GET LOAD BALANCER IP:
+     gcloud compute forwarding-rules list --global
+
+UPDATE FRONTEND CONFIG FOR LOAD BALANCER:
+  Edit react-app/.env to use LB IP (no ports needed — LB handles routing):
+    REACT_APP_ORDERS_URL=http://[LB_IP]/api/orders
+    REACT_APP_PRODUCTS_URL=http://[LB_IP]/api/products
+
+  Rebuild, re-upload to bucket, then rolling replace frontend MIG.
+
+EXAM TIP — URL Map:
+  • default-service → catches all paths not explicitly matched
+  • path-rules → map specific URL paths to specific backend services
+  • Enables single IP to serve frontend + multiple API backends
+
+--------------------------------------------------------------------------------
+3.7  Rolling Updates & Rolling Replace
+--------------------------------------------------------------------------------
+
+When code or configuration changes, instances must pull the new version.
+Since instances pull code at startup, trigger a rolling replace:
+
+  gcloud compute instance-groups managed rolling-action replace fancy-fe-mig \
+    --zone=$ZONE \
+    --max-unavailable 100%
+
+PARAMETERS:
+  • rolling-action replace → Recreate all instances from template
+  • --max-unavailable 100% → All instances can be replaced at once (lab speed)
+  • Production: use lower % (e.g., 25%) to maintain availability during update
+
+VERIFY HEALTH AFTER REPLACE:
+  watch -n 2 gcloud compute backend-services get-health fancy-fe-frontend --global
+
+  Wait until all instances show: healthState: HEALTHY
+
+INSTANCE TEMPLATE UPDATE (Machine type change):
+  1. Modify source instance:
+     gcloud compute instances set-machine-type frontend \
+       --zone=$ZONE --machine-type e2-small
+
+  2. Create NEW template (templates are immutable):
+     gcloud compute instance-templates create fancy-fe-new \
+       --region=$REGION \
+       --source-instance=frontend \
+       --source-instance-zone=$ZONE
+
+  3. Rolling update MIG to new template:
+     gcloud compute instance-groups managed rolling-action start-update fancy-fe-mig \
+       --zone=$ZONE \
+       --version template=fancy-fe-new
+
+  4. Monitor:
+     watch -n 2 gcloud compute instance-groups managed list-instances fancy-fe-mig \
+       --zone=$ZONE
+
+ROLLING UPDATE vs ROLLING REPLACE:
+  ┌────────────────────┬────────────────────────────────────────────────────┐
+  │ Rolling Replace    │ Recreates instances (new VMs, pulls fresh code)    │
+  │ Rolling Update     │ Updates in-place to new template version           │
+  │ Use Replace for    │ Code/config changes (startup script pulls new code)│
+  │ Use Update for     │ Template changes (machine type, disk, metadata)      │
+  └────────────────────┴────────────────────────────────────────────────────┘
+
+--------------------------------------------------------------------------------
+3.8  Autoscaling
+--------------------------------------------------------------------------------
+
+Autoscaling automatically adjusts the number of MIG instances based on load.
+
+  gcloud compute instance-groups managed set-autoscaling fancy-fe-mig \
+    --zone=$ZONE \
+    --max-num-replicas 2 \
+    --target-load-balancing-utilization 0.60
+
+  gcloud compute instance-groups managed set-autoscaling fancy-be-mig \
+    --zone=$ZONE \
+    --max-num-replicas 2 \
+    --target-load-balancing-utilization 0.60
+
+BEHAVIOR:
+  • Adds instances when load balancer utilization > 60%
+  • Removes instances when utilization < 60%
+  • --max-num-replicas caps maximum instances
+
+OTHER AUTOSCALING METRICS (Additional context):
+  • CPU utilization
+  • Custom metrics (Cloud Monitoring)
+  • Schedule-based scaling (predictable traffic patterns)
+  • Multi-zone regional MIGs for higher availability
+
+EXAM TIP:
+  Q: "What metric does the lab use for autoscaling?"
+  A: Target load balancing utilization at 60%.
+
+--------------------------------------------------------------------------------
+3.9  Cloud CDN (Content Delivery Network)
+--------------------------------------------------------------------------------
+
+Cloud CDN caches content at Google's globally distributed edge locations,
+reducing latency and backend load.
+
+ENABLE CDN ON BACKEND SERVICE:
+  gcloud compute backend-services update fancy-fe-frontend \
+    --enable-cdn --global
+
+HOW CLOUD CDN WORKS:
+
+  User Request
+       │
+       ▼
+  Google Front End (GFE) — Edge location nearest to user
+       │
+       ├── CACHE HIT  → Return cached response immediately (fast)
+       │
+       └── CACHE MISS → Forward to backend → Cache response → Return to user
+
+BENEFITS:
+  • Reduced latency for static content (images, CSS, JS, HTML)
+  • Lower backend load and cost
+  • Improved user experience globally
+  • Works with HTTP(S) Load Balancer
+
+CACHE HIT vs CACHE MISS:
+  • Cache Hit  → Content found in CDN cache; served from edge (milliseconds)
+  • Cache Miss → Content fetched from origin (backend), then cached for future
+
+CDN BEST PRACTICES:
+  • Cache static assets with long TTL (Time To Live)
+  • Use cache busting (versioned filenames) for updates
+  • Set appropriate Cache-Control headers in application
+  • Enable CDN only on services serving cacheable content (frontend, not APIs)
+
+EXAM TIP:
+  Q: "What is a cache hit?"
+  A: When the CDN edge server finds the requested content in its cache and
+     serves it directly without contacting the origin backend.
+
+--------------------------------------------------------------------------------
+3.10  Complete Network Architecture (After Topic 3)
+--------------------------------------------------------------------------------
+
+  Internet
+     │
+     ▼
+  ┌──────────────────────────────────────────────────────────┐
+  │  Global HTTP(S) Load Balancer (Port 80)                  │
+  │  IP: 34.x.x.x (static)                                   │
+  │  ┌─────────────┐  ┌──────────────┐  ┌────────────────┐ │
+  │  │ URL Map     │  │ Cloud CDN    │  │ Health Checks  │ │
+  │  └─────────────┘  └──────────────┘  └────────────────┘ │
+  └──────────┬───────────────────────┬───────────────────────┘
+             │                       │
+    / (default)              /api/orders, /api/products
+             │                       │
+             ▼                       ▼
+  ┌──────────────────┐    ┌──────────────────┐
+  │ fancy-fe-mig     │    │ fancy-be-mig     │
+  │ (2+ instances)   │    │ (2+ instances)   │
+  │ Port 8080        │    │ Ports 8081, 8082 │
+  │ Autoscaling 60%  │    │ Autoscaling 60%  │
+  │ Autohealing      │    │ Autohealing      │
+  └──────────────────┘    └──────────────────┘
+
+  Firewall Rules:
+    fw-fe          → tcp:8080   → target-tags: frontend
+    fw-be          → tcp:8081-8082 → target-tags: backend
+    allow-health-check → tcp:8080-8081 → Google probe IPs
+
+--------------------------------------------------------------------------------
+3.11  Key Commands Reference (Topic 3)
+--------------------------------------------------------------------------------
+
+  COMMAND                                              PURPOSE
+  ─────────────────────────────────────────────────────────────────────────
+  gcloud compute instance-templates create NAME ...    Create VM template
+  gcloud compute instance-groups managed create ...    Create MIG
+  gcloud compute instance-groups set-named-ports ...   Set service:port map
+  gcloud compute health-checks create http ...         Create health check
+  gcloud compute http-health-checks create ...         Create LB health check
+  gcloud compute backend-services create ...           Create backend service
+  gcloud compute backend-services add-backend ...      Attach MIG to backend
+  gcloud compute url-maps create ...                   Create URL routing map
+  gcloud compute target-http-proxies create ...        Create HTTP proxy
+  gcloud compute forwarding-rules create --global ...  Assign public IP
+  gcloud compute instance-groups managed set-autoscaling  Enable autoscaling
+  gcloud compute backend-services update --enable-cdn  Enable Cloud CDN
+  gcloud compute instance-groups managed rolling-action replace  Replace VMs
+  gcloud compute instance-groups managed rolling-action start-update  Update template
+  gcloud compute backend-services get-health ...       Check instance health
+
+--------------------------------------------------------------------------------
+3.12  EXAM PREPARATION — Topic 3
+--------------------------------------------------------------------------------
+
+SHORT ANSWER QUESTIONS (2–5 marks):
+
+  Q1. What is a Managed Instance Group (MIG)?
+  A1. A MIG is a collection of identical VM instances managed as a single unit,
+      providing autohealing, autoscaling, load balancing, and rolling updates.
+
+  Q2. What are named ports and why are they used?
+  A2. Named ports are key-value pairs (service-name:port) assigned to instance
+      groups. Load balancers use them to route traffic to the correct port on
+      backend instances.
+
+  Q3. Differentiate load balancing health checks and autohealing health checks.
+  A3. Load balancing health checks (aggressive) determine if an instance receives
+      traffic. Autohealing health checks (conservative) trigger instance
+      recreation when an app is unresponsive.
+
+  Q4. Explain the components of an HTTP(S) Load Balancer.
+  A4. Forwarding rule (public IP) → Target HTTP proxy → URL map (path routing)
+      → Backend services (with health checks) → Instance groups (VMs).
+
+  Q5. What is the purpose of a URL map?
+  A5. A URL map routes incoming HTTP requests to appropriate backend services
+      based on URL path (e.g., /api/orders → orders backend).
+
+  Q6. How does Cloud CDN improve performance?
+  A6. CDN caches content at edge locations near users. Cache hits serve content
+      directly from edge, reducing latency and backend load.
+
+  Q7. Can instance templates be edited? How do you apply changes?
+  A7. No. Create a new template and perform a rolling update on the MIG to use
+      the new template version.
+
+  Q8. What IP ranges must be allowed for health check probes?
+  A8. 130.211.0.0/22 and 35.191.0.0/16 (Google's health check probe ranges).
+
+ONE-LINER DEFINITIONS (MCQ/Viva):
+
+  • MIG              → Managed Instance Group; auto-managed identical VMs
+  • Instance Template→ Blueprint defining VM configuration
+  • Named Port       → service:port metadata on instance groups
+  • URL Map          → Path-based routing rules for load balancer
+  • Backend Service  → Group of instances serving load-balanced traffic
+  • Forwarding Rule  → Maps external IP:port to load balancer proxy
+  • Autohealing      → Automatic recreation of failed instances
+  • Cloud CDN        → Content caching at Google's global edge network
+  • Cache Hit        → Content served from CDN edge cache
+  • Rolling Update   → Gradual deployment of new template/version to MIG
+
+POSSIBLE LONG ANSWER (10 marks):
+
+  "Explain how to scale a web application on Google Cloud using Managed Instance
+   Groups, Load Balancer, and Cloud CDN."
+
+  Suggested structure:
+    1. Create instance templates from configured VMs
+    2. Create MIGs with desired size, named ports, autohealing
+    3. Configure firewall for app ports and health check probes
+    4. Create HTTP(S) LB: health checks → backend services → URL map → proxy
+       → forwarding rule
+    5. Update app config to use LB IP; rolling replace instances
+    6. Enable autoscaling based on utilization threshold
+    7. Enable Cloud CDN on frontend backend service
+    8. Verify health and test failover
+
+--------------------------------------------------------------------------------
+3.13  FUTURE SCOPE & CAREER RELEVANCE — Topic 3
+--------------------------------------------------------------------------------
+
+JOB ROLES:
+  • Cloud Network Engineer — VPC design, load balancers, CDN, firewall rules
+  • Site Reliability Engineer (SRE) — autohealing, health checks, incident response
+  • Cloud Architect — designing highly available, scalable architectures
+  • DevOps Engineer — rolling deployments, autoscaling policies
+
+INDUSTRY RELEVANCE:
+  • Every production web app uses load balancing + auto-scaling (AWS ALB/ELB,
+    Azure Load Balancer, GCP HTTP LB — concepts transfer across clouds)
+  • CDN is standard for global apps (Cloudflare, Akamai, Cloud CDN, CloudFront)
+  • MIG patterns map to AWS Auto Scaling Groups, Azure VM Scale Sets
+  • Health check design is critical — too aggressive causes flapping; too
+    conservative delays failure detection
+
+SKILLS TO BUILD AFTER THIS TOPIC:
+  1. Configure HTTPS load balancer with SSL certificates
+  2. Set up multi-region MIG behind global load balancer
+  3. Use Cloud Monitoring alerts on health check failure rates
+  4. Implement blue-green or canary deployments with MIG rolling updates
+  5. Compare Cloud CDN with Cloudflare or AWS CloudFront
+
+COMMON INTERVIEW QUESTIONS:
+  • "Design a highly available 3-tier architecture on GCP."
+  • "What happens when a health check fails in a MIG?"
+  • "Explain the difference between Layer 4 and Layer 7 load balancing."
+  • "How would you deploy a new version with zero downtime?"
+
+CERTIFICATION RELEVANCE:
+  • Google Cloud Associate Cloud Engineer — MIG, LB, CDN, autoscaling
+  • Google Cloud Professional Cloud Architect — HA architecture, disaster recovery
+  • Google Cloud Professional Cloud Network Engineer — VPC, LB, hybrid connectivity
+
+================================================================================
+END OF TOPIC 3
+================================================================================
+
+NEXT: Topic 4 — App Engine Flexible Environment & Exploring PaaS with App Engine
