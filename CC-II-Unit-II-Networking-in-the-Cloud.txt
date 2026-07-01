@@ -13,7 +13,7 @@
   CONTENTS
   --------
   1. Google App Engine (GAE) & Cloud Service Models
-  2. Compute Engine — Deploying Scalable Web Applications
+  2. Development of Scalable Web Applications on Google Cloud (Compute Engine Lab)
   3. Cloud Networking — MIG, Load Balancers, Autohealing & CDN
   4. App Engine Flexible Environment & PaaS Deep Dive
   5. Event-Driven Architecture with Cloud Functions
