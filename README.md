@@ -1,8 +1,8 @@
 # cloud-II — Presentations (`cc-ii-ppt`)
 
-PowerPoint / slide materials for Cloud Computing II.
+PowerPoint / slide materials for Cloud Computing II (FIT & CS, Parul University).
 
-## Contents
+## Presentations
 
 - `ppt/CC-II-Unit-II-Disaster-Recovery-in-Cloud.pptx` — **Unit II** expanded deck (~58 slides)
 - `ppt/build_unit2_ppt.py` — regenerator (`python3 ppt/build_unit2_ppt.py`)
@@ -16,4 +16,14 @@ PowerPoint / slide materials for Cloud Computing II.
 5. Cloud-Based Backup Solutions & Snapshots  
 6. Case Studies on Disaster Recovery Implementation  
 
-Related branches: `cc-ii-txt` (plain text), `cc-ii-notes` (study notes).
+## Study notes synced from `main`
+
+- `CC-II-Unit-II-Disaster-Recovery-in-Cloud.txt` — **Unit II** syllabus notes
+- `CC-II-Unit-II-Networking-in-the-Cloud.txt` — extended GCP lab/reference guide (see file header)
+
+## Content branches
+
+- `cc-ii-txt` — text notes (Units I & II)
+- `cc-ii-notes` — organised study notes
+- `cc-ii-ppt` — presentations (this branch)
+- `main` — default branch with Unit II notes

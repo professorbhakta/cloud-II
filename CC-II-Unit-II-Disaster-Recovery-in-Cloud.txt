@@ -1,0 +1,693 @@
+================================================================================
+                    CC-II — UNIT II: STUDY NOTES
+              Disaster Recovery in the Cloud
+================================================================================
+
+Course Reference: CC-II (Cloud Computing – II)
+Document Purpose: Exam preparation + practical / future learning scope
+Based On: CC-II Unit-II syllabus — Disaster Recovery in Cloud
+Related Materials:
+  • Branch cc-ii-ppt  → Unit II PowerPoint deck
+  • Branch cc-ii-notes → mirrored study notes
+  • Reference lab patterns from Fancy Store / GCE / Cloud SQL / GCS
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+1.  Disaster Recovery in Cloud — Introduction
+2.  Concepts of Backup & Disaster Recovery
+3.  High Availability & Fault Tolerance in Cloud
+4.  Disaster Recovery Strategies (RPO & RTO Considerations)
+5.  Cloud-Based Backup Solutions & Snapshots
+6.  Case Studies on Disaster Recovery Implementation
+7.  Exam Quick-Revision (Important Questions)
+8.  Future Scope & Industry Relevance
+
+================================================================================
+1. DISASTER RECOVERY IN CLOUD — INTRODUCTION
+================================================================================
+
+OVERVIEW
+--------
+Disaster Recovery (DR) in cloud computing is the set of policies, people,
+processes, and technology used to restore IT services after an event that
+makes systems unavailable or data unusable.
+
+In traditional on-premises IT, DR often meant a second physical datacenter,
+truckloads of tapes, and slow manual rebuilds. In the cloud, spare capacity,
+snapshots, managed database backups, global load balancing, and Infrastructure
+as Code make DR plans faster to design and cheaper to test — but only if you
+define clear objectives and actually practice recovery.
+
+WHAT COUNTS AS A “DISASTER”?
+----------------------------
+A disaster is any event that causes significant unavailability or data loss.
+Examples include:
+  • Cloud zone failure (power, cooling, network in one datacenter location)
+  • Cloud region outage (broader regional impact)
+  • Cyberattack / ransomware that encrypts or destroys data
+  • Accidental deletion or a bad deploy that corrupts production
+  • Natural disaster near a facility
+  • Cascading dependency failure (identity, DNS, payment gateway, etc.)
+
+WHY UNIT II MATTERS
+-------------------
+Unit I covered how cloud networks connect resources. Unit II asks:
+  • What happens when those resources fail?
+  • How much downtime is acceptable?
+  • How much data can the business afford to lose?
+  • Which cloud tools restore service within those limits?
+
+Without DR thinking, even a perfectly designed VPC and load balancer still
+leave you exposed to region loss, bad deletes, and untested backups.
+
+CLOUD ADVANTAGE (AND LIMIT)
+---------------------------
+Advantages:
+  • On-demand capacity in another zone/region (no need to own idle hardware)
+  • Managed snapshots and database point-in-time recovery
+  • Global load balancers for geo failover
+  • Pay for warm/hot capacity only at the level your RTO/RPO require
+
+Limits:
+  • Cloud does not magically “take care of DR” for your application data
+  • Shared responsibility: you own backup policy, IAM, testing, and runbooks
+  • Same-region backups still fail together in a regional outage
+
+ADDITIONAL CONTEXT (Exam + Future)
+----------------------------------
+  • DR and business continuity appear in cloud certifications
+    (Google Cloud, AWS, Azure architect paths).
+  • SRE / DevOps roles run game days to prove restore time matches RTO.
+  • Indian digital services (UPI, e-commerce, streaming, IRCTC-scale surges)
+    make HA/DR interview topics highly practical — not only theory.
+
+
+================================================================================
+2. CONCEPTS OF BACKUP & DISASTER RECOVERY
+================================================================================
+
+2.1  CORE DEFINITIONS
+---------------------
+  TERM                 DEFINITION
+  ─────────────────────────────────────────────────────────────────────────
+  Backup               A copy of data kept so it can be restored after
+                       loss, corruption, or accidental deletion.
+  Disaster             An event that makes systems unavailable or data
+                       unusable (outage, flood, cyberattack, bad change).
+  Disaster Recovery    Policies and procedures to restore IT operations
+  (DR)                 after a disaster.
+  Business Continuity  Keeping critical business services running for
+                       users / revenue / safety — broader than IT restore.
+  Restore              The act of bringing data/systems back from backup
+                       or replica into a usable state.
+  Failover             Switching users from a failed primary site/system
+                       to a secondary site/system.
+  Failback             Returning operations to the primary site after it
+                       is repaired (when applicable).
+
+IMPORTANT DISTINCTION
+---------------------
+  Backup  ≠  Disaster Recovery
+  Having backup files is necessary but not sufficient. DR also needs:
+    • Documented runbooks (who does what, in what order)
+    • Spare / rebuildable infrastructure (often via IaC)
+    • Network/DNS/LB cutover steps
+    • Measured restore time that meets RTO
+    • Regular tests (otherwise backups are false comfort)
+
+  Disaster Recovery  ≠  Business Continuity
+  DR restores IT. Business Continuity covers the whole organization
+  (communications, people, alternate processes, customer messaging).
+
+
+2.2  BACKUP TYPES
+-----------------
+  TYPE            WHAT IT COPIES                 NOTES
+  ─────────────────────────────────────────────────────────────────────────
+  Full            Entire dataset every run       Simple restore; slow and
+                                                 storage-heavy; often weekly
+                                                 baseline.
+  Incremental     Changes since last backup      Fast/cheap to take; restore
+                                                 = last full + chain of
+                                                 incrementals.
+  Differential    Changes since last full        Middle ground (less common
+                                                 in cloud object talk; know
+                                                 the idea for exams).
+  Snapshot        Point-in-time disk / volume    Near-instant capture of a
+                  / image state                  disk; ideal for VMs. In GCP,
+                                                 Compute Engine snapshots are
+                                                 incremental after the first.
+
+CLASSIC EXAM TRAPS
+------------------
+  • “We have daily backups” still leaves up to ~24 hours of possible data loss
+    unless continuous replication or PITR fills the gap.
+  • Snapshots of a busy database disk can be crash-consistent but not always
+    application-consistent — managed DB backups / PITR are preferred for SQL.
+
+
+2.3  WHERE BACKUPS LIVE (CLOUD THINKING)
+----------------------------------------
+  • Same zone as primary     → protects against VM failure; NOT zone outage
+  • Same region, other zone  → helps with zone failure; NOT region outage
+  • Cross-region / dual-region / multi-region → survives regional outage
+  • Offline / immutable copies → help against ransomware (attacker cannot
+    easily wipe every copy)
+
+RULE OF THUMB (widely taught “3-2-1” idea)
+------------------------------------------
+  Keep multiple copies, on more than one medium / location, with at least
+  one copy off-site (another region or provider). Exact policy varies by
+  organization — what matters for exams is: redundancy + geographic separation.
+
+
+2.4  BACKUP vs REPLICATION
+--------------------------
+  Backup:      Point-in-time copies, usually scheduled. Restore is explicit.
+  Replication: Ongoing copy of data to another location (sync or async).
+
+  Synchronous replication → very low RPO, higher latency / cost.
+  Asynchronous replication → small RPO lag possible, better for distance.
+
+  Many cloud designs combine both: continuous replicas for HA + lasting
+  backups for point-in-time rollback after corruption / ransomware.
+
+
+================================================================================
+3. HIGH AVAILABILITY & FAULT TOLERANCE IN CLOUD
+================================================================================
+
+3.1  DEFINITIONS
+----------------
+  High Availability (HA)
+    Design goal: keep the service reachable for users by reducing downtime.
+    Usually achieved with redundancy and automatic failover.
+    Often expressed as uptime percentage (e.g., 99.9% ≈ ~8.8 hours downtime/year).
+
+  Fault Tolerance (FT)
+    Ability to continue operating correctly even when a component fails —
+    ideally without the user noticing.
+
+  Relationship
+    HA systems often use fault-tolerant building blocks (replicas, health
+    checks, autohealing). Not every fault-tolerant mechanism is full DR
+    (for example, a multi-zone MIG is strong HA; surviving a whole-region
+    disaster still needs multi-region design + data protection).
+
+
+3.2  KEY CONCEPTS
+-----------------
+  CONCEPT              MEANING                         EXAMPLE
+  ─────────────────────────────────────────────────────────────────────────
+  High Availability    Minimize downtime via           MIG with 2+ instances
+                       redundancy                      behind a load balancer
+  Fault Tolerance      Continue despite component      Autohealing recreates
+                       failure                         an unhealthy VM
+  Redundancy           Duplicate components            Kubernetes replicas=3
+  Single Point of      One failure stops everything    One VM serving the
+  Failure (SPOF)                                       entire shop / college
+                                                       portal
+
+
+3.3  HA PATTERNS IN CLOUD
+-------------------------
+  1. Multi-instance
+       Run identical instances (Managed Instance Group, Kubernetes replicas)
+       so one crash does not stop the service.
+
+  2. Load balancing
+       Distribute traffic and send requests only to healthy backends
+       (HTTP(S) Load Balancer, Kubernetes Service / Ingress).
+
+  3. Health checks
+       Probe endpoints (e.g., / or /api/orders). Unhealthy backends stop
+       receiving traffic.
+
+  4. Autohealing
+       Automatically recreate unhealthy VMs/Pods from a template /
+       Deployment.
+
+  5. Multi-zone
+       Spread instances across zones in one region (e.g., us-central1-a/b/c)
+       to survive a single datacenter (zone) failure.
+
+  6. Multi-region
+       Deploy in more than one geographic region. This is where HA starts
+       overlapping with true regional Disaster Recovery.
+
+
+3.4  HA vs DR — CLEAR LINE FOR EXAMS
+------------------------------------
+  HA focus:  Keep the app up during common failures (VM death, zone blip).
+  DR focus:  Recover after major loss (region gone, data corrupted, ransomware).
+
+  You usually need BOTH:
+    • HA for day-to-day resilience
+    • DR for rare but severe events, guided by RTO/RPO
+
+
+3.5  REAL-LIFE PARALLEL
+-----------------------
+  Food delivery / UPI apps keep multiple zones healthy so dinner or salary-day
+  payments do not depend on one machine. That is HA. Separately, they still
+  need backups and (often) multi-region thinking for DR when an entire region
+  or a database corruption event hits.
+
+
+================================================================================
+4. DISASTER RECOVERY STRATEGIES (RPO & RTO CONSIDERATIONS)
+================================================================================
+
+4.1  RTO AND RPO — THE TWO DRIVING NUMBERS
+------------------------------------------
+  METRIC   FULL FORM                     MEANING
+  ─────────────────────────────────────────────────────────────────────────
+  RTO      Recovery Time Objective       Maximum acceptable downtime
+                                         (“How long can we be offline?”)
+  RPO      Recovery Point Objective      Maximum acceptable data loss,
+                                         measured in time
+                                         (“How much recent work can we lose?”)
+
+TIMELINE PICTURE
+----------------
+  Last good backup / replica ----[ RPO window ]---- DISASTER ----[ RTO ]---- Restored
+
+  • RPO looks BACKWARD from the disaster (data loss window).
+  • RTO looks FORWARD from the disaster (downtime window).
+
+  NEVER swap them in exam answers.
+
+
+4.2  HOW RTO/RPO DRIVE COST
+---------------------------
+  Lower RTO  → must failover / rebuild faster → more automation, more standby
+  Lower RPO  → must protect data more often → more frequent backups / replication
+
+  Near-zero RTO + near-zero RPO is expensive (hot standby or active-active).
+  Choose the cheapest strategy that still meets the business numbers.
+
+
+4.3  DR STRATEGY LADDER (COLD → HOT)
+------------------------------------
+  STRATEGY                 TYPICAL RTO        TYPICAL RPO        IDEA
+  ─────────────────────────────────────────────────────────────────────────
+  Backup & Restore         Hours              Hours              Store backups;
+                                                                 provision /
+                                                                 restore when
+                                                                 disaster hits.
+                                                                 Lowest cost,
+                                                                 slowest recovery.
+
+  Pilot Light              Tens of minutes    Minutes            Minimal core
+                                                                 always on in DR
+                                                                 site (e.g. DB
+                                                                 replica + tiny
+                                                                 services); scale
+                                                                 out on failover.
+
+  Warm Standby             Minutes            Minutes            Scaled-down but
+                                                                 complete copy
+                                                                 always running;
+                                                                 flip traffic and
+                                                                 scale up.
+
+  Hot Standby              Near zero          Near zero          Near full-size
+                                                                 duplicate ready;
+                                                                 fast failover;
+                                                                 high cost.
+
+  Multi-site Active-Active ~Zero              ~Zero              Multiple regions
+                                                                 serve live traffic
+                                                                 (global LB).
+                                                                 Hardest for data
+                                                                 consistency.
+
+
+4.4  STRATEGY DETAILS (KNOW THESE FOR EXAMS)
+--------------------------------------------
+  BACKUP & RESTORE
+    Steps (conceptual): take backups → on disaster create infrastructure →
+    restore data → validate → point users to recovered system.
+    Fits: blogs, internal portals, non-critical tools, many student systems
+    outside peak windows.
+
+  PILOT LIGHT
+    A “pilot light” keeps critical data tier alive in another region while
+    most compute stays off until needed. Faster than cold restore; still needs
+    a practiced scale-out runbook.
+
+  WARM STANDBY
+    A smaller production-like stack runs continuously. Failover is mostly
+    traffic shift + scale. Common for medium-critical business apps.
+
+  HOT STANDBY
+    Secondary is almost as capable as primary. Failover measured in seconds
+    to low minutes. Cost approaches running two production environments.
+
+  ACTIVE-ACTIVE
+    Two (or more) sites serve users at the same time. Global load balancing
+    sends users to healthy regions. Highest resilience and highest design
+    complexity (especially for databases and session state).
+
+
+4.5  CHOOSING A STRATEGY (BUSINESS FIRST)
+-----------------------------------------
+  WORKLOAD                         OFTEN APPROPRIATE TIER
+  ─────────────────────────────────────────────────────────────────────────
+  Campus result PDF site (peak)    Warm/Hot during result week; colder later
+  Food delivery order API          Hot / Active-Active mindset
+  Hospital EHR / patient data      Hot + strict RPO; audited restores
+  Nightly analytics / ML training  Backup & Restore + fault-tolerant retries
+  UPI / payments                   Very low RTO/RPO; multi-zone + strong DR
+
+  Principle: match DR spend to business pain, not to fashion.
+
+
+4.6  PEOPLE AND PROCESS (OFTEN FORGOTTEN)
+-----------------------------------------
+  Technology alone is not a strategy. Production DR also needs:
+  • Who declares a disaster?
+  • Who executes failover vs who communicates to users?
+  • How do you fail back safely?
+  • When was the last successful restore test?
+
+
+================================================================================
+5. CLOUD-BASED BACKUP SOLUTIONS & SNAPSHOTS
+================================================================================
+
+This section maps Unit II concepts to Google Cloud building blocks commonly
+taught with CC-II labs. Equivalent ideas exist on AWS/Azure (AMI snapshots,
+RDS backups, S3 versioning, etc.).
+
+5.1  COMPUTE ENGINE SNAPSHOTS
+-----------------------------
+  Purpose
+    Capture a point-in-time copy of a persistent disk.
+
+  Properties
+    • First snapshot is a full baseline; later snapshots are incremental
+    • Stored durably (backed by Cloud Storage infrastructure)
+    • You can create a new disk (and VM) from a snapshot during recovery
+
+  Example command shape:
+    gcloud compute disks snapshot DISK \
+      --snapshot-names=SNAPSHOT_NAME \
+      --zone=ZONE
+
+  Recovery playbook (conceptual)
+    1. Identify last known-good snapshot
+    2. Create disk from snapshot
+    3. Create / repair VM with that disk
+    4. Validate application and data
+    5. Re-attach load balancer / DNS if needed
+    6. Compare actual elapsed time against RTO
+
+
+5.2  CLOUD STORAGE (OBJECT BACKUPS & DURABILITY)
+------------------------------------------------
+  Useful features for DR:
+    • Object versioning — recover overwritten or deleted objects
+    • Dual-region / multi-region buckets — survive a regional outage better
+      than a single-region bucket
+    • Lifecycle policies — move older versions to Nearline / Coldline /
+      Archive to control cost
+
+  Use cases
+    Application artifacts, media, database dump exports, ML datasets,
+    Terraform state (with extreme care and locking), log archives.
+
+
+5.3  MANAGED DATABASE BACKUPS (Cloud SQL AND SIMILAR)
+-----------------------------------------------------
+  Cloud SQL typical capabilities (know the ideas):
+    • Automated backups on a schedule
+    • Point-in-Time Recovery (PITR) — restore to a specific timestamp
+      (classic example: corruption at 2:00 PM → restore to 1:30 PM)
+    • On-demand backups before risky schema changes
+
+  Firestore / Datastore style services:
+    • Export to Cloud Storage as part of a backup regimen
+
+  Why this matters
+    Disk snapshots of a DB VM are not always as clean as managed DB backups.
+    Prefer service-native backup/PITR for transactional data whenever available.
+
+
+5.4  GKE / CONTAINERIZED APPS
+-----------------------------
+  • Control plane etcd is managed by Google on GKE (operator still needs
+    application-level backup thinking).
+  • Persist meaningful state on Persistent Volumes and snapshot those disks /
+    backups according to policy.
+  • Multi-cluster / multi-region deployments support regional failover for
+    the compute layer — still pair with data-tier DR.
+
+
+5.5  APP ENGINE / SERVERLESS NOTE
+---------------------------------
+  Platform HA is largely Google-managed, but YOUR data in Cloud SQL,
+  Firestore, or Cloud Storage still needs a backup / DR policy. PaaS does
+  not remove shared responsibility for application data.
+
+
+5.6  GOOD PRACTICE FOR CLOUD BACKUPS
+------------------------------------
+  • Automate (scheduled snapshots / managed backups) — do not rely on memory
+  • Alert when backups fail
+  • Encrypt and restrict IAM on backup stores
+  • Keep at least one copy outside the primary region for regional DR
+  • Test restores on a schedule; record actual RTO
+  • For ransomware awareness: consider versioning / retention that survivors
+    cannot casually wipe with the same compromised credentials
+
+
+================================================================================
+6. CASE STUDIES ON DISASTER RECOVERY IMPLEMENTATION
+================================================================================
+
+These cases connect Unit II theory to lab-style patterns and recognizable
+real-world situations. Use them in viva / long-answer questions.
+
+
+--------------------------------------------------------------------------------
+CASE 1 — Fancy Store on Compute Engine (Unit Lab Pattern)
+--------------------------------------------------------------------------------
+  Problem
+    A single VM hosts the storefront. If that VM dies, the whole store is down.
+    This is a Single Point of Failure (SPOF).
+
+  Solution
+    • Managed Instance Group (identical VMs from a template)
+    • Health checks + autohealing
+    • HTTP(S) Load Balancer distributing traffic to healthy instances
+    • Named ports for frontend / orders / products style services
+
+  DR / HA level achieved
+    Strong High Availability within a zone (and better if multi-zone MIG).
+    This does NOT automatically equal full regional DR — still add backups
+    for data and consider multi-region if RTO requires it.
+
+  Teaching point
+    Replacing pets (unique servers) with cattle (identical replaceable
+    instances) is the foundation of cloud HA.
+
+
+--------------------------------------------------------------------------------
+CASE 2 — Global E-commerce Facing a Regional Outage
+--------------------------------------------------------------------------------
+  Problem
+    All production capacity sits in one region. A regional outage stops
+    checkout for every customer. Brand and revenue damage is immediate.
+
+  Solution
+    • Deploy across multiple regions
+    • Global HTTP(S) Load Balancer for traffic steering / failover
+    • Cloud CDN for static assets near users
+    • Warm / Hot standby or Active-Active depending on RTO/RPO budget
+    • Cross-region data replication + backups
+
+  DR level
+    Hot standby or Active-Active across regions.
+
+  Real-life parallel
+    Large sale events (e.g., major e-commerce festivals) and global SaaS
+    checkouts are designed so one region wobble does not cancel payments.
+
+
+--------------------------------------------------------------------------------
+CASE 3 — Data-Critical Application (Database Corruption / Bad Change)
+--------------------------------------------------------------------------------
+  Problem
+    At 2:00 PM a bad migration, accidental DELETE, or logical corruption
+    damages production data. The business needs approximately the 1:30 PM
+    state back.
+
+  Solution
+    • Cloud SQL (or equivalent) automated backups + Point-in-Time Recovery
+    • Restore to the required timestamp into a recovery instance
+    • Validate application integrity before reopening traffic
+    • Post-incident: add change guards (pre-migration on-demand backup)
+
+  DR level
+    Backup & Restore with a tightly defined RPO (minutes) and practiced RTO.
+
+  Teaching point
+    Replicas alone may copy corruption. Point-in-time backups let you roll
+    BACK in time — that is different from failing OVER to a healthy twin.
+
+
+--------------------------------------------------------------------------------
+CASE 4 — Batch Analytics / Non-Interactive Jobs
+--------------------------------------------------------------------------------
+  Problem
+    A long batch job fails when a Spot / Preemptible node disappears.
+
+  Solution
+    • Keep intermediate state in Cloud Storage
+    • Retry / resume logic from last checkpoint / watermark
+    • Do not buy Hot Standby for a job that can restart safely
+
+  DR level
+    Fault tolerance oriented; RTO can be longer; cost optimized.
+
+  Real-life parallel
+    ML training, recommendation batch jobs, nightly ETL — design for
+    interruption; save money where human-facing downtime is not the issue.
+
+
+--------------------------------------------------------------------------------
+CASE 5 — Streaming Spike (Hotstar / Live Sports Style)
+--------------------------------------------------------------------------------
+  Problem
+    Traffic multiplies massively during a live event. Failure mode is often
+    overload / capacity, not only a datacenter fire.
+
+  Solution themes
+    • Autoscaling compute
+    • CDN for video segments / static assets
+    • Multi-AZ / resilient origin design
+    • Graceful degradation (lower bitrate rather than total blackout)
+
+  Teaching point
+    “Disaster of demand” is still an availability problem. Capacity + CDN
+    patterns sit next to classic DR thinking.
+
+
+--------------------------------------------------------------------------------
+CASE 6 — Payments / UPI Style Systems
+--------------------------------------------------------------------------------
+  Problem
+    Minutes of downtime mean failed transactions and lost trust. Data loss
+    windows must be tiny.
+
+  Solution themes
+    • Multi-zone HA as baseline
+    • Very low RTO/RPO targets
+    • Strict failover drills / game days
+    • Careful database replication and backup strategy
+
+  Teaching point
+    Not every campus app needs banking-grade DR — but you must know why
+    payments pay for hotter tiers.
+
+
+--------------------------------------------------------------------------------
+CASE 7 — GitLab Database Incident (2017) — Industry Lesson
+--------------------------------------------------------------------------------
+  Publicly discussed outage involving production database deletion and
+  backup/restore difficulties.
+
+  Lessons that map to Unit II
+    • Multiple backup methods beat a single “we think backups exist”
+    • Restore testing matters as much as backup scheduling
+    • Clear RPO expectations reduce panic during incidents
+    • Access controls / change safety reduce likelihood of catastrophic deletes
+
+
+--------------------------------------------------------------------------------
+CASE 8 — Campus ERP / Exam Result Portal
+--------------------------------------------------------------------------------
+  Problem
+    Most of the year, moderate traffic. On result day, load explodes and
+    any outage causes chaos among students.
+
+  Practical DR approach
+    • Off-peak: Backup & Restore + basic HA may suffice
+    • Peak window: raise capacity, consider warmer standby, CDN for static
+      PDFs / pages, rate limiting / queues
+    • Always: tested backups of the marks database before publish day
+
+  Teaching point
+    RTO/RPO can be time-varying. Escalate DR tier for critical business
+    windows (exams, festivals, salary day).
+
+
+================================================================================
+7. EXAM QUICK-REVISION (IMPORTANT QUESTIONS)
+================================================================================
+
+Q1. Define Backup, Disaster, Disaster Recovery, and Business Continuity.
+A1. Backup = data copy for restore. Disaster = event causing unavailability /
+    data loss. DR = plan/process to restore IT. Continuity = keep business
+    services running overall.
+
+Q2. Why is backup not the same as disaster recovery?
+A2. Backups are one ingredient. DR also needs infrastructure rebuild/failover,
+    runbooks, people decisions, and tested restore within RTO.
+
+Q3. Differentiate RTO and RPO with one example each.
+A3. RTO = max downtime (e.g., payment API must return in 5 minutes).
+    RPO = max data loss window (e.g., lose at most 15 minutes of orders).
+
+Q4. List DR strategies from cold to hot.
+A4. Backup & Restore → Pilot Light → Warm Standby → Hot Standby →
+    Multi-site Active-Active.
+
+Q5. Differentiate High Availability and Fault Tolerance.
+A5. HA aims to minimize downtime using redundancy. Fault tolerance means
+    continuing correctly despite component failure.
+
+Q6. What is SPOF? Give a cloud fix.
+A6. Single Point of Failure — one component whose loss stops the system.
+    Fix example: replace one VM with a Managed Instance Group + load balancer.
+
+Q7. Name cloud backup tools/features you studied.
+A7. Compute Engine snapshots; Cloud Storage versioning & dual/multi-region;
+    Cloud SQL automated backups and PITR; application/PV backups for GKE.
+
+Q8. When would you choose Active-Active vs Backup & Restore?
+A8. Active-Active for near-zero downtime/data-loss needs (payments, major
+    commerce). Backup & Restore for cost-sensitive apps that can accept hours
+    of recovery time.
+
+Q9. Why test restores?
+A9. Untested backups may be incomplete, unrestorable, or too slow for RTO.
+    Game days measure real recovery time and improve runbooks.
+
+Q10. HA multi-zone vs regional DR — difference?
+A10. Multi-zone protects against one zone failure inside a region.
+     Regional DR needs multi-region design and cross-region data protection.
+
+
+================================================================================
+8. FUTURE SCOPE & INDUSTRY RELEVANCE
+================================================================================
+
+  • Chaos engineering / game days — deliberately inject failure to prove HA/DR
+  • Immutable / vaulted backups against ransomware
+  • Multi-cloud DR (rare but discussed for extreme vendor outage scenarios)
+  • Policy as code — enforce backup schedules and retention via CI/CD
+  • FinOps for DR — do not overbuy Active-Active for a weekly report job
+  • Career link — Cloud Architect, SRE, DevOps Engineer interview loops
+    frequently include RTO/RPO design questions
+
+REMEMBER
+--------
+  Design for failure. Measure RTO/RPO. Protect data offline from the blast
+  radius. Practice restore. Match spend to business impact.
+
+================================================================================
+END OF UNIT II STUDY NOTES — Disaster Recovery in the Cloud
+================================================================================
