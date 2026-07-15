@@ -1,8 +1,20 @@
 ================================================================================
-  CLOUD COMPUTING - II  |  UNIT - II
-  TOPIC: NETWORKING IN THE CLOUD
+  CLOUD COMPUTING - II  |  GCP LABS & REFERENCE NOTES
+  TOPIC: NETWORKING / COMPUTE / PaaS / GKE / IaC / CI-CD (extended lab guide)
   Institution: FIT & CS, Parul University
 ================================================================================
+
+IMPORTANT — UNIT II SYLLABUS NOTE
+---------------------------------
+  Official Unit II syllabus focus is **Disaster Recovery in Cloud**
+  (Backup & DR concepts, HA & Fault Tolerance, RPO/RTO strategies,
+  Cloud backups & snapshots, Case studies).
+
+  Use the dedicated study notes file for Unit II exams:
+    CC-II-Unit-II-Disaster-Recovery-in-Cloud.txt
+
+  This file remains as an extended lab/reference guide. Topic 9 below is a
+  short DR summary only — prefer the dedicated Unit II notes for full coverage.
 
 ================================================================================
 TOPIC 1: GOOGLE APP ENGINE (GAE) & CLOUD SERVICE MODELS
@@ -1855,31 +1867,41 @@ Google Cloud and AWS both use similar pillars. Pillars:
   • Use rolling updates for zero-downtime deployments
 
 ================================================================================
-TOPIC 9: DISASTER RECOVERY IN CLOUD
+TOPIC 9: DISASTER RECOVERY IN CLOUD  (SHORT SUMMARY)
 ================================================================================
+
+  FULL UNIT II NOTES (recommended for exams):
+    → CC-II-Unit-II-Disaster-Recovery-in-Cloud.txt
+
+  The section below is a compact checklist only.
 
 --------------------------------------------------------------------------------
 9.1  Concepts of Backup & Disaster Recovery
 --------------------------------------------------------------------------------
 
-  TERM            DEFINITION
+  TERM                 DEFINITION
   ─────────────────────────────────────────────────────────────────────────
-  Backup          Copy of data for restoration after loss/corruption
-  Disaster        Event causing system unavailability (outage, flood, cyberattack)
-  DR              Policies and procedures to restore operations after disaster
-  Business        Maximum acceptable downtime
-  Continuity      Keeping critical services running
+  Backup               Copy of data for restoration after loss/corruption
+  Disaster             Event causing system unavailability or data loss
+                       (outage, flood, cyberattack, bad change)
+  Disaster Recovery    Policies and procedures to restore IT operations
+  Business Continuity  Keeping critical business services running (broader
+                       than IT restore alone)
+
+  NOTE: Backup ≠ DR. DR also needs runbooks, rebuild/failover, and tested
+  restore within RTO.
 
 BACKUP TYPES:
   • Full backup — entire dataset
   • Incremental — changes since last backup
-  • Snapshot — point-in-time disk/image copy (Compute Engine snapshots, GCS versioning)
+  • Snapshot — point-in-time disk/image copy (Compute Engine snapshots,
+    GCS object versioning for objects)
 
 CLOUD BACKUP SERVICES (GCP):
-  • Cloud Storage — object versioning, cross-region replication
+  • Cloud Storage — object versioning, dual/multi-region buckets
   • Compute Engine snapshots — disk backups
-  • Cloud SQL automated backups
-  • App Engine Datastore export/backup (experimental/admin features in unit)
+  • Cloud SQL automated backups + point-in-time recovery (PITR)
+  • Firestore/Datastore export to GCS; GKE PV snapshots / multi-cluster
 
 --------------------------------------------------------------------------------
 9.2  High Availability & Fault Tolerance in Cloud
@@ -1899,7 +1921,10 @@ HA PATTERNS:
   • Health checks — detect and remove failed instances
   • Autohealing — automatic instance/Pod replacement
   • Multi-zone — deploy across zones in one region (us-central1-a, -b, -c)
-  • Multi-region — deploy in multiple geographic regions for DR
+  • Multi-region — deploy in multiple geographic regions for regional DR
+
+  HA ≠ full DR: multi-zone HA still needs cross-region data protection for
+  regional disasters.
 
 --------------------------------------------------------------------------------
 9.3  Disaster Recovery Strategies — RPO & RTO
@@ -1910,14 +1935,17 @@ HA PATTERNS:
   RTO      Recovery Time Objective          Max acceptable downtime
   RPO      Recovery Point Objective         Max acceptable data loss (time)
 
-DR STRATEGY TIERS:
+  Do not swap RTO and RPO.
+
+DR STRATEGY TIERS (cold → hot):
 
   ┌──────────────┬──────────┬──────────┬────────────────────────────────────┐
   │ Strategy     │ RTO      │ RPO      │ Description                        │
   ├──────────────┼──────────┼──────────┼────────────────────────────────────┤
   │ Backup &     │ Hours    │ Hours    │ Backups restored when disaster hits│
   │ Restore      │          │          │ Lowest cost, slowest recovery      │
-  │ Pilot Light  │ 10s min  │ Minutes  │ Minimal core systems always running│
+  │ Pilot Light  │ Tens of  │ Minutes  │ Minimal core systems always running│
+  │              │ minutes  │          │ then scale out on failover         │
   │ Warm         │ Minutes  │ Minutes  │ Scaled-down copy always running    │
   │ Standby      │          │          │                                    │
   │ Hot          │ Near zero│ Near zero│ Full duplicate environment active  │
@@ -1926,7 +1954,7 @@ DR STRATEGY TIERS:
   │ Active-Active│          │          │ (global load balancing)            │
   └──────────────┴──────────┴──────────┴────────────────────────────────────┘
 
-  • Lower RTO = faster recovery needed
+  • Lower RTO = faster recovery needed = usually higher cost
   • Lower RPO = less data loss acceptable = more frequent backups/replication
 
 --------------------------------------------------------------------------------
@@ -1935,46 +1963,53 @@ DR STRATEGY TIERS:
 
 COMPUTE ENGINE:
   gcloud compute disks snapshot DISK --snapshot-names=SNAPSHOT_NAME --zone=ZONE
-  • Snapshots stored in Cloud Storage (incremental, compressed)
+  • Snapshots stored durably (incremental after the first)
   • Create new disk/VM from snapshot for recovery
+  • Practice restores and measure elapsed time vs RTO
 
 CLOUD STORAGE:
   • Object versioning — recover previous file versions
-  • Cross-region / dual-region buckets — survive regional outage
+  • Dual-region / multi-region buckets — better regional resilience
   • Lifecycle policies — move old data to Nearline/Coldline/Archive
 
 MANAGED DATABASES:
   • Cloud SQL: automated daily backups, point-in-time recovery
   • Firestore/Datastore: export to GCS
+  • Prefer service-native DB backups/PITR over raw disk snapshots alone
 
 GKE:
-  • etcd backups managed by Google (control plane)
+  • Control plane etcd managed by Google
   • Application state in Persistent Volumes — snapshot PVs for DR
-  • Multi-cluster deployment for regional failover
+  • Multi-cluster deployment for regional failover (pair with data DR)
 
 --------------------------------------------------------------------------------
 9.5  Case Studies — DR Implementation
 --------------------------------------------------------------------------------
 
 CASE 1 — Fancy Store on Compute Engine (this unit's lab):
-  Problem: Single VM failure takes down the store
+  Problem: Single VM failure takes down the store (SPOF)
   Solution: MIG + health checks + autohealing + load balancer
-  DR level: HA within a zone; extend to multi-zone MIG for zone failure
+  Level: HA within a zone; extend to multi-zone MIG for zone failure;
+         still keep data backups for DR
 
 CASE 2 — Global e-commerce:
   Problem: Regional outage affects all users
   Solution: Multi-region deployment + global HTTP(S) load balancer + Cloud CDN
-  DR level: Hot standby or active-active across regions
+  Level: Hot standby or active-active across regions
 
 CASE 3 — Data-critical application:
   Problem: Database corruption at 2 PM; need restore to 1:30 PM state
   Solution: Cloud SQL point-in-time recovery (RPO = minutes)
-  DR level: Backup & restore with defined RTO/RPO SLAs
+  Level: Backup & restore with defined, tested RTO/RPO SLAs
+  Note: Replicas may copy corruption; PITR rolls BACK in time
 
 CASE 4 — Batch analytics:
-  Problem: Job failure on one node
-  Solution: Spot VMs + retry logic; state in Cloud Storage
-  DR level: Fault tolerant, not mission-critical RTO
+  Problem: Job failure / preemption on one node
+  Solution: Spot VMs + retry/checkpoint logic; state in Cloud Storage
+  Level: Fault tolerant; longer RTO often acceptable
+
+(See CC-II-Unit-II-Disaster-Recovery-in-Cloud.txt for expanded industry
+cases: streaming spikes, payments/UPI, GitLab 2017 lesson, campus ERP.)
 
 ================================================================================
 TOPIC 10: INTRODUCTION TO INFRASTRUCTURE AS CODE (IaC)
