@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
-"""Build a cloud-themed Unit II PowerPoint from course notes + real-life examples."""
+"""Unit II PowerPoint — Disaster Recovery in Cloud (syllabus-aligned)."""
 
 from pptx import Presentation
-from pptx.util import Inches, Pt, Emu
+from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
-from pptx.oxml.ns import nsmap
-from pptx.oxml import parse_xml
-from copy import deepcopy
 import os
 
-# ── Cloud theme palette (deep sky / navy — not purple-AI defaults) ──────────
+# Cloud theme (navy / sky — DR-focused)
 NAVY = RGBColor(0x0A, 0x1B, 0x2E)
 SKY = RGBColor(0x1A, 0x6F, 0xB5)
 SKY_LIGHT = RGBColor(0x3D, 0x9B, 0xE0)
@@ -23,6 +20,7 @@ SOFT = RGBColor(0xE8, 0xF1, 0xF8)
 INK = RGBColor(0x1C, 0x2B, 0x3A)
 MUTED = RGBColor(0x5A, 0x6B, 0x7C)
 GOLD = RGBColor(0xD4, 0xA0, 0x17)
+GREEN = RGBColor(0x1F, 0x8A, 0x5F)
 
 SLIDE_W = Inches(13.333)
 SLIDE_H = Inches(7.5)
@@ -32,26 +30,19 @@ prs.slide_width = SLIDE_W
 prs.slide_height = SLIDE_H
 
 
-def add_rect(slide, left, top, width, height, fill, line=None):
+def add_rect(slide, left, top, width, height, fill):
     shape = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, left, top, width, height)
     shape.fill.solid()
     shape.fill.fore_color.rgb = fill
-    if line is None:
-        shape.line.fill.background()
-    else:
-        shape.line.color.rgb = line
+    shape.line.fill.background()
     return shape
 
 
-def add_rounded(slide, left, top, width, height, fill, line=None):
+def add_rounded(slide, left, top, width, height, fill):
     shape = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left, top, width, height)
     shape.fill.solid()
     shape.fill.fore_color.rgb = fill
-    if line is None:
-        shape.line.fill.background()
-    else:
-        shape.line.color.rgb = line
-    # Softer corners
+    shape.line.fill.background()
     try:
         shape.adjustments[0] = 0.08
     except Exception:
@@ -68,8 +59,7 @@ def set_run(run, text, size=18, bold=False, color=INK, font="Calibri"):
 
 
 def tb(slide, left, top, width, height, lines, default_size=16, default_color=INK,
-       align=PP_ALIGN.LEFT, font="Calibri"):
-    """lines: list of str or (text, size, bold, color) tuples."""
+       align=PP_ALIGN.LEFT):
     box = slide.shapes.add_textbox(left, top, width, height)
     tf = box.text_frame
     tf.word_wrap = True
@@ -82,39 +72,35 @@ def tb(slide, left, top, width, height, lines, default_size=16, default_color=IN
             size = item[1] if len(item) > 1 else default_size
             bold = item[2] if len(item) > 2 else False
             color = item[3] if len(item) > 3 else default_color
-        if first:
-            p = tf.paragraphs[0]
-            first = False
-        else:
-            p = tf.add_paragraph()
+        p = tf.paragraphs[0] if first else tf.add_paragraph()
+        first = False
         p.alignment = align
         p.space_after = Pt(4)
         run = p.add_run()
-        set_run(run, text, size=size, bold=bold, color=color, font=font)
+        set_run(run, text, size=size, bold=bold, color=color)
     return box
 
 
-def footer(slide, page, total=None):
+def footer(slide, page):
     add_rect(slide, Inches(0), Inches(7.15), SLIDE_W, Inches(0.35), NAVY)
-    tb(slide, Inches(0.4), Inches(7.18), Inches(8), Inches(0.3),
-       [("CC-II  ·  Unit II  ·  Networking in the Cloud  ·  Parul University", 10, False, SOFT)])
-    label = f"{page}" if total is None else f"{page} / {total}"
+    tb(slide, Inches(0.4), Inches(7.18), Inches(10), Inches(0.3),
+       [("CC-II  ·  Unit II  ·  Disaster Recovery in Cloud  ·  Parul University", 10, False, SOFT)])
     tb(slide, Inches(11.5), Inches(7.18), Inches(1.5), Inches(0.3),
-       [(label, 10, False, SOFT)], align=PP_ALIGN.RIGHT)
+       [(str(page), 10, False, SOFT)], align=PP_ALIGN.RIGHT)
 
 
 def header_bar(slide, title, subtitle=None):
     add_rect(slide, Inches(0), Inches(0), SLIDE_W, Inches(1.15), NAVY)
     add_rect(slide, Inches(0), Inches(1.15), SLIDE_W, Inches(0.08), TEAL)
     tb(slide, Inches(0.5), Inches(0.22), Inches(12), Inches(0.5),
-       [(title, 28, True, WHITE)], font="Calibri")
+       [(title, 26, True, WHITE)])
     if subtitle:
         tb(slide, Inches(0.5), Inches(0.7), Inches(12), Inches(0.35),
            [(subtitle, 13, False, SKY_LIGHT)])
 
 
-def blank_content_slide():
-    slide = prs.slides.add_slide(prs.slide_layouts[6])  # blank
+def blank():
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
     add_rect(slide, Inches(0), Inches(0), SLIDE_W, SLIDE_H, CLOUD)
     return slide
 
@@ -124,700 +110,708 @@ def card(slide, left, top, width, height, title, body_lines, accent=SKY):
     add_rect(slide, left, top, Inches(0.1), height, accent)
     tb(slide, left + Inches(0.25), top + Inches(0.15), width - Inches(0.4), Inches(0.4),
        [(title, 15, True, NAVY)])
-    formatted = []
-    for line in body_lines:
-        if isinstance(line, str):
-            formatted.append((line, 12, False, MUTED))
-        else:
-            formatted.append(line)
+    formatted = [(ln, 12, False, MUTED) if isinstance(ln, str) else ln for ln in body_lines]
     tb(slide, left + Inches(0.25), top + Inches(0.55), width - Inches(0.4), height - Inches(0.7),
        formatted, default_size=12, default_color=MUTED)
 
 
 def example_banner(slide, top, text):
-    """Highlight real-life example strip."""
     add_rounded(slide, Inches(0.5), top, Inches(12.3), Inches(0.55), RGBColor(0xFF, 0xF4, 0xEC))
     tb(slide, Inches(0.7), top + Inches(0.1), Inches(12), Inches(0.4),
-       [(f"🌍  Real life:  {text}", 13, True, CORAL)])
+       [(f"Real life:  {text}", 13, True, CORAL)])
 
-
-# ═══════════════════════════════════════════════════════════════════════════
-# SLIDE BUILDERS
-# ═══════════════════════════════════════════════════════════════════════════
 
 PAGE = 0
 
 
-def next_page():
+def p():
     global PAGE
     PAGE += 1
     return PAGE
 
 
-# ── 1. Title ───────────────────────────────────────────────────────────────
-s = blank_content_slide()
+# ═══════════════════════════════════════════════════════════════════════════
+# 1. TITLE
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
 add_rect(s, Inches(0), Inches(0), SLIDE_W, SLIDE_H, NAVY)
-# Decorative sky bands
 add_rect(s, Inches(0), Inches(0), SLIDE_W, Inches(0.15), TEAL)
 add_rect(s, Inches(0), Inches(7.35), SLIDE_W, Inches(0.15), SKY)
-# Soft cloud shapes (ellipses)
-for left, top, w, h in [
-    (10.2, 0.8, 2.8, 1.2), (0.3, 5.8, 3.2, 1.0), (9.5, 5.5, 3.5, 1.3),
-]:
+for left, top, w, h in [(10.2, 0.8, 2.8, 1.2), (0.3, 5.8, 3.2, 1.0), (9.5, 5.5, 3.5, 1.3)]:
     sh = s.shapes.add_shape(MSO_SHAPE.OVAL, Inches(left), Inches(top), Inches(w), Inches(h))
     sh.fill.solid()
     sh.fill.fore_color.rgb = RGBColor(0x14, 0x2E, 0x4A)
     sh.line.fill.background()
 
-tb(s, Inches(0.8), Inches(1.8), Inches(11.5), Inches(0.4),
-   [("CLOUD COMPUTING – II", 16, True, TEAL)], font="Calibri")
-tb(s, Inches(0.8), Inches(2.3), Inches(11.5), Inches(1.0),
-   [("Networking in the Cloud", 44, True, WHITE)], font="Calibri")
-tb(s, Inches(0.8), Inches(3.4), Inches(11.5), Inches(0.5),
-   [("Unit II  ·  Base Presentation", 20, False, SKY_LIGHT)])
-tb(s, Inches(0.8), Inches(4.3), Inches(11.5), Inches(0.8),
-   [
-       ("Google App Engine  ·  Compute Engine  ·  Load Balancing  ·  GKE", 14, False, SOFT),
-       ("Cloud Functions  ·  DR  ·  IaC  ·  CI/CD  + Real-world case studies", 14, False, SOFT),
-   ])
-tb(s, Inches(0.8), Inches(5.8), Inches(11.5), Inches(0.5),
+tb(s, Inches(0.8), Inches(1.7), Inches(11.5), Inches(0.4),
+   [("CLOUD COMPUTING – II  ·  UNIT II", 15, True, TEAL)])
+tb(s, Inches(0.8), Inches(2.25), Inches(11.5), Inches(1.0),
+   [("Disaster Recovery", 44, True, WHITE),
+    ("in the Cloud", 44, True, WHITE)])
+tb(s, Inches(0.8), Inches(4.3), Inches(11.5), Inches(1.0),
+   [("Backup & DR Concepts  ·  High Availability & Fault Tolerance", 14, False, SOFT),
+    ("RPO & RTO Strategies  ·  Cloud Backups & Snapshots  ·  Case Studies", 14, False, SOFT)])
+tb(s, Inches(0.8), Inches(5.8), Inches(11.5), Inches(0.4),
    [("FIT & CS  ·  Parul University", 14, False, MUTED)])
-next_page()
+p()
 
 
-# ── 2. Agenda ──────────────────────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Learning Roadmap", "Eleven topics that build a production-ready cloud networking mindset")
-footer(s, next_page())
-
+# ═══════════════════════════════════════════════════════════════════════════
+# 2. AGENDA — exact syllabus topics
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Unit II Syllabus — Agenda", "Disaster Recovery in Cloud")
+footer(s, p())
 topics = [
-    ("01", "App Engine & Service Models", SKY),
-    ("02", "Compute Engine & Scalable Web Apps", TEAL),
-    ("03", "MIG, Load Balancers, CDN & Autohealing", CORAL),
-    ("04", "App Engine Flexible & PaaS Deep Dive", SKY),
-    ("05", "Event-Driven Cloud Functions", TEAL),
-    ("06–07", "GKE Overview & Container Deployments", CORAL),
-    ("08", "Cloud Principles & Well-Architected", SKY),
-    ("09", "Disaster Recovery in the Cloud", TEAL),
-    ("10–11", "Infrastructure as Code & CI/CD", CORAL),
+    ("01", "Disaster Recovery in Cloud", "Why DR matters; what a cloud disaster looks like"),
+    ("02", "Backup & DR Concepts", "Backup, disaster, DR, business continuity"),
+    ("03", "HA & Fault Tolerance", "Redundancy, SPOF, multi-zone / multi-region"),
+    ("04", "DR Strategies · RPO & RTO", "Backup-restore → pilot → warm → hot → active-active"),
+    ("05", "Cloud Backups & Snapshots", "GCE snapshots, GCS, Cloud SQL, GKE state"),
+    ("06", "Case Studies", "Lab + industry DR implementations"),
 ]
-for i, (num, title, color) in enumerate(topics):
+for i, (num, title, sub) in enumerate(topics):
     col = i % 3
     row = i // 3
     left = Inches(0.5 + col * 4.2)
-    top = Inches(1.55 + row * 1.7)
-    add_rounded(s, left, top, Inches(3.9), Inches(1.4), WHITE)
-    add_rect(s, left, top, Inches(3.9), Inches(0.12), color)
-    tb(s, left + Inches(0.25), top + Inches(0.35), Inches(3.4), Inches(0.4),
-       [(num, 22, True, color)])
-    tb(s, left + Inches(0.25), top + Inches(0.8), Inches(3.4), Inches(0.45),
-       [(title, 13, True, NAVY)])
+    top = Inches(1.55 + row * 2.4)
+    add_rounded(s, left, top, Inches(3.95), Inches(2.1), WHITE)
+    add_rect(s, left, top, Inches(3.95), Inches(0.12), [SKY, TEAL, CORAL, SKY, TEAL, CORAL][i])
+    tb(s, left + Inches(0.25), top + Inches(0.4), Inches(3.4), Inches(0.4),
+       [(num, 22, True, [SKY, TEAL, CORAL, SKY, TEAL, CORAL][i])])
+    tb(s, left + Inches(0.25), top + Inches(0.95), Inches(3.4), Inches(0.4),
+       [(title, 14, True, NAVY)])
+    tb(s, left + Inches(0.25), top + Inches(1.4), Inches(3.4), Inches(0.5),
+       [(sub, 12, False, MUTED)])
 
 
-# ── 3. Why Unit II matters ─────────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Why “Networking in the Cloud” Matters", "Unit II connects compute, traffic, resilience, and delivery")
-footer(s, next_page())
-points = [
-    ("Compute choices", "PaaS (App Engine), IaaS (Compute Engine), FaaS (Functions), containers (GKE) — pick the right abstraction."),
-    ("Traffic fabric", "Load balancers, named ports, health checks, and CDN move users to healthy backends worldwide."),
-    ("Resilience", "MIG autohealing, rolling updates, multi-zone GKE, and DR strategies keep apps alive under failure."),
-    ("Delivery speed", "IaC + CI/CD turn Fancy Store / GKE labs into repeatable production pipelines."),
-]
-for i, (t, b) in enumerate(points):
-    top = Inches(1.45 + i * 1.25)
-    add_rounded(s, Inches(0.5), top, Inches(12.3), Inches(1.1), WHITE)
-    add_rect(s, Inches(0.5), top, Inches(0.12), Inches(1.1), [SKY, TEAL, CORAL, GOLD][i])
-    tb(s, Inches(0.9), top + Inches(0.2), Inches(11.5), Inches(0.35), [(t, 16, True, NAVY)])
-    tb(s, Inches(0.9), top + Inches(0.55), Inches(11.5), Inches(0.4), [(b, 13, False, MUTED)])
+# ═══════════════════════════════════════════════════════════════════════════
+# 3. What is Disaster Recovery in Cloud?
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "What is Disaster Recovery in Cloud?", "Policies + people + technology to restore operations after a disaster")
+footer(s, p())
 
-
-# ── 4. Topic 1 — GAE ───────────────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Topic 1 · Google App Engine (GAE)", "Fully managed PaaS — write code, Google runs the platform")
-footer(s, next_page())
-card(s, Inches(0.5), Inches(1.45), Inches(6.0), Inches(3.6), "What is GAE?", [
-    "• Platform-as-a-Service on Google Cloud",
-    "• Google handles servers, OS, scaling, LB",
-    "• You deploy app code — not VMs",
-    "• Sandboxed runtimes + auto-scaling",
-    "• Built-in APIs: Memcache, URL Fetch,",
-    "  Cloud Storage, Blobstore (legacy)",
-    "• Free tier for CPU, storage, API calls",
-], SKY)
-card(s, Inches(6.8), Inches(1.45), Inches(6.0), Inches(3.6), "Standard vs Flexible", [
-    "STANDARD",
-    "• Strict sandbox, fast cold starts",
-    "• Fine-grained auto scale, lower cost",
-    "",
-    "FLEXIBLE",
-    "• Docker containers on GCE VMs",
-    "• Custom runtimes & longer requests",
-    "• Full VPC networking options",
-], TEAL)
-example_banner(s, Inches(5.3),
-               "Snapchat, Rovio (Angry Birds), and Khan Academy scaled early on App Engine — proving PaaS can serve millions without ops teams babysitting VMs.")
-
-
-# ── 5. IaaS / PaaS / SaaS ──────────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Cloud Service Models — Where GAE Fits", "Architecture decisions start with who manages what")
-footer(s, next_page())
-models = [
-    ("IaaS", "Infrastructure", "You manage OS, runtime, apps\nProvider: hardware + virt",
-     "Compute Engine, Amazon EC2", CORAL),
-    ("PaaS", "Platform", "You deploy code only\nProvider: OS, scale, runtime",
-     "App Engine, Heroku, Azure App Service", SKY),
-    ("SaaS", "Software", "Ready-to-use product\nYou just use the UI / API",
-     "Gmail, Docs, Salesforce, Zoom", TEAL),
-]
-for i, (abbr, name, desc, examples, color) in enumerate(models):
-    left = Inches(0.5 + i * 4.2)
-    add_rounded(s, left, Inches(1.5), Inches(3.95), Inches(4.2), WHITE)
-    add_rect(s, left, Inches(1.5), Inches(3.95), Inches(0.7), color)
-    tb(s, left + Inches(0.2), Inches(1.6), Inches(3.5), Inches(0.5),
-       [(abbr, 26, True, WHITE)], align=PP_ALIGN.CENTER)
-    tb(s, left + Inches(0.25), Inches(2.45), Inches(3.5), Inches(0.4),
-       [(name, 16, True, NAVY)], align=PP_ALIGN.CENTER)
-    lines = desc.split("\n")
-    tb(s, left + Inches(0.3), Inches(3.0), Inches(3.4), Inches(1.2),
-       [(ln, 13, False, MUTED) for ln in lines], align=PP_ALIGN.CENTER)
-    tb(s, left + Inches(0.3), Inches(4.5), Inches(3.4), Inches(0.9),
-       [("Examples", 11, True, color), (examples, 12, False, INK)], align=PP_ALIGN.CENTER)
-
-
-# ── 6. Real-life service model picker ──────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Real-Life Architecture Choices", "How top products map to IaaS / PaaS / FaaS / Containers")
-footer(s, next_page())
-cases = [
-    ("Netflix", "IaaS + Containers", "Chaos engineering on VMs/K8s; global CDN (Open Connect) — need full control of media pipelines."),
-    ("Shopify", "PaaS / Containers", "Merchant storefronts surge on Black Friday → auto-scale platforms beat hand-tuned VMs."),
-    ("Duolingo", "Functions + K8s", "Lesson XP events & notifications via event-driven functions; core APIs on containers."),
-    ("Zomato / Swiggy", "Microservices", "Order, menu, delivery tracking as separate services behind LBs — Fancy Store pattern at city scale."),
-]
-for i, (name, stack, why) in enumerate(cases):
-    top = Inches(1.4 + i * 1.3)
-    add_rounded(s, Inches(0.5), top, Inches(12.3), Inches(1.15), WHITE)
-    add_rect(s, Inches(0.5), top, Inches(2.4), Inches(1.15), NAVY)
-    tb(s, Inches(0.65), top + Inches(0.25), Inches(2.1), Inches(0.35), [(name, 14, True, WHITE)])
-    tb(s, Inches(0.65), top + Inches(0.65), Inches(2.1), Inches(0.35), [(stack, 11, False, SKY_LIGHT)])
-    tb(s, Inches(3.2), top + Inches(0.35), Inches(9.3), Inches(0.6), [(why, 13, False, MUTED)])
-
-
-# ── 7. Topic 2 — Compute Engine ────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Topic 2 · Compute Engine — Scalable Web Apps", "IaaS foundation: VMs, Cloud Shell, storage, firewalls")
-footer(s, next_page())
-card(s, Inches(0.5), Inches(1.4), Inches(4.0), Inches(4.5), "Core building blocks", [
-    "• Regions & zones for locality",
-    "• Compute Engine API enabled",
-    "• Cloud Storage buckets for code",
-    "• Startup scripts automate boot:",
-    "    install runtime → pull code",
-    "    → Supervisor → non-root user",
-    "• Network tags + firewall rules",
-    "• gcloud CLI / Cloud Shell",
-], SKY)
-card(s, Inches(4.7), Inches(1.4), Inches(4.0), Inches(4.5), "Fancy Store lab pattern", [
-    "Monolith → microservices:",
-    "• Frontend  :8080",
-    "• Orders    :8081",
-    "• Products  :8082",
-    "",
-    "Code lives in GCS; VMs pull at",
-    "startup (stateless image).",
-    "Firewall tags: frontend / backend",
-], TEAL)
-card(s, Inches(8.9), Inches(1.4), Inches(4.0), Inches(4.5), "Real-life parallels", [
-    "• Banks lift legacy Java apps",
-    "  onto GCE before containerizing",
-    "• Media encode farms use custom",
-    "  machine types / GPUs",
-    "• “Pets → Cattle”: identical VMs",
-    "  from templates, not unique pets",
-    "• Same idea as AWS EC2 + S3",
-    "  user-data scripts",
+card(s, Inches(0.5), Inches(1.4), Inches(6.0), Inches(3.5), "In the cloud, a “disaster” can be…", [
+    "• Regional outage (power, network, cooling)",
+    "• Zone failure (single datacenter impact)",
+    "• Cyberattack / ransomware encrypting data",
+    "• Accidental delete or bad deploy",
+    "• Natural disaster near a region",
+    "• Vendor / dependency failure cascading out",
 ], CORAL)
 
+card(s, Inches(6.8), Inches(1.4), Inches(6.0), Inches(3.5), "DR answers three questions", [
+    "1. How fast must we be back?  → RTO",
+    "2. How much data can we lose? → RPO",
+    "3. How do we actually recover?",
+    "     backups, replicas, failover, runbooks",
+    "",
+    "Cloud advantage: spare capacity on demand,",
+    "snapshots, multi-region, IaC rebuilds.",
+], SKY)
 
-# ── 8. Topic 3 opener ──────────────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Topic 3 · Beyond a Single VM", "MIG · Load Balancers · Autohealing · CDN — the heart of cloud networking")
-footer(s, next_page())
-problems = [
-    ("Single point of failure", "Managed Instance Groups"),
-    ("No load distribution", "HTTP(S) Load Balancer"),
-    ("Manual scaling", "Autoscaling policies"),
-    ("No auto recovery", "Health checks + autohealing"),
-    ("Slow global media", "Cloud CDN at the edge"),
-    ("Risky deploy nights", "Rolling updates / replace"),
+example_banner(s, Inches(5.2),
+               "When AWS us-east-1 wobbles, half the internet feels it — DR is not optional for money, health, or exam-result systems.")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 4. Backup vs DR vs Business Continuity
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Concepts — Backup, Disaster, DR & Continuity", "These four words are related but not the same")
+footer(s, p())
+
+defs = [
+    ("Backup", "A copy of data kept so you can restore after loss or corruption.", SKY),
+    ("Disaster", "An event that makes systems unavailable — outage, flood, cyberattack.", CORAL),
+    ("Disaster Recovery (DR)", "Policies & procedures to restore IT operations after a disaster.", TEAL),
+    ("Business Continuity", "Keeping critical business services running for users / revenue.", GOLD),
 ]
-for i, (prob, sol) in enumerate(problems):
+for i, (t, d, c) in enumerate(defs):
+    top = Inches(1.4 + i * 1.25)
+    add_rounded(s, Inches(0.5), top, Inches(12.3), Inches(1.1), WHITE)
+    add_rect(s, Inches(0.5), top, Inches(3.4), Inches(1.1), c if i < 3 else NAVY)
+    tb(s, Inches(0.7), top + Inches(0.35), Inches(3.0), Inches(0.45), [(t, 14, True, WHITE)])
+    tb(s, Inches(4.2), top + Inches(0.35), Inches(8.3), Inches(0.5), [(d, 14, False, MUTED)])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 5. Backup types
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Backup Types You Must Know", "Full · Incremental · Snapshot — trade space, time, and restore complexity")
+footer(s, p())
+
+types = [
+    ("Full Backup", "Entire dataset every run",
+     "Simple restore\nSlow + expensive\nOften weekly baseline", SKY),
+    ("Incremental", "Only changes since last backup",
+     "Fast & cheap to take\nRestore = full + chain\nCommon daily schedule", TEAL),
+    ("Snapshot", "Point-in-time disk/image copy",
+     "Near-instant capture\nIdeal for VMs & disks\nGCP: GCE / PV snapshots", CORAL),
+]
+for i, (t, sub, body, c) in enumerate(types):
+    left = Inches(0.5 + i * 4.2)
+    add_rounded(s, left, Inches(1.5), Inches(3.95), Inches(4.2), WHITE)
+    add_rect(s, left, Inches(1.5), Inches(3.95), Inches(0.7), c)
+    tb(s, left + Inches(0.2), Inches(1.6), Inches(3.5), Inches(0.5),
+       [(t, 18, True, WHITE)], align=PP_ALIGN.CENTER)
+    tb(s, left + Inches(0.25), Inches(2.5), Inches(3.5), Inches(0.5),
+       [(sub, 13, True, NAVY)], align=PP_ALIGN.CENTER)
+    lines = body.split("\n")
+    tb(s, left + Inches(0.35), Inches(3.3), Inches(3.3), Inches(2.0),
+       [(ln, 13, False, MUTED) for ln in lines], align=PP_ALIGN.CENTER)
+
+example_banner(s, Inches(6.0),
+               "PhonePe / banks: full weekly + frequent incrementals/snapshots so a 2 PM corruption can roll back near 1:30 PM (tight RPO).")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 6. Why backup alone is not enough
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Backup ≠ Disaster Recovery", "Having a zip file is not a recovery plan")
+footer(s, p())
+
+rows = [
+    ("Only backups", "You still need people, runbooks, spare infra, tested restore time, and a decision of WHEN to fail over."),
+    ("Untested restores", "Backups that never restore successfully are false comfort — practice game days."),
+    ("Same-region copies", "A region outage can wipe primary AND local backups. Cross-region matters."),
+    ("No RTO/RPO", "Without targets you overspend on gold-plated DR or underserve a critical app."),
+]
+for i, (t, d) in enumerate(rows):
+    top = Inches(1.4 + i * 1.25)
+    add_rounded(s, Inches(0.5), top, Inches(12.3), Inches(1.1), WHITE)
+    add_rect(s, Inches(0.5), top, Inches(0.12), Inches(1.1), [CORAL, SKY, TEAL, GOLD][i])
+    tb(s, Inches(0.9), top + Inches(0.2), Inches(11.5), Inches(0.35), [(t, 15, True, NAVY)])
+    tb(s, Inches(0.9), top + Inches(0.55), Inches(11.5), Inches(0.4), [(d, 13, False, MUTED)])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 7. HA & Fault Tolerance definitions
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "High Availability & Fault Tolerance", "Two goals that often work together — but mean different things")
+footer(s, p())
+
+card(s, Inches(0.5), Inches(1.4), Inches(6.0), Inches(4.5), "High Availability (HA)", [
+    "Minimize downtime through redundancy.",
+    "",
+    "Goal: service stays reachable for users.",
+    "Often measured as uptime % (e.g. 99.9%).",
+    "",
+    "Cloud examples:",
+    "• MIG with 2+ instances",
+    "• Load balancer + health checks",
+    "• Multi-zone deployments",
+], SKY)
+
+card(s, Inches(6.8), Inches(1.4), Inches(6.0), Inches(4.5), "Fault Tolerance (FT)", [
+    "Continue operating despite a component",
+    "failure — ideally without the user noticing.",
+    "",
+    "Cloud examples:",
+    "• Autohealing recreates a bad VM",
+    "• Replica Pods serve while one dies",
+    "• Stateless apps pull code from GCS",
+    "",
+    "HA often uses FT building blocks.",
+], TEAL)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 8. Key HA concepts table
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "HA Building Blocks", "Concept → meaning → unit / cloud example")
+footer(s, p())
+
+headers = ["Concept", "Meaning", "Cloud / Unit Example"]
+rows_ha = [
+    ["High Availability", "Minimize downtime via redundancy", "MIG with 2+ instances"],
+    ["Fault Tolerance", "Survive component failure", "Autohealing recreates VM"],
+    ["Redundancy", "Duplicate components", "Kubernetes replicas = 3"],
+    ["SPOF", "One failure stops everything", "Single VM store → fixed by MIG"],
+]
+for i, h in enumerate(headers):
+    left = Inches(0.5 + i * 4.2)
+    add_rect(s, left, Inches(1.45), Inches(4.05), Inches(0.55), NAVY)
+    tb(s, left + Inches(0.15), Inches(1.55), Inches(3.75), Inches(0.4),
+       [(h, 13, True, WHITE)], align=PP_ALIGN.CENTER)
+for r, row in enumerate(rows_ha):
+    for c, cell in enumerate(row):
+        left = Inches(0.5 + c * 4.2)
+        top = Inches(2.05 + r * 0.9)
+        bg = WHITE if r % 2 == 0 else SOFT
+        add_rect(s, left, top, Inches(4.05), Inches(0.85), bg)
+        tb(s, left + Inches(0.15), top + Inches(0.25), Inches(3.75), Inches(0.45),
+           [(cell, 12, c == 0, NAVY if c == 0 else MUTED)], align=PP_ALIGN.CENTER)
+
+tb(s, Inches(0.5), Inches(5.9), Inches(12.3), Inches(0.7),
+   [("SPOF reminder: if losing ONE thing kills the app, you do not have HA yet.", 14, True, CORAL)])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 9. HA patterns
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "HA Patterns in the Cloud", "From one zone to planet-scale")
+footer(s, p())
+
+patterns = [
+    ("Multi-instance", "MIG / K8s replicas so one crash is not an outage"),
+    ("Load balancing", "Send traffic only to healthy backends"),
+    ("Health checks", "Detect failures early; remove bad nodes"),
+    ("Autohealing", "Replace unhealthy VMs/Pods automatically"),
+    ("Multi-zone", "Survive one datacenter failure in a region"),
+    ("Multi-region", "Survive a whole region outage (true DR)"),
+]
+for i, (t, d) in enumerate(patterns):
+    col = i % 3
+    row = i // 3
+    left = Inches(0.5 + col * 4.2)
+    top = Inches(1.45 + row * 2.4)
+    add_rounded(s, left, top, Inches(3.95), Inches(2.15), WHITE)
+    add_rect(s, left, top, Inches(3.95), Inches(0.55), [SKY, TEAL, CORAL, GOLD, SKY, TEAL][i])
+    tb(s, left + Inches(0.2), top + Inches(0.12), Inches(3.5), Inches(0.4),
+       [(t, 14, True, WHITE)], align=PP_ALIGN.CENTER)
+    tb(s, left + Inches(0.25), top + Inches(0.9), Inches(3.5), Inches(0.9),
+       [(d, 14, False, MUTED)], align=PP_ALIGN.CENTER)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 10. RTO & RPO
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "RTO & RPO — The Two Numbers That Drive DR Cost", "Decide these BEFORE picking a DR strategy")
+footer(s, p())
+
+card(s, Inches(0.5), Inches(1.4), Inches(6.0), Inches(3.6), "RTO — Recovery Time Objective", [
+    "Maximum acceptable downtime.",
+    "",
+    "“How long can we be offline?”",
+    "",
+    "Example: payment UPI app RTO ≈ seconds–minutes.",
+    "Campus portal after exams may accept hours.",
+], CORAL)
+
+card(s, Inches(6.8), Inches(1.4), Inches(6.0), Inches(3.6), "RPO — Recovery Point Objective", [
+    "Maximum acceptable data loss (time window).",
+    "",
+    "“How much recent work can we afford to lose?”",
+    "",
+    "Hourly backup ⇒ RPO up to ~1 hour.",
+    "Sync replication ⇒ RPO near zero.",
+], SKY)
+
+example_banner(s, Inches(5.3),
+               "Lower RTO + lower RPO = more money (hot standby / active-active). Match the strategy to business pain, not to fashion.")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 11. Visual timeline RTO RPO
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "How RPO and RTO Sit on a Timeline", "Disaster → restore → back in business")
+footer(s, p())
+
+# Timeline visual using boxes
+add_rounded(s, Inches(0.5), Inches(2.2), Inches(12.3), Inches(2.8), WHITE)
+# Events
+events = [
+    (1.0, "Last good\nbackup", TEAL),
+    (4.5, "DISASTER\nhits", CORAL),
+    (8.0, "Service\nrestored", SKY),
+    (11.0, "Users\nback", GREEN),
+]
+for x, label, c in events:
+    circ = s.shapes.add_shape(MSO_SHAPE.OVAL, Inches(x), Inches(3.1), Inches(0.45), Inches(0.45))
+    circ.fill.solid()
+    circ.fill.fore_color.rgb = c
+    circ.line.fill.background()
+    tb(s, Inches(x - 0.55), Inches(3.7), Inches(1.6), Inches(0.8),
+       [(label, 11, True, NAVY)], align=PP_ALIGN.CENTER)
+
+# Line
+add_rect(s, Inches(1.2), Inches(3.28), Inches(9.9), Inches(0.08), SOFT)
+
+tb(s, Inches(1.2), Inches(1.5), Inches(10), Inches(0.5),
+   [("RPO = time from last good backup → disaster  (data you may lose)", 14, True, TEAL)])
+tb(s, Inches(1.2), Inches(5.3), Inches(10), Inches(0.5),
+   [("RTO = time from disaster → service restored  (downtime users feel)", 14, True, CORAL)])
+tb(s, Inches(0.5), Inches(6.0), Inches(12.3), Inches(0.7),
+   [("Exam tip: never swap the two. RPO = data loss window · RTO = downtime window.", 13, True, NAVY)])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 12. DR Strategy tiers table
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Disaster Recovery Strategy Tiers", "From cheapest/slowest to near-zero downtime")
+footer(s, p())
+
+headers2 = ["Strategy", "Typical RTO", "Typical RPO", "Idea"]
+rows2 = [
+    ["Backup & Restore", "Hours", "Hours", "Restore when disaster hits — lowest cost"],
+    ["Pilot Light", "Tens of minutes", "Minutes", "Minimal core always on; scale out on failover"],
+    ["Warm Standby", "Minutes", "Minutes", "Scaled-down copy always running"],
+    ["Hot Standby", "Near zero", "Near zero", "Full duplicate active — costly"],
+    ["Multi-site Active-Active", "~Zero", "~Zero", "Both regions serve traffic (global LB)"],
+]
+for i, h in enumerate(headers2):
+    left = Inches(0.35 + i * 3.2)
+    add_rect(s, left, Inches(1.4), Inches(3.1), Inches(0.5), NAVY)
+    tb(s, left + Inches(0.08), Inches(1.48), Inches(2.95), Inches(0.35),
+       [(h, 12, True, WHITE)], align=PP_ALIGN.CENTER)
+for r, row in enumerate(rows2):
+    for c, cell in enumerate(row):
+        left = Inches(0.35 + c * 3.2)
+        top = Inches(1.95 + r * 0.8)
+        bg = WHITE if r % 2 == 0 else SOFT
+        add_rect(s, left, top, Inches(3.1), Inches(0.75), bg)
+        color = [SKY, TEAL, CORAL, GOLD, GREEN][r] if c == 0 else INK
+        tb(s, left + Inches(0.08), top + Inches(0.2), Inches(2.95), Inches(0.4),
+           [(cell, 11, c == 0, color)], align=PP_ALIGN.CENTER)
+
+tb(s, Inches(0.5), Inches(6.2), Inches(12.3), Inches(0.5),
+   [("Rule: lower RTO/RPO ⇒ climb the ladder ⇒ higher ongoing cost.", 13, True, MUTED)])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 13. Strategy deep dive 1 — Backup & Restore / Pilot
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Strategy Deep Dive — Backup & Restore · Pilot Light", "Cost-efficient tiers for many university / SMB apps")
+footer(s, p())
+
+card(s, Inches(0.5), Inches(1.4), Inches(6.0), Inches(4.5), "Backup & Restore", [
+    "How it works",
+    "• Periodic backups to Cloud Storage / snapshots",
+    "• On disaster: provision infra + restore data",
+    "",
+    "Pros: cheapest; simple to understand",
+    "Cons: longest RTO; restore must be practiced",
+    "",
+    "Good for: blogs, internal tools, labs,",
+    "non-critical reporting systems",
+], SKY)
+
+card(s, Inches(6.8), Inches(1.4), Inches(6.0), Inches(4.5), "Pilot Light", [
+    "How it works",
+    "• Tiny core always running in DR region",
+    "  (e.g. DB replica + minimal services)",
+    "• On disaster: scale up compute fleets",
+    "",
+    "Pros: faster than cold restore",
+    "Cons: some always-on cost + runbook skill",
+    "",
+    "Good for: business apps that can wait",
+    "tens of minutes but not hours",
+], TEAL)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 14. Strategy deep dive 2 — Warm / Hot / Active-Active
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Strategy Deep Dive — Warm · Hot · Active-Active", "When downtime is measured in money, brand, or safety")
+footer(s, p())
+
+card(s, Inches(0.4), Inches(1.4), Inches(4.1), Inches(4.5), "Warm Standby", [
+    "Scaled-down full copy",
+    "always running in DR site.",
+    "",
+    "Flip DNS / LB → scale up.",
+    "",
+    "RTO/RPO: minutes.",
+    "Cost: medium.",
+], SKY)
+card(s, Inches(4.65), Inches(1.4), Inches(4.1), Inches(4.5), "Hot Standby", [
+    "Near full-size duplicate",
+    "environment is ready.",
+    "",
+    "Failover is almost immediate.",
+    "",
+    "RTO/RPO: near zero.",
+    "Cost: high (2× many resources).",
+], CORAL)
+card(s, Inches(8.9), Inches(1.4), Inches(4.0), Inches(4.5), "Active-Active", [
+    "Multiple regions serve",
+    "live traffic together.",
+    "",
+    "Global HTTP(S) LB + CDN.",
+    "One region dies → others continue.",
+    "",
+    "RTO/RPO: ~zero.",
+    "Hardest (data consistency!).",
+], TEAL)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 15. Choosing strategy by business
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Choosing a Strategy — Business First", "Same cloud tools · different RTO/RPO budgets")
+footer(s, p())
+
+choices = [
+    ("Campus ERP / results site", "Warm or Hot during exam week; Backup & Restore in off-season", CORAL),
+    ("Food delivery order API", "Hot / Active-Active — every minute = cancelled orders", SKY),
+    ("Hospital patient records", "Hot + strict RPO; often multi-region with audited restores", TEAL),
+    ("Batch analytics job", "Fault tolerance + retries; Backup & Restore is often enough", GOLD),
+]
+for i, (t, d, c) in enumerate(choices):
+    top = Inches(1.4 + i * 1.25)
+    add_rounded(s, Inches(0.5), top, Inches(12.3), Inches(1.1), WHITE)
+    add_rect(s, Inches(0.5), top, Inches(4.2), Inches(1.1), NAVY)
+    tb(s, Inches(0.7), top + Inches(0.35), Inches(3.8), Inches(0.45), [(t, 13, True, WHITE)])
+    tb(s, Inches(5.0), top + Inches(0.35), Inches(7.5), Inches(0.5), [(d, 13, False, MUTED)])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 16. Cloud-based backup solutions overview
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Cloud-Based Backup Solutions & Snapshots", "GCP building blocks you will see in labs & exams")
+footer(s, p())
+
+sols = [
+    ("Compute Engine\nSnapshots", "Disk point-in-time copies\nIncremental & compressed\nRestore → new disk / VM", SKY),
+    ("Cloud Storage", "Object versioning\nCross / dual-region buckets\nLifecycle → Coldline/Archive", TEAL),
+    ("Cloud SQL", "Automated daily backups\nPoint-in-time recovery\nTight RPO for databases", CORAL),
+    ("GKE / Apps", "Control plane etcd (Google)\nSnapshot Persistent Volumes\nMulti-cluster failover", GOLD),
+]
+for i, (t, body, c) in enumerate(sols):
+    left = Inches(0.4 + i * 3.2)
+    add_rounded(s, left, Inches(1.45), Inches(3.05), Inches(4.4), WHITE)
+    add_rect(s, left, Inches(1.45), Inches(3.05), Inches(1.1), c)
+    tb(s, left + Inches(0.15), Inches(1.55), Inches(2.75), Inches(0.9),
+       [(t, 14, True, WHITE)], align=PP_ALIGN.CENTER)
+    lines = body.split("\n")
+    tb(s, left + Inches(0.2), Inches(2.9), Inches(2.7), Inches(2.5),
+       [(ln, 13, False, MUTED) for ln in lines], align=PP_ALIGN.CENTER)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 17. Snapshots deep dive
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Compute Engine Snapshots — How Recovery Works", "Capture → store → rebuild")
+footer(s, p())
+
+card(s, Inches(0.5), Inches(1.4), Inches(6.0), Inches(4.5), "What a snapshot does", [
+    "• Point-in-time copy of a persistent disk",
+    "• Stored durably (Cloud Storage backed)",
+    "• Incremental after the first snapshot",
+    "• Create new disk / VM from snapshot",
+    "",
+    "Command shape:",
+    "gcloud compute disks snapshot DISK \\",
+    "  --snapshot-names=NAME --zone=ZONE",
+], SKY)
+
+card(s, Inches(6.8), Inches(1.4), Inches(6.0), Inches(4.5), "Recovery playbook", [
+    "1. Identify last known-good snapshot",
+    "2. Create disk from snapshot",
+    "3. Create VM / attach disk",
+    "4. Validate app & data",
+    "5. Point LB / DNS to recovered stack",
+    "",
+    "Practice this BEFORE the outage.",
+    "Measure actual restore time vs RTO.",
+], TEAL)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 18. Cloud Storage & SQL backups
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Cloud Storage Versioning & Database PITR", "Protect objects and transactional data")
+footer(s, p())
+
+card(s, Inches(0.5), Inches(1.4), Inches(6.0), Inches(4.5), "Cloud Storage", [
+    "• Object versioning → undelete / prior versions",
+    "• Dual-region / multi-region → survive region loss",
+    "• Lifecycle policies → cheaper cold storage",
+    "",
+    "Real life: media archives, ML datasets,",
+    "backup dumps, Terraform state (carefully!).",
+], SKY)
+
+card(s, Inches(6.8), Inches(1.4), Inches(6.0), Inches(4.5), "Managed databases", [
+    "Cloud SQL:",
+    "• Automated daily backups",
+    "• Point-in-Time Recovery (PITR)",
+    "  → restore to e.g. 1:30 PM after 2 PM corruption",
+    "",
+    "Firestore / Datastore: export to GCS",
+    "App state on GKE: snapshot PVs + app backups",
+], CORAL)
+
+example_banner(s, Inches(6.15),
+               "A bad ALTER TABLE at 2:00 PM is a classic exam story — PITR is how you restore without yesterday’s full dump only.")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 19. Case studies intro
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Case Studies — DR Implementation", "From lab patterns to industry disasters")
+footer(s, p())
+
+cases = [
+    ("01", "Fancy Store (Unit Lab)", "Single VM → MIG + LB + autohealing"),
+    ("02", "Global E-commerce", "Multi-region + global LB + CDN"),
+    ("03", "Data-Critical App", "Cloud SQL PITR for minute-level RPO"),
+    ("04", "Batch Analytics", "Spot VMs + retries + state in GCS"),
+    ("05", "Hotstar / Streaming", "Elasticity + CDN under traffic spikes"),
+    ("06", "Banking / UPI", "Active-active mindset, strict RTO/RPO"),
+]
+for i, (num, title, sub) in enumerate(cases):
     col = i % 3
     row = i // 3
     left = Inches(0.5 + col * 4.2)
     top = Inches(1.5 + row * 2.4)
-    add_rounded(s, left, top, Inches(3.95), Inches(2.1), WHITE)
-    tb(s, left + Inches(0.25), top + Inches(0.35), Inches(3.5), Inches(0.5),
-       [("Problem", 11, True, CORAL), (prob, 15, True, NAVY)])
-    tb(s, left + Inches(0.25), top + Inches(1.2), Inches(3.5), Inches(0.6),
-       [("Solution", 11, True, TEAL), (sol, 15, True, NAVY)])
-
-
-# ── 9. MIG & Templates ─────────────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Instance Templates & Managed Instance Groups", "Blueprints + self-healing fleets")
-footer(s, next_page())
-card(s, Inches(0.5), Inches(1.4), Inches(6.0), Inches(3.8), "Instance Template", [
-    "Immutable blueprint: machine type, disk,",
-    "network, startup script, tags.",
-    "",
-    "Change? Create a NEW template, then roll it.",
-    "Create from an existing VM (stop first for",
-    "consistent disk state).",
-], SKY)
-card(s, Inches(6.8), Inches(1.4), Inches(6.0), Inches(3.8), "Managed Instance Group (MIG)", [
-    "Identical VMs managed as one entity.",
-    "• High availability & autohealing",
-    "• Load balancing ready",
-    "• Autoscaling & rolling updates",
-    "• Named ports (frontend:8080, …)",
-    "",
-    "MIG (managed) ≫ unmanaged ad-hoc groups",
-    "for production.",
-], TEAL)
-example_banner(s, Inches(5.5),
-               "Flipkart / Amazon Big Billion / Prime Day: fleets grow with traffic and shrink overnight — MIG-style autoscaling is how flash sales stay online.")
-
-
-# ── 10. Load Balancer architecture ─────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "HTTP(S) Load Balancer Architecture", "Global Layer-7 traffic → healthy backends")
-footer(s, next_page())
-steps = [
-    ("1", "Forwarding Rule", "Public IP + port 80/443"),
-    ("2", "Target HTTP Proxy", "Terminates HTTP, reads URL map"),
-    ("3", "URL Map", "/ → FE · /api/orders · /api/products"),
-    ("4", "Backend Services", "Health checks + capacity"),
-    ("5", "MIG Instances", "Actual app VMs / Pods"),
-]
-for i, (n, title, desc) in enumerate(steps):
-    left = Inches(0.4 + i * 2.55)
-    add_rounded(s, left, Inches(1.7), Inches(2.4), Inches(2.8), WHITE)
-    circ = s.shapes.add_shape(MSO_SHAPE.OVAL, left + Inches(0.85), Inches(1.95), Inches(0.7), Inches(0.7))
-    circ.fill.solid()
-    circ.fill.fore_color.rgb = SKY if i % 2 == 0 else TEAL
-    circ.line.fill.background()
-    tb(s, left + Inches(0.85), Inches(2.05), Inches(0.7), Inches(0.5),
-       [(n, 18, True, WHITE)], align=PP_ALIGN.CENTER)
-    tb(s, left + Inches(0.1), Inches(2.9), Inches(2.2), Inches(0.7),
-       [(title, 13, True, NAVY)], align=PP_ALIGN.CENTER)
-    tb(s, left + Inches(0.1), Inches(3.6), Inches(2.2), Inches(0.7),
-       [(desc, 11, False, MUTED)], align=PP_ALIGN.CENTER)
-example_banner(s, Inches(5.0),
-               "Google Search / YouTube Front Ends: one anycast IP worldwide — same idea as GCP’s global HTTP(S) LB routing users to the nearest healthy backend.")
-tb(s, Inches(0.5), Inches(5.8), Inches(12.3), Inches(0.8),
-   [("Pro tip: lab often uses HTTP for simplicity — production must terminate HTTPS and protect health-check IP ranges.", 13, False, INK)])
-
-
-# ── 11. CDN + Autohealing ──────────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Autohealing, Rolling Updates & Cloud CDN", "Recover, release, and accelerate")
-footer(s, next_page())
-card(s, Inches(0.5), Inches(1.4), Inches(4.0), Inches(4.5), "Health & Autohealing", [
-    "Health checks probe / or /api/*",
-    "Unhealthy? MIG recreates the VM.",
-    "",
-    "Separate LB health checks from",
-    "autohealing checks when needed.",
-    "",
-    "Lab: supervisorctl stop → watch",
-    "healing recreate the instance.",
-], CORAL)
-card(s, Inches(4.7), Inches(1.4), Inches(4.0), Inches(4.5), "Rolling Updates", [
-    "maxSurge / maxUnavailable control",
-    "how many new vs old VMs exist.",
-    "",
-    "Keeps minimum capacity healthy.",
-    "Safer than “stop all → redeploy”.",
-    "",
-    "Also: rolling replace after you",
-    "upload new code to GCS.",
-], SKY)
-card(s, Inches(8.9), Inches(1.4), Inches(4.0), Inches(4.5), "Cloud CDN", [
-    "Cache static assets at Google’s",
-    "edge — images, JS, CSS, video.",
-    "",
-    "Enable on frontend backend service.",
-    "Cuts origin load & latency.",
-    "",
-    "Twitch / Disney+ / Cloudflare-class",
-    "patterns: cache near the viewer.",
-], TEAL)
-
-
-# ── 12. Topic 4 Flex ───────────────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Topic 4 · App Engine Flexible & Exploring PaaS", "Docker-powered PaaS when sandbox Standard is too tight")
-footer(s, next_page())
-card(s, Inches(0.5), Inches(1.4), Inches(6.0), Inches(3.6), "When Flexible wins", [
-    "• Custom OS packages / native libs",
-    "• Long requests (up to ~60 minutes)",
-    "• SSH into underlying VMs for debug",
-    "• Full VPC integration",
-    "• Pay for vCPU + memory used",
-    "",
-    "Region choice is permanent — pick close",
-    "to users on day one.",
-], SKY)
-card(s, Inches(6.8), Inches(1.4), Inches(6.0), Inches(3.6), "PaaS in practice", [
-    "Languages: Java, Python, Go, PHP,",
-    "Node.js, Ruby… (modern runtimes).",
-    "",
-    "Workflow: local SDK → gcloud app deploy",
-    "→ Google scales & load balances.",
-    "",
-    "Data services: Cloud SQL, Firestore,",
-    "Cloud Storage, Memcache.",
-], TEAL)
-example_banner(s, Inches(5.3),
-               "Khan Academy used App Engine to teach millions with a small platform team — PaaS trades control for shipping speed, which is perfect for education & content sites.")
-
-
-# ── 13. Topic 5 Functions ──────────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Topic 5 · Event-Driven Cloud Functions", "Serverless FaaS — pay per invocation, scale 0 → N")
-footer(s, next_page())
-
-flow = [
-    ("Event", "Upload / HTTP /\nPub/Sub / Firestore"),
-    ("Trigger", "Cloud Function\nwakes automatically"),
-    ("Execute", "Run business logic\nreturn or fan-out"),
-]
-for i, (t, d) in enumerate(flow):
-    left = Inches(0.6 + i * 4.2)
-    add_rounded(s, left, Inches(1.45), Inches(3.8), Inches(1.8), WHITE)
-    add_rect(s, left, Inches(1.45), Inches(3.8), Inches(0.45), [SKY, TEAL, CORAL][i])
-    tb(s, left + Inches(0.2), Inches(1.5), Inches(3.4), Inches(0.35),
-       [(t, 14, True, WHITE)], align=PP_ALIGN.CENTER)
-    tb(s, left + Inches(0.2), Inches(2.1), Inches(3.4), Inches(0.9),
-       [(d, 13, False, MUTED)], align=PP_ALIGN.CENTER)
-
-card(s, Inches(0.5), Inches(3.5), Inches(6.0), Inches(2.4), "2nd gen (recommended)", [
-    "Built on Cloud Run • longer timeouts • more concurrency",
-    "CloudEvents standard across runtimes",
-    "Triggers: HTTP, Storage, Pub/Sub, Firestore, Audit logs",
-    "Watch cold starts — keep functions small; min instances help",
-], SKY)
-card(s, Inches(6.8), Inches(3.5), Inches(6.0), Inches(2.4), "Real-life triggers", [
-    "• Instagram/WhatsApp-style: resize image on Storage upload",
-    "• UPI banks: Pub/Sub fraud-scoring function on each txn",
-    "• IoT fleet: telemetry → function → BigQuery",
-    "• Webhooks: Stripe / Razorpay payment events",
-], CORAL)
-
-
-# ── 14. Compare compute options ────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Choose Your Compute: Functions vs App Engine vs GCE", "One of the most asked exam & interview questions")
-footer(s, next_page())
-
-# Table-like cards
-headers = ["Aspect", "Cloud Functions", "App Engine", "Compute Engine"]
-rows = [
-    ["Model", "FaaS / Serverless", "PaaS", "IaaS"],
-    ["Deploy unit", "Single function", "Application", "Virtual machine"],
-    ["Scaling", "0 → N auto", "Auto", "Manual / MIG"],
-    ["Billing", "Per invocation", "Instance-hours", "VM-hours"],
-    ["Best for", "Events & glue code", "Web apps & APIs", "Custom / legacy"],
-]
-# Header row
-for i, h in enumerate(headers):
-    left = Inches(0.4 + i * 3.2)
-    add_rect(s, left, Inches(1.5), Inches(3.05), Inches(0.55), NAVY)
-    tb(s, left + Inches(0.1), Inches(1.58), Inches(2.85), Inches(0.4),
-       [(h, 13, True, WHITE)], align=PP_ALIGN.CENTER)
-for r, row in enumerate(rows):
-    for c, cell in enumerate(row):
-        left = Inches(0.4 + c * 3.2)
-        top = Inches(2.1 + r * 0.7)
-        bg = WHITE if r % 2 == 0 else SOFT
-        add_rect(s, left, top, Inches(3.05), Inches(0.65), bg)
-        color = NAVY if c == 0 else INK
-        bold = c == 0
-        tb(s, left + Inches(0.1), top + Inches(0.15), Inches(2.85), Inches(0.4),
-           [(cell, 12, bold, color)], align=PP_ALIGN.CENTER)
-tb(s, Inches(0.5), Inches(5.8), Inches(12.3), Inches(0.8),
-   [("Rule of thumb: start managed (Functions / App Engine / Cloud Run). Drop to GCE/GKE only when you need control that PaaS cannot give.", 13, True, TEAL)])
-
-
-# ── 15. Topic 6 GKE ────────────────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Topic 6 · Google Kubernetes Engine (GKE)", "Managed Kubernetes born from Google’s Borg")
-footer(s, next_page())
-card(s, Inches(0.5), Inches(1.4), Inches(6.0), Inches(3.5), "When to use GKE", [
-    "• Multi-container apps & microservices",
-    "• Portable workloads (cloud ↔ on-prem)",
-    "• Service discovery + advanced networking",
-    "• CI/CD of container images at scale",
-    "",
-    "Prefer App Engine/Cloud Run for simple web;",
-    "Functions for events; GCE for legacy VMs.",
-], SKY)
-card(s, Inches(6.8), Inches(1.4), Inches(6.0), Inches(3.5), "Architecture essentials", [
-    "Control plane (Google-managed): API server,",
-    "scheduler, controllers, etcd",
-    "",
-    "Nodes = GCE VMs with kubelet",
-    "Pod = smallest deployable unit",
-    "Deployment = replicas + rolling updates",
-    "Service = stable network endpoint",
-], TEAL)
-example_banner(s, Inches(5.2),
-               "Pokémon GO famously rode Kubernetes during launch spikes; Spotify & Airbnb run large microservice meshes on K8s for portability and density.")
-
-
-# ── 16. Autopilot vs Standard ──────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "GKE Modes — Autopilot vs Standard", "Choose ops burden vs knobs")
-footer(s, next_page())
-card(s, Inches(0.5), Inches(1.45), Inches(6.0), Inches(4.5), "Autopilot (recommended default)", [
-    "• Google manages nodes AND control plane",
-    "• Pay only for Pod CPU/memory requests",
-    "• Hardened defaults + node auto-repair",
-    "• Pod-level SLA, less ops work",
-    "• Great for most production microservices",
-    "",
-    "gcloud container clusters create-auto …",
-], TEAL)
-card(s, Inches(6.8), Inches(1.45), Inches(6.0), Inches(4.5), "Standard", [
-    "• You size & tune nodes",
-    "• Pay for whole node (even idle)",
-    "• GPUs, custom machines, taints…",
-    "• Node auto-provisioning optional",
-    "• Release channels: Rapid / Regular / Stable",
-    "",
-    "Pick when you need exotic hardware or",
-    "cluster-level customization.",
-], SKY)
-
-
-# ── 17. Topic 7 Deploy on GKE ──────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Topic 7 · Deploying Containers on GKE", "Artifact Registry → Cluster → Deployment → HPA → Service")
-footer(s, next_page())
-pipeline = [
-    ("1. Build", "docker build → image"),
-    ("2. Store", "Artifact Registry"),
-    ("3. Cluster", "Autopilot / Standard"),
-    ("4. Deploy", "kubectl Deployment"),
-    ("5. Scale", "HPA on CPU %"),
-    ("6. Expose", "Service / LB / Ingress"),
-]
-for i, (t, d) in enumerate(pipeline):
-    col = i % 3
-    row = i // 3
-    left = Inches(0.5 + col * 4.2)
-    top = Inches(1.5 + row * 2.2)
-    add_rounded(s, left, top, Inches(3.95), Inches(1.9), WHITE)
-    add_rect(s, left, top, Inches(0.12), Inches(1.9), [SKY, TEAL, CORAL, SKY, TEAL, CORAL][i])
-    tb(s, left + Inches(0.35), top + Inches(0.4), Inches(3.4), Inches(0.45), [(t, 18, True, NAVY)])
-    tb(s, left + Inches(0.35), top + Inches(1.0), Inches(3.4), Inches(0.5), [(d, 14, False, MUTED)])
-
-
-# ── 18. Topic 8 Principles ─────────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Topic 8 · Cloud Principles & Well-Architected", "NIST fundamentals + Google’s design pillars")
-footer(s, next_page())
-pillars = [
-    ("On-demand", "Self-service provisioning"),
-    ("Broad access", "Any device over network"),
-    ("Pooling", "Multi-tenant efficiency"),
-    ("Elasticity", "Scale up/down fast"),
-    ("Measured", "Utility pay-as-you-go"),
-]
-for i, (t, d) in enumerate(pillars):
-    left = Inches(0.4 + i * 2.55)
-    add_rounded(s, left, Inches(1.45), Inches(2.4), Inches(1.5), WHITE)
-    tb(s, left + Inches(0.1), Inches(1.65), Inches(2.2), Inches(0.5),
-       [(t, 14, True, SKY)], align=PP_ALIGN.CENTER)
-    tb(s, left + Inches(0.1), Inches(2.2), Inches(2.2), Inches(0.5),
-       [(d, 11, False, MUTED)], align=PP_ALIGN.CENTER)
-
-wa = [
-    ("Operational Excellence", "Automate, monitor, learn from failure"),
-    ("Security", "IAM, least privilege, encrypt in transit"),
-    ("Reliability", "HA, autohealing, assume pods die"),
-    ("Performance", "Right-size, HPA, CDN, Memcache"),
-    ("Cost", "Delete idle, Spot Pods, Autopilot pay-per-pod"),
-    ("Sustainability", "No idle waste; serverless when possible"),
-]
-for i, (t, d) in enumerate(wa):
-    col = i % 3
-    row = i // 3
-    left = Inches(0.5 + col * 4.2)
-    top = Inches(3.3 + row * 1.55)
-    add_rounded(s, left, top, Inches(3.95), Inches(1.35), WHITE)
-    add_rect(s, left, top, Inches(3.95), Inches(0.1), [SKY, TEAL, CORAL, GOLD, SKY, TEAL][i])
-    tb(s, left + Inches(0.2), top + Inches(0.25), Inches(3.5), Inches(0.35), [(t, 13, True, NAVY)])
-    tb(s, left + Inches(0.2), top + Inches(0.7), Inches(3.5), Inches(0.45), [(d, 12, False, MUTED)])
-
-
-# ── 19. Shared responsibility + real life ─────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Shared Responsibility — Who Owns What?", "Cloud ≠ “Google secures everything”")
-footer(s, next_page())
-rows2 = [
-    ("Always yours", "App code, data classification, IAM identity design, secrets"),
-    ("GAE / Functions", "You: app + data · Google: runtime, OS, infra"),
-    ("Compute Engine", "You: OS patches, apps, network config · Google: hardware"),
-    ("GKE", "Google: control plane · You: workloads (nodes shared/Autopilot)"),
-]
-for i, (t, d) in enumerate(rows2):
-    top = Inches(1.45 + i * 1.1)
-    add_rounded(s, Inches(0.5), top, Inches(12.3), Inches(0.95), WHITE)
-    add_rect(s, Inches(0.5), top, Inches(3.0), Inches(0.95), NAVY)
-    tb(s, Inches(0.7), top + Inches(0.3), Inches(2.6), Inches(0.4), [(t, 13, True, WHITE)])
-    tb(s, Inches(3.8), top + Inches(0.3), Inches(8.7), Inches(0.45), [(d, 13, False, MUTED)])
-
-
-# ── 20. Topic 9 DR ─────────────────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Topic 9 · Disaster Recovery in the Cloud", "Backup ≠ DR — define RTO & RPO first")
-footer(s, next_page())
-card(s, Inches(0.5), Inches(1.4), Inches(6.0), Inches(2.6), "Key metrics", [
-    "RTO — Recovery Time Objective: max downtime",
-    "RPO — Recovery Point Objective: max data loss window",
-    "",
-    "Lower RTO/RPO ⇒ more $ (hot standby / multi-site)",
-], CORAL)
-card(s, Inches(6.8), Inches(1.4), Inches(6.0), Inches(2.6), "Strategy ladder", [
-    "Backup & Restore → Pilot Light → Warm Standby",
-    "→ Hot Standby → Multi-site Active-Active",
-    "",
-    "HA patterns: MIG, replicas, LB, multi-zone/region",
-], SKY)
-example_banner(s, Inches(4.3),
-               "Airlines & UPI apps target near-zero RTO with active-active regions. A campus portal may accept hours (cheap backup/restore). Match strategy to business pain.")
-tb(s, Inches(0.5), Inches(5.2), Inches(12.3), Inches(1.3),
-   [
-       ("GCP toolkit from the unit:", 14, True, NAVY),
-       ("Cloud Storage versioning · GCE disk snapshots · Cloud SQL automated backups · multi-zone MIG/GKE · global LB failover", 13, False, MUTED),
-   ])
-
-
-# ── 21. Topic 10 IaC ───────────────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Topic 10 · Infrastructure as Code (IaC)", "Machines from files — repeatable, reviewable, recoverable")
-footer(s, next_page())
-card(s, Inches(0.5), Inches(1.4), Inches(4.0), Inches(4.5), "Why IaC", [
-    "• Repeatability",
-    "• Git history = audit trail",
-    "• Fewer console typos",
-    "• Docs that can’t rot",
-    "• Rebuild after disaster",
-    "",
-    "Imperative: gcloud create…",
-    "Declarative: desired state=2",
-], SKY)
-card(s, Inches(4.7), Inches(1.4), Inches(4.0), Inches(4.5), "Tool map", [
-    "Terraform — multi-cloud HCL",
-    "Deployment Manager — GCP YAML",
-    "CloudFormation — AWS",
-    "Ansible — config over SSH",
-    "Pulumi — Python/TS/Go IaC",
-    "",
-    "Templates & MIG size = declarative",
-    "mindset you already practiced.",
-], TEAL)
-card(s, Inches(8.9), Inches(1.4), Inches(4.0), Inches(4.5), "Real-life", [
-    "• HashiCorp Terraform at banks",
-    "  for regulated change control",
-    "• Spotify Backstage + IaC for",
-    "  self-service environments",
-    "• Your Fancy Store firewall →",
-    "  google_compute_firewall{}",
-    "• Never commit secrets — use",
-    "  Secret Manager",
-], CORAL)
-
-
-# ── 22. Topic 11 CI/CD ─────────────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Topic 11 · CI/CD & DevOps", "From git push to verified production — automatically")
-footer(s, next_page())
-stages = ["Code", "Build", "Test", "Artifact", "Deploy", "Verify"]
-for i, stg in enumerate(stages):
-    left = Inches(0.45 + i * 2.15)
-    add_rounded(s, left, Inches(1.45), Inches(2.0), Inches(0.85), NAVY if i % 2 == 0 else SKY)
-    tb(s, left, Inches(1.6), Inches(2.0), Inches(0.55),
-       [(stg, 14, True, WHITE)], align=PP_ALIGN.CENTER)
-
-card(s, Inches(0.5), Inches(2.6), Inches(4.0), Inches(3.3), "Concepts", [
-    "CI — integrate often; build+test every push",
-    "Continuous Delivery — always deployable",
-    "Continuous Deployment — auto to prod",
-    "",
-    "Tools: Cloud Build, Cloud Deploy,",
-    "GitHub Actions, GitLab CI, Jenkins",
-], SKY)
-card(s, Inches(4.7), Inches(2.6), Inches(4.0), Inches(3.3), "Strategies", [
-    "Rolling — MIG / GKE default",
-    "Blue-Green — swap environments",
-    "Canary — % traffic to new version",
-    "Recreate — simple but downtime",
-    "",
-    "Health checks gate traffic;",
-    "rollback on failure.",
-], TEAL)
-card(s, Inches(8.9), Inches(2.6), Inches(4.0), Inches(3.3), "Real-life pipelines", [
-    "• Google ships internally with",
-    "  huge automated test matrices",
-    "• GitHub (Actions) powering OSS",
-    "• Indian unicorns: canary on",
-    "  payments before 100% cutover",
-    "• Lab map: gsutil + rolling",
-    "  replace = CD in miniature",
-], CORAL)
-
-
-# ── 23. Fancy Store architecture wrap ──────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Capstone Pattern — “Fancy Store” Networking Blueprint", "Unit labs ≈ how modern e-commerce fleets are wired")
-footer(s, next_page())
-arch = [
-    ("Users", "Browsers worldwide"),
-    ("Global LB + CDN", "URL map to services"),
-    ("Frontend MIG", "Port 8080 · cached assets"),
-    ("Orders / Products MIG", "8081 / 8082 APIs"),
-    ("GCS + Templates", "Stateless code delivery"),
-    ("Health + Autoscale", "Heal, roll, grow, shrink"),
-]
-for i, (t, d) in enumerate(arch):
-    col = i % 3
-    row = i // 3
-    left = Inches(0.5 + col * 4.2)
-    top = Inches(1.5 + row * 2.3)
-    add_rounded(s, left, top, Inches(3.95), Inches(2.0), WHITE)
-    add_rect(s, left, top, Inches(3.95), Inches(0.55), [NAVY, SKY, TEAL, CORAL, NAVY, SKY][i])
+    add_rounded(s, left, top, Inches(3.95), Inches(2.15), WHITE)
+    add_rect(s, left, top, Inches(3.95), Inches(0.55), [SKY, TEAL, CORAL, GOLD, SKY, TEAL][i])
     tb(s, left + Inches(0.2), top + Inches(0.12), Inches(3.5), Inches(0.4),
-       [(t, 14, True, WHITE)], align=PP_ALIGN.CENTER)
-    tb(s, left + Inches(0.2), top + Inches(0.9), Inches(3.5), Inches(0.7),
-       [(d, 14, False, MUTED)], align=PP_ALIGN.CENTER)
+       [(num + "  " + title, 13, True, WHITE)], align=PP_ALIGN.CENTER)
+    tb(s, left + Inches(0.25), top + Inches(0.95), Inches(3.5), Inches(0.8),
+       [(sub, 13, False, MUTED)], align=PP_ALIGN.CENTER)
 
 
-# ── 24. Extra real-life gallery ────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "More Real-Life Cloud Stories (Beyond the Notes)", "Connect theory to products students already use")
-footer(s, next_page())
+# ═══════════════════════════════════════════════════════════════════════════
+# 20. Case 1 Fancy Store
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Case 1 — Fancy Store on Compute Engine (Lab)", "Problem → Solution → DR level")
+footer(s, p())
+
+card(s, Inches(0.5), Inches(1.4), Inches(4.0), Inches(4.5), "Problem", [
+    "Single VM failure takes the",
+    "whole store offline.",
+    "",
+    "Classic SPOF.",
+    "No health checks,",
+    "no automatic recovery.",
+], CORAL)
+card(s, Inches(4.7), Inches(1.4), Inches(4.0), Inches(4.5), "Solution", [
+    "• Managed Instance Group",
+    "• Health checks",
+    "• Autohealing",
+    "• HTTP(S) Load Balancer",
+    "• Named ports for services",
+    "",
+    "Identical VMs from templates.",
+], SKY)
+card(s, Inches(8.9), Inches(1.4), Inches(4.0), Inches(4.5), "DR / HA level", [
+    "HA within a zone.",
+    "",
+    "Extend to multi-zone MIG",
+    "to survive zone failure.",
+    "",
+    "Still need backups for",
+    "data / config recovery.",
+], TEAL)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 21. Case 2 Global ecommerce
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Case 2 — Global E-commerce Regional Outage", "When one region is not enough")
+footer(s, p())
+
+card(s, Inches(0.5), Inches(1.4), Inches(6.0), Inches(3.6), "Problem", [
+    "Regional outage affects ALL users.",
+    "Revenue stops; brand damage is instant.",
+    "Single-region HA cannot save you.",
+], CORAL)
+card(s, Inches(6.8), Inches(1.4), Inches(6.0), Inches(3.6), "Solution", [
+    "• Multi-region deployment",
+    "• Global HTTP(S) Load Balancer",
+    "• Cloud CDN for static assets",
+    "• Hot standby or Active-Active",
+], SKY)
+example_banner(s, Inches(5.3),
+               "Amazon / Flipkart sale days and Shopify merchants design for regional failover so one datacenter wobble doesn’t cancel checkout.")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 22. Case 3 Data critical PITR
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Case 3 — Data-Critical Application (PITR)", "Corruption at 2:00 PM → restore to 1:30 PM")
+footer(s, p())
+
+steps = [
+    ("1", "Incident", "Bad write / delete /\nransomware-like event"),
+    ("2", "Decide RPO", "Business: lose ≤ 30 min\nof transactions"),
+    ("3", "PITR restore", "Cloud SQL point-in-time\nto 1:30 PM state"),
+    ("4", "Validate", "App checks, reconcile,\nreopen traffic"),
+]
+for i, (n, t, d) in enumerate(steps):
+    left = Inches(0.45 + i * 3.2)
+    add_rounded(s, left, Inches(1.55), Inches(3.05), Inches(3.2), WHITE)
+    circ = s.shapes.add_shape(MSO_SHAPE.OVAL, left + Inches(1.15), Inches(1.8), Inches(0.7), Inches(0.7))
+    circ.fill.solid()
+    circ.fill.fore_color.rgb = [CORAL, SKY, TEAL, GOLD][i]
+    circ.line.fill.background()
+    tb(s, left + Inches(1.15), Inches(1.9), Inches(0.7), Inches(0.5),
+       [(n, 16, True, WHITE)], align=PP_ALIGN.CENTER)
+    tb(s, left + Inches(0.15), Inches(2.7), Inches(2.75), Inches(0.4),
+       [(t, 14, True, NAVY)], align=PP_ALIGN.CENTER)
+    tb(s, left + Inches(0.15), Inches(3.3), Inches(2.75), Inches(1.0),
+       [(d, 12, False, MUTED)], align=PP_ALIGN.CENTER)
+
+tb(s, Inches(0.5), Inches(5.2), Inches(12.3), Inches(1.2),
+   [("DR level: Backup & Restore with a defined, tested RTO/RPO SLA — not “we hope the dump works.”", 14, True, NAVY),
+    ("Real life: fintech ledgers, college marksheets, inventory DBs — PITR beats praying for yesterday’s .sql file.", 13, False, MUTED)])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 23. Case 4 Batch + industry
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Case 4 — Batch Analytics · Industry Stories", "Not every workload needs hot standby")
+footer(s, p())
+
+card(s, Inches(0.5), Inches(1.4), Inches(6.0), Inches(3.5), "Batch analytics (lab pattern)", [
+    "Problem: job fails on one node",
+    "Solution: Spot/Preemptible VMs + retry logic",
+    "          Keep state in Cloud Storage",
+    "DR level: fault tolerant, not tiny RTO",
+    "",
+    "Save money where downtime is acceptable.",
+], TEAL)
+
+card(s, Inches(6.8), Inches(1.4), Inches(6.0), Inches(3.5), "Industry analogues", [
+    "• ML training on Spot → checkpoint to GCS",
+    "• Nightly ETL: restart from last watermark",
+    "• Log processing pipelines with replay",
+    "",
+    "Design for interruption, not immortality.",
+], SKY)
+
+example_banner(s, Inches(5.2),
+               "Spotify Wrapped / recommendation batch jobs can retry; UPI settlement cannot. Same cloud — different DR tier.")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 24. Extra industry case studies
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "More Real-Life DR Stories", "Connect Unit II theory to products students use")
+footer(s, p())
+
 stories = [
-    ("Hotstar / Disney+", "IPL finals: traffic multiplies 50–100×. Autoscale + CDN + multi-region = stay up during last-over sixes."),
-    ("PhonePe / GPay", "Payment spikes on salary day. Event pipelines + multi-zone HA + aggressive RTO for money movement."),
-    ("Zoom (COVID peak)", "Elastic capacity overnight. Measured service + rapid elasticity saved classrooms & offices."),
-    ("Spotify Wrapped", "Batch + streaming analytics on containers; publish once a year but build on always-on data platforms."),
-    ("IRCTC window", "Ticket rush = classic thundering herd. Queues, caching, rate limits, and graceful degradation."),
-    ("Campus ERP", "Exam result day mimics cloud black Friday — plan HPA/MIG before the PDF drop."),
+    ("Hotstar / Disney+ (IPL)", "Traffic 50–100×. CDN + autoscale + multi-AZ. Goal: stay up for the last over, not just “have backups”."),
+    ("PhonePe / Google Pay", "Payments need tight RTO/RPO. Multi-zone HA, strict failover drills, active capacity for salary-day spikes."),
+    ("GitLab 2017 DB incident", "Bad delete + backup gaps = long outage. Lesson: test restores; multiple backup methods; clear RPO."),
+    ("British Airways / airline OTAs", "Ops outages strand passengers. Multi-site thinking + runbooks matter more than pretty architecture slides."),
+    ("IRCTC Tatkal window", "Thundering herd ≠ only HA. Queues, rate limits, graceful degradation are part of surviving “disasters of demand”."),
+    ("Hospital / EHR systems", "Life-critical RTO. Hot/multi-site, audited backups, ransomware playbooks, offline contingency."),
 ]
 for i, (t, d) in enumerate(stories):
     col = i % 2
@@ -826,39 +820,68 @@ for i, (t, d) in enumerate(stories):
     top = Inches(1.4 + row * 1.7)
     add_rounded(s, left, top, Inches(6.15), Inches(1.5), WHITE)
     add_rect(s, left, top, Inches(0.12), Inches(1.5), [SKY, TEAL, CORAL, GOLD, SKY, TEAL][i])
-    tb(s, left + Inches(0.35), top + Inches(0.2), Inches(5.6), Inches(0.35), [(t, 14, True, NAVY)])
+    tb(s, left + Inches(0.35), top + Inches(0.2), Inches(5.6), Inches(0.35), [(t, 13, True, NAVY)])
     tb(s, left + Inches(0.35), top + Inches(0.65), Inches(5.6), Inches(0.65), [(d, 12, False, MUTED)])
 
 
-# ── 25. Exam rapid revision ────────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Exam Rapid Revision — Must Remember", "High-frequency concepts from Unit II")
-footer(s, next_page())
-bullets = [
-    "GAE = PaaS; GCE = IaaS; Cloud Functions = FaaS; GKE = managed Kubernetes (from Borg).",
-    "Instance templates are immutable; MIGs deliver HA, autoscaling, rolling updates, autohealing.",
-    "HTTP(S) LB chain: Forwarding rule → Target proxy → URL map → Backend service → MIG.",
-    "Named ports tell the LB which port to hit (frontend:8080, orders:8081, products:8082).",
-    "Autopilot pays per Pod resources; Standard pays for nodes — pick based on control needs.",
-    "RTO = downtime budget; RPO = data-loss budget — drive DR tier selection.",
-    "IaC: Terraform/DM/Ansible; startup scripts & MIG size already teach the mindset.",
-    "CI vs CD vs Continuous Deployment; rolling / blue-green / canary for safe releases.",
+# ═══════════════════════════════════════════════════════════════════════════
+# 25. DR checklist / best practices
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "DR Best Practices Checklist", "What production teams actually do")
+footer(s, p())
+
+checks = [
+    "Write RTO/RPO per application — not one number for the whole college.",
+    "Keep backups off the primary region (cross-region / dual-region).",
+    "Automate snapshots + Cloud SQL backups; alert on backup failures.",
+    "Run restore game days — measure real RTO, update runbooks.",
+    "Combine HA (MIG/multi-zone) with DR (multi-region / backups).",
+    "Use IaC so you can rebuild the stack when the console is on fire.",
+    "Protect against ransomware: immutable / versioned backups + IAM least privilege.",
+    "Document who declares a disaster and who executes failover.",
 ]
-for i, b in enumerate(bullets):
+for i, b in enumerate(checks):
     top = Inches(1.35 + i * 0.65)
     add_rect(s, Inches(0.5), top, Inches(0.18), Inches(0.18), TEAL if i % 2 == 0 else SKY)
     tb(s, Inches(0.9), top - Inches(0.05), Inches(11.8), Inches(0.55), [(b, 13, False, INK)])
 
 
-# ── 26. Key takeaways ──────────────────────────────────────────────────────
-s = blank_content_slide()
-header_bar(s, "Key Takeaways", "What Unit II wants you to design for")
-footer(s, next_page())
+# ═══════════════════════════════════════════════════════════════════════════
+# 26. Exam rapid revision
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Exam Rapid Revision — Unit II DR", "High-frequency points")
+footer(s, p())
+
+bullets = [
+    "Backup = data copy · Disaster = unavailability event · DR = restore plan · Continuity = business keeps running.",
+    "Backup types: Full, Incremental, Snapshot (GCE disks / GCS versioning).",
+    "HA minimizes downtime via redundancy; Fault Tolerance continues despite failures; kill SPOFs.",
+    "HA patterns: multi-instance, LB, health checks, autohealing, multi-zone, multi-region.",
+    "RTO = max downtime · RPO = max data-loss window — never swap them.",
+    "Strategy ladder: Backup & Restore → Pilot Light → Warm → Hot → Active-Active.",
+    "GCP tools: GCE snapshots, GCS versioning/replication, Cloud SQL backups + PITR, GKE multi-cluster / PV snapshots.",
+    "Case studies map: Fancy Store HA → Global multi-region → SQL PITR → Batch fault tolerance.",
+]
+for i, b in enumerate(bullets):
+    top = Inches(1.35 + i * 0.65)
+    add_rect(s, Inches(0.5), top, Inches(0.18), Inches(0.18), CORAL if i % 2 else SKY)
+    tb(s, Inches(0.9), top - Inches(0.05), Inches(11.8), Inches(0.55), [(b, 12, False, INK)])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 27. Key takeaways
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
+header_bar(s, "Key Takeaways", "Design DR for people and money — not for slides")
+footer(s, p())
+
 takes = [
-    ("Design for failure", "Instances and Pods die. Health checks, MIG/GKE replicas, and multi-zone beat hero servers."),
-    ("Automate the path", "Startup scripts → templates → IaC → CI/CD. Humans review; machines apply."),
-    ("Pick abstractions wisely", "Don’t run Kubernetes for a brochure site. Don’t trap a banking core on a toy PaaS sandbox."),
-    ("Measure & cache", "Autoscaling needs signals; CDN and Memcache protect origins when the world shows up."),
+    ("Measure first", "Agree RTO & RPO with stakeholders, then pick the cheapest strategy that meets them."),
+    ("HA ≠ full DR", "Multi-zone MIG is HA. Surviving a whole-region loss needs multi-region design + data protection."),
+    ("Practice restores", "Untested backups are theater. Game days prove RTO; PITR drills prove RPO."),
+    ("Match the workload", "UPI ≠ nightly ETL. Active-Active for payments; retries + GCS for batch."),
 ]
 for i, (t, d) in enumerate(takes):
     top = Inches(1.45 + i * 1.25)
@@ -868,25 +891,31 @@ for i, (t, d) in enumerate(takes):
     tb(s, Inches(0.9), top + Inches(0.55), Inches(11.5), Inches(0.4), [(d, 13, False, MUTED)])
 
 
-# ── 27. Closing ────────────────────────────────────────────────────────────
-s = blank_content_slide()
+# ═══════════════════════════════════════════════════════════════════════════
+# 28. Closing
+# ═══════════════════════════════════════════════════════════════════════════
+s = blank()
 add_rect(s, Inches(0), Inches(0), SLIDE_W, SLIDE_H, NAVY)
 add_rect(s, Inches(0), Inches(0), SLIDE_W, Inches(0.15), TEAL)
 tb(s, Inches(0.8), Inches(2.2), Inches(11.5), Inches(0.8),
    [("Thank you", 44, True, WHITE)])
 tb(s, Inches(0.8), Inches(3.2), Inches(11.5), Inches(0.5),
-   [("Questions · Discussion · Lab mapping", 20, False, SKY_LIGHT)])
-tb(s, Inches(0.8), Inches(4.2), Inches(11.5), Inches(1.0),
-   [
-       ("Source: CC-II Unit II notes (Networking in the Cloud)", 14, False, SOFT),
-       ("Enriched with industry case studies for classroom discussion", 14, False, SOFT),
-       ("Branch: cc-ii-ppt  ·  FIT & CS, Parul University", 14, False, MUTED),
-   ])
-next_page()
+   [("Questions · Discussion · Lab mapping to DR tiers", 18, False, SKY_LIGHT)])
+tb(s, Inches(0.8), Inches(4.3), Inches(11.5), Inches(1.2),
+   [("Unit II focus: Disaster Recovery in Cloud", 14, False, SOFT),
+    ("Backup & DR · HA & Fault Tolerance · RPO/RTO Strategies", 14, False, SOFT),
+    ("Cloud Backups & Snapshots · Case Studies", 14, False, SOFT),
+    ("Branch: cc-ii-ppt  ·  FIT & CS, Parul University", 13, False, MUTED)])
+p()
 
 
-# ── Save ───────────────────────────────────────────────────────────────────
-out = os.path.join(os.path.dirname(__file__), "CC-II-Unit-II-Networking-in-the-Cloud.pptx")
+out_dir = os.path.dirname(os.path.abspath(__file__))
+out = os.path.join(out_dir, "CC-II-Unit-II-Disaster-Recovery-in-Cloud.pptx")
+# Remove old networking-focused deck name if regenerating in place
+old = os.path.join(out_dir, "CC-II-Unit-II-Networking-in-the-Cloud.pptx")
 prs.save(out)
 print(f"Saved {out}")
 print(f"Slides: {len(prs.slides)}")
+if os.path.exists(old):
+    os.remove(old)
+    print(f"Removed outdated {old}")
