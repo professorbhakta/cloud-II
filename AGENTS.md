@@ -34,6 +34,8 @@ This repository holds **Cloud Computing – II** teaching materials (Parul Unive
 | `main` | Default branch |
 | `cc2Material` | Consolidated course materials (syllabus, notes, PPT, assignments) |
 
+Prefer committing teaching materials **directly on `cc2Material`**. Do not create extra feature branches for notes/PPT work unless the owner asks.
+
 ### Folder layout on `cc2Material`
 
 | Path | Contents |
@@ -43,8 +45,13 @@ This repository holds **Cloud Computing – II** teaching materials (Parul Unive
 | `notes/unit-2/` | Unit 2 DR notes + GCP lab reference |
 | `notes/unit-3/` | Unit 3 Infrastructure as Code (IaC) notes |
 | `notes/unit-4/` | Unit 4 Kubernetes & Container Orchestration notes |
-| `ppt/` | Presentations and regenerators |
+| `ppt/` | PowerPoint decks + visual assets (no Python regenerators) |
 | `assignments/` | Mid-term / assignment papers |
+
+### Material format preference
+
+- Ship **notes (`.txt`)**, **PowerPoint (`.pptx`)**, and **visual assets** (PNG/GIF) only.
+- **Do not add Python regenerator scripts** (`build_*.py`) for decks or assets.
 
 ### Unit 4 syllabus (authoritative for deck/notes titled Unit 4)
 
@@ -56,7 +63,6 @@ This repository holds **Cloud Computing – II** teaching materials (Parul Unive
 
 Canonical notes: `notes/unit-4/CC-II-Unit-IV-Kubernetes-Container-Orchestration.txt`  
 Canonical deck: `ppt/CC-II-Unit-IV-Kubernetes-Container-Orchestration.pptx`  
-Regenerator: `python3 ppt/build_unit4_ppt.py` (assets first: `python3 ppt/build_unit4_assets.py`)  
 Visuals: `ppt/unit4-assets/` (PNG diagrams + GIF animations for key concepts)  
 Official syllabus text: `syllabus/CC-II-Units.txt`
 
@@ -80,13 +86,4 @@ For Unit 2 (and similar teaching PPTs), prefer **4–5+ content slides per sylla
 
 ### Commands / setup
 
-This is primarily documentation content (notes + PPT). There is no application server to run. Regenerate decks with:
-
-```bash
-python3 ppt/build_unit2_ppt.py
-python3 ppt/build_unit3_ppt.py
-python3 ppt/build_unit4_assets.py   # PNG/GIF visuals for Unit 4
-python3 ppt/build_unit4_ppt.py
-```
-
-(from the `cc2Material` branch, after `pip install python-pptx pillow` if needed).
+This is primarily documentation content (notes + PPT + visual assets). There is no application server to run and no Python build step required.

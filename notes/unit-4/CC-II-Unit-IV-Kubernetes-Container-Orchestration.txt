@@ -14,8 +14,7 @@ Related Materials:
   • notes/unit-3/ — IaC (often used to create GKE clusters with Terraform)
   • notes/unit-2/ — networking lab guide (GKE Topics 6–7 reference)
   • ppt/CC-II-Unit-IV-Kubernetes-Container-Orchestration.pptx — Unit 4 lecture deck
-  • ppt/build_unit4_ppt.py — regenerator (`python3 ppt/build_unit4_ppt.py`)
-  • ppt/build_unit4_assets.py + ppt/unit4-assets/ — concept diagrams & GIFs
+  • ppt/unit4-assets/ — concept diagrams & GIFs (architecture, deploy, HPA, …)
 
 HOW TO USE THESE NOTES
 ----------------------

@@ -17,7 +17,7 @@ notes/unit-1/   Unit 1 study notes
 notes/unit-2/   Unit 2 Disaster Recovery notes + GCP lab reference
 notes/unit-3/   Unit 3 Infrastructure as Code (IaC) notes
 notes/unit-4/   Unit 4 Kubernetes & Container Orchestration notes
-ppt/            PowerPoint decks and regenerators
+ppt/            PowerPoint decks + Unit 4 visual assets
 assignments/    Mid-term / assignment question papers
 AGENTS.md       Guidance for Cursor / Cloud Agents
 ```
@@ -39,13 +39,9 @@ AGENTS.md       Guidance for Cursor / Cloud Agents
 ## Presentations
 
 - `ppt/CC-II-Unit-II-Disaster-Recovery-in-Cloud.pptx` — Unit 2 expanded deck (~58 slides)
-- `ppt/build_unit2_ppt.py` — Unit 2 regenerator (`python3 ppt/build_unit2_ppt.py`)
 - `ppt/CC-II-Unit-III-Infrastructure-as-Code.pptx` — Unit 3 expanded deck (~51 slides)
-- `ppt/build_unit3_ppt.py` — Unit 3 regenerator (`python3 ppt/build_unit3_ppt.py`)
 - `ppt/cc2-unit3-iac-example.tf` — Unit 3 Terraform example (VM + firewall + bucket)
 - `ppt/CC-II-Unit-IV-Kubernetes-Container-Orchestration.pptx` — Unit 4 expanded deck (~59 slides, with concept diagrams + GIFs)
-- `ppt/build_unit4_ppt.py` — Unit 4 regenerator (`python3 ppt/build_unit4_ppt.py`)
-- `ppt/build_unit4_assets.py` — generates Unit 4 PNG/GIF teaching visuals
 - `ppt/unit4-assets/` — architecture, deploy, Service, Ingress, HPA, rolling-update visuals
 
 ### Unit 2 deck topics
