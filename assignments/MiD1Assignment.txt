@@ -5,15 +5,16 @@
 ================================================================================
 Course        :  Cloud Computing – II (CC-II)
 Assessment    :  MiD1 Assignment
-Coverage      :  Unit 1, Unit 2 & Unit 3
-Total Marks   :  84
+Coverage      :  Unit 1, Unit 2, Unit 3 & Unit 4 (starting topics)
+Total Marks   :  98
 Date          :  ____________________
 Student Name  :  ____________________     Enrollment No.: ______________
 ================================================================================
 
 INSTRUCTIONS
-  1. Attempt all questions from all three units.
-  2. Each unit contains FOUR questions only.
+  1. Attempt all questions from all four units.
+  2. Units 1–3 contain FOUR questions each; Unit 4 contains TWO questions
+     (starting topics only).
   3. Each question carries SEVEN (7) marks.
   4. Answers must be neat, well-structured and supported with suitable
      examples / diagrams wherever necessary.
@@ -150,6 +151,31 @@ why the “Plan before Apply” step is important.
 
 
 ================================================================================
+UNIT – 4
+KUBERNETES & CONTAINER ORCHESTRATION  (Starting Topics)
+================================================================================
+[Introduction to Kubernetes & its Architecture |
+ Setting Up & Managing Kubernetes Clusters]
+
+--------------------------------------------------------------------------------
+Q.13                                                                     [7]
+--------------------------------------------------------------------------------
+What is Kubernetes? Explain why container orchestration is needed.
+Describe Kubernetes architecture with control-plane components (API Server,
+Scheduler, Controller Manager, etcd) and worker-node components (kubelet,
+kube-proxy, container runtime). Define Pod, Deployment and Service.
+
+
+--------------------------------------------------------------------------------
+Q.14                                                                     [7]
+--------------------------------------------------------------------------------
+Explain the steps to set up and manage a Kubernetes cluster on Google
+Kubernetes Engine (GKE). Compare Autopilot and Standard modes. Describe
+how to connect with kubectl, the role of namespaces, and basic cluster
+management practices (release channels / upgrades, drain & cordon).
+
+
+================================================================================
                               MARKING SCHEME
 ================================================================================
 
@@ -158,8 +184,9 @@ why the “Plan before Apply” step is important.
    Unit 1   Cloud Principles & Well-Architected        Q.1 – Q.4     28
    Unit 2   Disaster Recovery in Cloud                 Q.5 – Q.8     28
    Unit 3   Introduction to Infrastructure as Code     Q.9 – Q.12    28
+   Unit 4   Kubernetes (Architecture + Cluster Setup)  Q.13 – Q.14   14
    ---------------------------------------------------------------------
-            TOTAL                                                    84
+            TOTAL                                                    98
 
 ================================================================================
                          END OF MiD1 ASSIGNMENT

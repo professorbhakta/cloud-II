@@ -1,0 +1,655 @@
+================================================================================
+                         PARUL UNIVERSITY
+                    Faculty of IT & Computer Science
+                         MCA  |  Semester – III
+================================================================================
+Course        :  Cloud Computing – II (CC-II)
+Document      :  MiD1 Assignment — MODEL ANSWER BOOK
+File          :  Assignment-Solution.txt
+Pairs with    :  assignments/MiD1Assignment.txt
+Coverage      :  Unit 1, Unit 2, Unit 3 & Unit 4 (Q.13–Q.14 starting topics)
+Total Marks   :  98  (14 × 7)
+
+HOW TO USE
+----------
+  • Each answer is written in a 7-mark exam style: definition → explanation →
+    comparison / steps → example → short conclusion.
+  • Diagrams described in words can be redrawn in the answer booklet.
+  • Quote one real-life line (campus portal / UPI / food delivery) where useful.
+
+================================================================================
+UNIT – 1  |  CLOUD PRINCIPLES & WELL-ARCHITECTED FRAMEWORK
+================================================================================
+
+--------------------------------------------------------------------------------
+Q.1  Fundamental principles of cloud computing                         [7]
+--------------------------------------------------------------------------------
+
+ANSWER:
+
+Cloud computing is delivered using five NIST-style fundamental principles.
+Together they explain why cloud often gives higher throughput and better cost
+control than traditional on-premises data centres.
+
+1. On-demand Self-service
+   Users provision compute, storage, and network themselves through a portal
+   or API — without waiting for a long hardware purchase cycle.
+
+2. Broad Network Access
+   Services are reachable over the network (internet / private links) from
+   laptops, mobiles, and other systems using standard mechanisms.
+
+3. Resource Pooling
+   Provider resources are shared among many customers (multi-tenancy) with
+   location abstraction (region / zone). Customers get capacity from a large
+   shared pool instead of owning every server.
+
+4. Rapid Elasticity
+   Capacity can scale out quickly when load rises and scale in when load
+   falls (e.g., Managed Instance Groups, Kubernetes HPA, serverless).
+
+5. Measured Service
+   Usage is metered (CPU-hours, GB-month, requests). Customers pay for what
+   they use and can track consumption for billing and FinOps.
+
+How this beats traditional on-premises for throughput & cost
+------------------------------------------------------------
+  • Throughput: elasticity + global regions let you add capacity in minutes
+    for result-day or sale traffic instead of over-buying hardware months ahead.
+  • Cost control: measured service + scale-in avoids paying for idle racks;
+    pooling spreads infrastructure cost across many tenants.
+
+Example: A campus result portal can auto-scale web VMs during result week
+and shrink afterward — high throughput when needed, lower bill when quiet.
+
+Conclusion: The five principles make cloud elastic, accessible, shared, and
+metered — enabling faster delivery of capacity with pay-as-you-go control.
+
+
+--------------------------------------------------------------------------------
+Q.2  Shared Responsibility Model                                       [7]
+--------------------------------------------------------------------------------
+
+ANSWER:
+
+Definition
+----------
+The Shared Responsibility Model defines which security and operational duties
+belong to the cloud provider and which belong to the customer. “Cloud is
+secure” does not mean the customer has zero duties.
+
+Comparison by service model
+---------------------------
+  Aspect                IaaS (e.g. Compute Engine)   PaaS (e.g. App Engine)   SaaS (e.g. Gmail)
+  ─────────────────────────────────────────────────────────────────────────────────────────
+  Physical DC / hardware   Provider                    Provider                 Provider
+  Network / hypervisor     Provider                    Provider                 Provider
+  OS / runtime patching    Customer                    Provider                 Provider
+  Application code         Customer                    Customer                 Provider
+  Data & access (IAM)      Customer                    Customer                 Customer (config)
+  Identity of end users    Customer                    Customer                 Shared / customer
+
+Examples
+--------
+  • IaaS: You create a VM → you must patch Linux, configure firewall tags,
+    secure the app. Google secures the data centre and hypervisor.
+  • PaaS: You deploy code to App Engine → Google manages runtime/scaling;
+    you still secure app logic, secrets, and data access.
+  • SaaS: Provider runs the whole app; you manage accounts, MFA, sharing
+    settings, and classification of data you put into the tool.
+
+Security risk if misunderstood
+------------------------------
+If a team treats IaaS like SaaS, they may leave OS unpatched or open SSH to
+the world, believing “the cloud provider handles security.” That creates
+breach risk even though the provider’s physical security is strong.
+
+Conclusion: Always ask “Who patches what?” for IaaS vs PaaS vs SaaS — and
+never assume customer data/IAM duties disappear in the cloud.
+
+
+--------------------------------------------------------------------------------
+Q.3  Cloud-Native Architecture                                         [7]
+--------------------------------------------------------------------------------
+
+ANSWER:
+
+Definition
+----------
+Cloud-native architecture designs applications to exploit cloud strengths:
+elasticity, managed services, automation, and failure-tolerant deployment —
+rather than simply “lifting” a single large server into a VM.
+
+Important characteristics
+-------------------------
+1. Microservices — app split into small independently deployable services
+   (orders, products, frontend) that scale and fail independently.
+2. Containers — package app + dependencies for consistent deploy (Docker);
+   often orchestrated by Kubernetes.
+3. Managed services — use cloud databases, queues, object storage instead of
+   operating every component yourself.
+4. API-driven design — services talk over well-defined HTTP/gRPC APIs.
+5. Externalized state — keep session/data in Cloud SQL / Redis / GCS; treat
+   compute instances/Pods as disposable.
+
+Cloud-native vs traditional monolith
+------------------------------------
+  Aspect              Monolith                         Cloud-native
+  ─────────────────────────────────────────────────────────────────────────
+  Scalability         Scale whole app together         Scale only hot services
+  Failure handling    One bug can take all down        Isolate failure per service
+  Deploy              Rare big releases                Frequent small rollouts
+  Resource use        Often over-provision one box     Elastic / pay for need
+
+Example: Fancy Store-style lab — frontend / orders / products as separate
+services behind a load balancer; one slow service does not force scaling the
+entire monolith.
+
+Conclusion: Cloud-native is not only “hosted in cloud” — it is designed for
+independent scale, containerised deploy, APIs, and external state.
+
+
+--------------------------------------------------------------------------------
+Q.4  Well-Architected Framework + scalable design practices            [7]
+--------------------------------------------------------------------------------
+
+ANSWER:
+
+The Well-Architected Framework (AWS / Google-style) guides good cloud design
+using pillars. For this course we emphasise:
+
+1. Security
+   Least privilege IAM, network firewalls / tags, encryption in transit/at
+   rest, secrets management. Example: service account with only bucket read.
+
+2. Reliability
+   Multi-zone replicas, health checks, autohealing, backups and DR planning.
+   Example: Managed Instance Group with autohealing behind HTTP(S) LB.
+
+3. Performance
+   Right-size machines, caching/CDN, autoscaling on utilisation, choose
+   region close to users. Example: Cloud CDN for static assets.
+
+4. Cost
+   Turn off idle resources, use serverless/Spot where suitable, right-size,
+   monitor bills. Example: scale MIG to zero/min after peak; Autopilot pays
+   per Pod requests.
+
+5. Sustainability
+   Avoid always-on idle capacity; prefer efficient regions / autoscaling so
+   energy is not wasted on unused VMs.
+
+Best practices for scalable cloud applications
+----------------------------------------------
+  • Prefer horizontal scaling (add instances/Pods) over one huge server
+  • Put load balancers in front of healthy backends
+  • Decouple with microservices / queues
+  • Externalise state (DB / object storage)
+  • Health checks at every tier
+  • Design for failure; use rolling updates
+  • Automate with IaC and CI/CD
+
+Conclusion: Pillars give a checklist; scalable design turns that checklist
+into concrete patterns (LB + MIG/HPA + external state + automation).
+
+
+================================================================================
+UNIT – 2  |  DISASTER RECOVERY IN CLOUD
+================================================================================
+
+--------------------------------------------------------------------------------
+Q.5  Backup, Disaster, DR, BC — “Backup alone is not DR”               [7]
+--------------------------------------------------------------------------------
+
+ANSWER:
+
+Definitions
+-----------
+  Backup               A copy of data kept so it can be restored after loss,
+                       corruption, or accidental deletion.
+  Disaster             An event that makes systems unavailable or data
+                       unusable (outage, flood, ransomware, bad change).
+  Disaster Recovery    Policies and procedures to restore IT operations after
+                       a disaster (people + process + technology).
+  Business Continuity  Keeping critical business services running for users /
+                       revenue / safety — broader than IT restore alone.
+
+Why “Backup alone is not Disaster Recovery”
+-------------------------------------------
+Having backup files is necessary but not sufficient. Full DR also needs:
+
+  1. Runbooks — who does what, in what order, with which accounts/tools.
+  2. Failover / rebuild procedures — how to switch DNS/LB or recreate infra
+     (often with Infrastructure as Code).
+  3. Restore testing — practice restores and measure time; untested backups
+     are false comfort (files may be incomplete or unreadable).
+  4. Meeting RTO — backups that take three days to restore fail a 2-hour RTO.
+
+Example: Daily database dumps exist, but nobody knows the restore steps and
+infra was never rebuilt in another zone → during a zone outage the business
+still stays down.
+
+Conclusion: Backup protects data copies; Disaster Recovery is the proven
+ability to bring services back within agreed time using tested procedures.
+
+
+--------------------------------------------------------------------------------
+Q.6  HA vs Fault Tolerance, SPOF, reducing SPOF                        [7]
+--------------------------------------------------------------------------------
+
+ANSWER:
+
+High Availability (HA)
+----------------------
+Design goal: keep the service reachable by reducing downtime, usually with
+redundancy and automatic failover. Often expressed as uptime %
+(e.g., 99.9%).
+
+Fault Tolerance (FT)
+--------------------
+Ability to continue operating correctly even when a component fails —
+ideally without the user noticing. HA systems often use fault-tolerant
+building blocks (replicas, health checks, autohealing).
+
+Cloud examples
+--------------
+  • HA: HTTP(S) Load Balancer + Managed Instance Group across 2+ zones.
+  • FT building block: autohealing recreates an unhealthy VM; Kubernetes
+    Deployment recreates a crashed Pod.
+
+Single Point of Failure (SPOF)
+------------------------------
+Any component whose failure alone takes down the whole service
+(e.g., one VM, one zone with no replica, one disk without backup).
+
+How to reduce SPOF
+------------------
+  1. Redundancy — run N+1 instances / multi-zone replicas.
+  2. Load balancing — distribute traffic; remove failed backends from pool.
+  3. Health checks — detect unhealthy instances automatically.
+  4. Multi-zone deployment — survive a single zone outage.
+
+Example: One web VM in one zone is a SPOF. Two+ VMs in a MIG across zones
+behind a load balancer removes that SPOF for compute.
+
+Conclusion: HA minimises downtime; FT continues through failures; removing
+SPOF with redundancy + LB + health checks + multi-zone is core cloud design.
+
+
+--------------------------------------------------------------------------------
+Q.7  RTO, RPO and DR strategies                                        [7]
+--------------------------------------------------------------------------------
+
+ANSWER:
+
+RTO — Recovery Time Objective
+-----------------------------
+Maximum acceptable downtime after a disaster (how long until service is back).
+Example: Online payments RTO = 15 minutes; internal wiki RTO = 24 hours.
+
+RPO — Recovery Point Objective
+------------------------------
+Maximum acceptable data loss measured in time (how far back data may roll).
+Example: If RPO = 1 hour and disaster hits at 3 pm, data since ~2 pm may be lost
+unless replication/PITR is tighter.
+
+Diagram (words): Last good copy --[RPO]-- DISASTER --[RTO]-- Restored service
+
+DR strategies (cost vs speed)
+-----------------------------
+  Strategy            Idea                         Typical RTO/RPO      Cost
+  ───────────────────────────────────────────────────────────────────────────
+  Backup & Restore    Restore from backups         Higher RTO/RPO       Low
+  Pilot Light         Minimal core always on       Medium               Medium-low
+  Warm Standby        Scaled-down full env ready   Lower RTO            Medium
+  Hot Standby         Near-full capacity standby   Very low RTO/RPO     High
+  Multi-site Active-Active
+                      Serve from 2+ regions        Near-zero downtime   Highest
+
+Compare any two (example: Backup & Restore vs Hot Standby)
+----------------------------------------------------------
+  • Backup & Restore: cheapest; longer RTO (rebuild + restore); RPO depends
+    on backup frequency.
+  • Hot Standby: expensive continuous capacity; very low RTO; often low RPO
+    via continuous replication — used for UPI / critical payments.
+
+Conclusion: RTO/RPO are business numbers that choose the DR pattern; tighter
+objectives cost more.
+
+
+--------------------------------------------------------------------------------
+Q.8  Cloud backups, snapshots & one DR case study                      [7]
+--------------------------------------------------------------------------------
+
+ANSWER:
+
+Cloud-based backup solutions & snapshots
+----------------------------------------
+1. Disk / VM snapshots
+   Point-in-time capture of a persistent disk (e.g., Compute Engine
+   snapshots). First snapshot full-ish; later ones incremental. Good for
+   VM rollback; DB disks may be crash-consistent — prefer managed DB backup
+   for application-consistent SQL restore.
+
+2. Object-storage versioning
+   Buckets (GCS / S3) can keep object versions; protects against accidental
+   overwrite/delete. Soft-delete / retention policies help ransomware cases.
+
+3. Managed database backups + PITR
+   Cloud SQL / RDS automated backups and point-in-time recovery restore to a
+   second-level timestamp — much tighter RPO than daily dumps alone.
+
+Case study (campus / exam-style)
+--------------------------------
+Scenario: University result portal. Business wants RTO ≤ 2 hours and RPO ≤
+15 minutes for the results database.
+
+Chosen strategy: Warm Standby in another zone/region + Cloud SQL PITR +
+snapshots of app templates + IaC to rebuild frontends quickly.
+
+Justification using RTO/RPO:
+  • PITR meets ~15-minute RPO better than nightly-only backups.
+  • Warm standby + IaC rebuild meets 2-hour RTO better than cold
+    Backup & Restore alone.
+  • Cost stays below full Hot/Active-Active which the portal does not need
+    year-round.
+
+Conclusion: Combine snapshots, object versioning, and managed DB PITR; pick
+DR pattern that mathematically satisfies stated RTO and RPO.
+
+
+================================================================================
+UNIT – 3  |  INTRODUCTION TO INFRASTRUCTURE AS CODE (IaC)
+================================================================================
+
+--------------------------------------------------------------------------------
+Q.9  What is IaC? Why preferred? Benefits + scenario                   [7]
+--------------------------------------------------------------------------------
+
+ANSWER:
+
+Definition
+----------
+Infrastructure as Code (IaC) is the practice of managing and provisioning
+computing infrastructure (VMs, networks, load balancers, buckets, IAM, …)
+through machine-readable definition files — not by clicking a cloud console
+or typing one-off unreproducible commands.
+
+“Treat infrastructure like application code: versioned, reviewed, tested,
+automated.”
+
+Why preferred over manual console provisioning
+----------------------------------------------
+  • Console click-ops creates “snowflake” environments that nobody can
+    recreate identically.
+  • Manual steps are slow after disasters and hard to peer-review.
+  • Drift appears when someone hot-fixes Prod in the console but not Dev.
+
+Benefits
+--------
+  1. Repeatability — same file → same environment shape
+  2. Version control — Git shows who changed what
+  3. Automation — CI can plan/apply
+  4. Fewer human errors — less missed checkboxes
+  5. Living documentation — repo is the architecture
+  6. Faster DR rebuild — re-apply stack from Git (links Unit 2)
+
+Practical scenario
+------------------
+Result-day traffic: change one variable (MIG size / replica count) in
+Terraform, plan + apply — scale out safely. After the peak, scale back down.
+Doing the same with 50 manual console clicks risks mistakes and drift.
+
+Conclusion: IaC replaces fragile click-ops with reviewable, repeatable code.
+
+
+--------------------------------------------------------------------------------
+Q.10  Compare Terraform, CloudFormation, Ansible + example             [7]
+--------------------------------------------------------------------------------
+
+ANSWER:
+
+Comparison table
+----------------
+  Tool              Purpose                 Language      Cloud          Approach
+  ───────────────────────────────────────────────────────────────────────────────
+  Terraform         Provision infra         HCL           Multi-cloud    Declarative
+  AWS CloudFormation Provision AWS infra    YAML / JSON   AWS only       Declarative
+  Ansible           Configure hosts / CM    YAML playbooks Multi / on-prem Task-oriented
+
+Notes
+-----
+  • Terraform & CloudFormation declare desired resources; tool computes
+    create/update/delete (plan/apply or change sets).
+  • Ansible is excellent for configuration management (packages, files,
+    services) over SSH — often used after Terraform creates the VM.
+  • Memory hook: Terraform builds the house; Ansible furnishes the rooms.
+
+Short conceptual example (Terraform creating a bucket idea)
+-----------------------------------------------------------
+  resource "google_storage_bucket" "lab" {
+    name     = "cc2-lab-bucket"
+    location = "ASIA"
+  }
+Apply creates the bucket; second apply makes no change if already correct
+(idempotent desired-state behaviour).
+
+Conclusion: Choose Terraform for multi-cloud provisioning, CloudFormation
+for AWS-native stacks, Ansible for host configuration — often combined.
+
+
+--------------------------------------------------------------------------------
+Q.11  Configuration Management vs provisioning; Ansible steps          [7]
+--------------------------------------------------------------------------------
+
+ANSWER:
+
+Configuration Management (CM)
+-----------------------------
+CM keeps software and settings on servers in a desired state: packages,
+users, config files, services running. It is about what runs on the machine.
+
+Provisioning vs configuration
+-----------------------------
+  Infrastructure provisioning   Create cloud resources via APIs
+                                (VM, VPC, disk, LB, managed DB)
+                                Tools: Terraform, CloudFormation
+                                “Build the house”
+
+  Configuration management      Install/configure software on hosts
+                                Tools: Ansible, startup scripts
+                                “Furnish the rooms”
+
+How Ansible helps
+-----------------
+Ansible uses YAML playbooks, is agentless (SSH push), and applies tasks
+idempotently where modules support it (e.g., package state=present).
+
+Typical automated server setup steps
+------------------------------------
+  1. Install required packages / runtime (nginx, java, node)
+  2. Create application user (non-root)
+  3. Copy or pull application artifacts
+  4. Write config files / env templates
+  5. Enable and start services (systemd)
+  6. Configure process manager / restart policy
+  7. Open only required ports (or rely on cloud firewall tags)
+  8. Health check / smoke test the endpoint
+
+Conclusion: Provisioning creates resources; CM configures them. Ansible
+automates repeatable host setup after (or alongside) IaC provisioning.
+
+
+--------------------------------------------------------------------------------
+Q.12  IaC workflow + versioning/scaling + plan-before-apply            [7]
+--------------------------------------------------------------------------------
+
+ANSWER:
+
+Workflow: Write → Version Control → Review → Plan → Apply → Verify
+-------------------------------------------------------------------
+  1. Write      Author Terraform/CloudFormation/Ansible definitions
+  2. Version     Commit to Git (source of truth)
+  3. Review      Pull request / peer review for risky changes
+  4. Plan        Preview creates/updates/destroys (terraform plan)
+  5. Apply       Execute the approved change
+  6. Verify      Smoke test / kubectl get / hit health URL
+
+Best practices for versioning
+-----------------------------
+  • Git is source of truth — minimise long-lived console drift
+  • Tag releases; pin provider/module versions
+  • No secrets in Git (use secret managers)
+  • Modules for reuse; variables for environment differences
+
+Best practices for scaling
+--------------------------
+  • Parameterise counts (instance_count, min/max replicas)
+  • Encode autoscaling policies in code
+  • Promote Dev → Staging → Prod with same modules
+
+Why “Plan before Apply” matters
+-------------------------------
+Plan reveals accidental destroys (e.g., renaming a DB resource showing
+destroy/create). Reviewers can block catastrophic production loss before
+apply. In shared environments, blind apply from a laptop is an anti-pattern.
+
+Conclusion: IaC is a pipeline, not a one-time script. Plan-before-apply is
+the safety gate that protects production.
+
+
+================================================================================
+UNIT – 4  |  KUBERNETES (Starting Topics — Architecture & Cluster Setup)
+================================================================================
+
+--------------------------------------------------------------------------------
+Q.13  Kubernetes definition, need, architecture, Pod/Deploy/Service    [7]
+--------------------------------------------------------------------------------
+
+ANSWER:
+
+What is Kubernetes?
+-------------------
+Kubernetes (K8s) is an open-source container orchestration platform that
+automates deployment, scaling, networking, and management of containerized
+applications across a cluster of machines.
+
+One line: “Kubernetes is the operating system for your containers at
+cluster scale.” (Originally inspired by Google Borg; now CNCF-maintained.)
+
+Why orchestration is needed
+---------------------------
+Running one container is easy. Running hundreds across many machines needs
+automation for: placement, restart on crash, scaling before peaks, routing
+to healthy instances, and zero-downtime rollouts. Manual SSH cannot do this
+reliably.
+
+Architecture
+------------
+CONTROL PLANE (brain)
+  • API Server     — front door for kubectl / controllers
+  • Scheduler      — chooses which node runs a Pod
+  • Controller Mgr — reconciles desired state vs actual state
+  • etcd           — distributed store of cluster state
+
+WORKER NODE (muscle)
+  • kubelet            — agent that runs Pods as instructed
+  • kube-proxy         — helps implement Service networking
+  • Container runtime  — containerd / Docker starts containers
+
+Objects (definitions)
+---------------------
+  Pod          Smallest deployable unit — one or more tightly coupled
+               containers sharing network namespace and volumes.
+  Deployment   Declares desired replicas of a Pod template; handles
+               rolling updates and rollbacks.
+  Service      Stable network endpoint (VIP/DNS) selecting Pods by label
+               (ClusterIP / NodePort / LoadBalancer).
+
+Exam phrase: Desired state is reconciled by controllers (self-healing).
+
+Conclusion: Kubernetes provides cluster-wide orchestration; know control
+plane vs nodes and the Pod / Deployment / Service trio for exams.
+
+
+--------------------------------------------------------------------------------
+Q.14  GKE setup & management — Autopilot vs Standard, kubectl, namespaces [7]
+--------------------------------------------------------------------------------
+
+ANSWER:
+
+Steps to set up a GKE cluster (Practical 4 style)
+-------------------------------------------------
+  1. Choose GCP project / billing / region
+  2. Enable APIs: Compute Engine, Kubernetes Engine, Artifact Registry
+  3. Create cluster (Autopilot or Standard)
+  4. Connect credentials: gcloud container clusters get-credentials …
+  5. Verify: kubectl get nodes
+  6. (Optional) create namespaces; grant registry pull permissions
+
+Autopilot vs Standard
+---------------------
+  Aspect              Autopilot                      Standard
+  ─────────────────────────────────────────────────────────────────────────
+  Node management     Google manages nodes           You size / manage pools
+  Control plane       Google-managed                 Google-managed
+  Cost model          Pay for Pod resource requests  Pay for node VMs
+  Flexibility         Safe opinionated defaults      GPUs / custom machines
+  Best for            Most labs & many prod apps     Special hardware needs
+
+  Autopilot sketch:
+    gcloud container clusters create-auto hello-cluster --region=REGION
+  Standard sketch:
+    gcloud container clusters create hello-cluster --num-nodes=3 --region=REGION
+
+Connecting with kubectl
+-----------------------
+get-credentials writes kubeconfig so kubectl talks to that cluster’s API
+Server. Then: kubectl get nodes / cluster-info / get namespaces.
+
+Namespaces
+----------
+Virtual slices of one cluster (staging, production, per student team).
+Deploy with: kubectl apply -f app.yaml -n production
+Useful for isolation without creating many clusters.
+
+Basic management practices
+--------------------------
+  • Release channels: Rapid (new), Regular (balanced), Stable (conservative)
+  • Prefer regional clusters; set maintenance windows for upgrades
+  • Node ops (Standard): kubectl drain before maintenance; cordon to stop
+    new Pods; uncordon when ready
+  • Autopilot: Google handles much of node repair/scaling
+  • Security baseline: least-privilege IAM for get-credentials; prefer
+    Workload Identity over long-lived key files
+
+Conclusion: GKE setup = create → get-credentials → verify; choose Autopilot
+for simplicity or Standard for control; manage with namespaces, channels,
+and safe node operations.
+
+
+================================================================================
+                         QUICK MARKS CHECKLIST
+================================================================================
+
+  Q     Unit   Focus keywords to hit in 7 marks
+  ─────────────────────────────────────────────────────────────────────────
+  1     1      Five principles + throughput/cost vs on-prem
+  2     1      Shared model table IaaS/PaaS/SaaS + one risk
+  3     1      Cloud-native traits + vs monolith scale/failure
+  4     1      Five pillars + scalable design bullets
+  5     2      Definitions + backup ≠ DR (runbook/test/RTO)
+  6     2      HA vs FT + SPOF + LB/health/multi-zone
+  7     2      RTO/RPO defs + strategy table + compare two
+  8     2      Snapshots/versioning/PITR + case with RTO/RPO
+  9     3      IaC def + why + benefits + scenario
+  10    3      Tool comparison table + mini example
+  11    3      Provision vs CM + Ansible steps
+  12    3      Workflow + version/scale practices + plan importance
+  13    4      Def + need + control plane/nodes + Pod/Deploy/Service
+  14    4      GKE steps + Autopilot/Standard + kubectl/namespaces/ops
+
+================================================================================
+                    END OF ASSIGNMENT SOLUTION BOOK
+         Pair with: assignments/MiD1Assignment.txt  |  CC-II MiD1
+================================================================================

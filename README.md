@@ -73,4 +73,5 @@ AGENTS.md       Guidance for Cursor / Cloud Agents
 
 ## Assignments
 
-- `assignments/MiD1Assignment.txt` — MiD1 Assignment (Units 1–3)
+- `assignments/MiD1Assignment.txt` — MiD1 Assignment (Units 1–3 + Unit 4 starting topics; 98 marks)
+- `assignments/Assignment-Solution.txt` — Model answer book for all MiD1 questions (Q.1–Q.14)
