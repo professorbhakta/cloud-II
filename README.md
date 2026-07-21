@@ -31,6 +31,7 @@ AGENTS.md       Guidance for Cursor / Cloud Agents
 - `notes/unit-1/CC-II-Unit-I-Study-Notes.txt` — Unit 1 study notes
 - `notes/unit-2/CC-II-Unit-II-Disaster-Recovery-in-Cloud.txt` — **Unit 2 syllabus notes (DR)**
 - `notes/unit-2/CC-II-Unit-II-Networking-in-the-Cloud.txt` — extended GCP lab/reference guide
+- `notes/unit-3/CC-II-Unit-III-Infrastructure-as-Code.txt` — **Unit 3 syllabus notes (IaC)**
 
 ## Presentations
 

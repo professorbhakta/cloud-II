@@ -1,0 +1,689 @@
+================================================================================
+                    CC-II — UNIT III: STUDY NOTES
+           Introduction to Infrastructure as Code (IaC)
+================================================================================
+
+Course Reference: CC-II (Cloud Computing – II)
+Document Purpose: Exam preparation + practical / future learning scope
+Based On: CC-II Unit-III syllabus — Introduction to Infrastructure as Code (IaC)
+Weightage: 20%   |   Teaching Hours: 10
+Related Materials:
+  • syllabus/CC-II-Units.txt — official Unit 3 contents
+  • syllabus/CC-II-Practicals.txt — Practical 7 (Terraform)
+  • assignments/MiD1Assignment.txt — Unit 3 questions Q.9–Q.12
+  • notes/unit-2/ — DR notes (IaC helps rebuild after disasters)
+  • ppt/ — presentations (Unit 3 deck can be added later)
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+1.  Overview of Infrastructure as Code (IaC)
+2.  Tools for IaC — Terraform, AWS CloudFormation, Ansible
+3.  Configuration Management & Automation
+4.  Writing & Managing Infrastructure as Code
+5.  Best Practices for Versioning & Scaling Infrastructure
+6.  Exam Quick-Revision (Important Questions)
+7.  Future Scope & Industry Relevance
+
+================================================================================
+1. OVERVIEW OF INFRASTRUCTURE AS CODE (IaC)
+================================================================================
+
+1.1  DEFINITION
+---------------
+Infrastructure as Code (IaC) means managing and provisioning computing
+infrastructure (networks, VMs, load balancers, databases, firewalls, etc.)
+through machine-readable definition files — not by clicking through a cloud
+console or running one-off manual commands.
+
+  Traditional way:  Open GCP / AWS console → click Create VM → remember settings
+  IaC way:          Write a file that describes the VM → apply it with a tool
+                    → the same file can recreate the VM anytime, anywhere
+
+In short: treat infrastructure the same way developers treat application code —
+store it in Git, review it, test it, and automate it.
+
+
+1.2  WHY UNIT III MATTERS
+------------------------
+Unit 1 covered cloud principles and architecture thinking.
+Unit 2 covered how to recover when things fail (DR / backups / RTO / RPO).
+
+Unit 3 asks:
+  • How do we create cloud resources reliably and repeatedly?
+  • How do we avoid “snowflake” servers that only one engineer understands?
+  • How do we rebuild a whole environment after a disaster from code?
+  • How do teams collaborate on infrastructure without stepping on each other?
+
+Without IaC, even a good DR plan is slow: someone must remember every firewall
+rule, every VM size, every tag. With IaC, recovery can mean “re-apply the
+stack from Git.”
+
+
+1.3  PROBLEMS WITH MANUAL PROVISIONING
+--------------------------------------
+  PROBLEM                         WHAT GOES WRONG
+  ─────────────────────────────────────────────────────────────────────────
+  Click-ops / console only        Steps are not documented; hard to repeat
+  Different people, different     Dev looks nothing like prod (“works on my
+  settings                        cloud project”)
+  Forgotten resources             Orphan VMs, open firewalls, surprise bills
+  Slow disaster recovery          Rebuild depends on memory and screenshots
+  No peer review                  A wrong firewall rule goes live unnoticed
+  Scaling pain                    Creating 50 identical servers by hand
+
+
+1.4  BENEFITS OF IaC
+--------------------
+  • Repeatability — same environment every time (dev ≈ staging ≈ prod shape)
+  • Version control — Git history shows who changed what and why
+  • Automation — CI/CD can plan and apply infrastructure changes
+  • Reduced human error — fewer typos and missed checkbox settings
+  • Documentation — the code itself documents the intended architecture
+  • Faster DR — redeploy an entire stack from known-good definitions
+  • Collaboration — pull requests for infrastructure, just like app code
+  • Auditability — reviewers and auditors can inspect desired state
+
+PRACTICAL SCENARIO (exam-friendly)
+----------------------------------
+A campus ERP team needs identical environments for development, testing, and
+result-day production scale-up. With console-only work, each environment drifts.
+With Terraform (or similar), one module creates the VPC, MIG, load balancer,
+and Cloud SQL settings; variables change project/region/size. Before result day
+they apply a larger instance count from the same code — and after a zone failure
+they can rebuild in another region from the same repository.
+
+
+1.5  IMPERATIVE vs DECLARATIVE
+------------------------------
+  APPROACH      MEANING                         EXAMPLE
+  ─────────────────────────────────────────────────────────────────────────
+  Imperative    You specify HOW to do it —      gcloud compute instances create
+                step-by-step commands           a series of shell scripts
+
+  Declarative   You specify WHAT you want —     Terraform: desired_state = 2 VMs
+                the tool figures out the        CloudFormation template
+                create/update/delete steps
+
+KEY EXAM POINT:
+  Declarative tools compare desired state with current state and only change
+  what is needed (converge to the target). Imperative scripts often re-run
+  every step unless you carefully make them idempotent.
+
+
+1.6  IDEMPOTENCE
+----------------
+Idempotent means: applying the same definition twice leaves the system in the
+same final state (no duplicate VMs, no double-install chaos).
+
+  Good IaC tools aim for idempotent apply:
+    1st apply  → creates missing resources
+    2nd apply  → detects “already matches desired state” → little or no change
+
+This is why `terraform apply` twice is safer than blindly re-running a messy
+create-only shell script.
+
+
+1.7  PROVISIONING vs CONFIGURATION (PREVIEW)
+--------------------------------------------
+  Infrastructure provisioning   → Create cloud resources (VM, VPC, LB, bucket)
+  Configuration management      → Install/configure software ON those servers
+                                  (packages, app code, services, users)
+
+Many real projects use both:
+  Terraform / CloudFormation  → create the VM and network
+  Ansible / startup scripts   → install Node.js, pull app, start the service
+
+(You will expand this in Section 3.)
+
+
+1.8  HOW IaC CONNECTS TO EARLIER UNITS
+--------------------------------------
+  • Unit 1 (Well-Architected / scalable design): IaC encodes best practices
+    as reusable modules so every project starts from a good baseline.
+  • Unit 2 (DR): IaC turns “rebuild from backup + runbooks” into “restore data
+    + re-apply infrastructure code.” Snapshots protect data; IaC protects the
+    shape of the system.
+  • Labs: Practical 7 — Automating Infrastructure Deployment with Terraform.
+
+
+================================================================================
+2. TOOLS FOR IaC — TERRAFORM, AWS CLOUDFORMATION, ANSIBLE
+================================================================================
+
+2.1  COMPARISON TABLE (MEMORISE FOR EXAMS)
+------------------------------------------
+  TOOL              PURPOSE / FOCUS      LANGUAGE     CLOUD SUPPORT   APPROACH
+  ─────────────────────────────────────────────────────────────────────────────
+  Terraform         Provision multi-     HCL          Multi-cloud     Declarative
+                    cloud infrastructure              (AWS, GCP,
+                                                      Azure, …)
+
+  AWS               Provision AWS        JSON / YAML  AWS only        Declarative
+  CloudFormation    resources
+
+  Ansible           Configure software   YAML         Multi-cloud /   Procedural /
+                    on machines; also    playbooks    on-prem         often called
+                    can provision some                (agentless)     config mgmt
+                    resources                                         (push over SSH)
+
+Also useful to know (extra, not always required by syllabus wording):
+  • Google Deployment Manager — GCP-native declarative templates (YAML)
+  • Pulumi — IaC using general-purpose languages (Python, TypeScript, Go, etc.)
+
+
+2.2  TERRAFORM (HashiCorp)
+--------------------------
+WHAT IT IS
+  A popular open-source (and enterprise) IaC tool that declares infrastructure
+  in HCL (HashiCorp Configuration Language) and applies it through providers
+  (plugins for GCP, AWS, Azure, Kubernetes, and many more).
+
+CORE IDEAS
+  • Configuration files (usually `*.tf`) describe desired resources
+  • Provider plugins talk to cloud APIs
+  • State file (`terraform.tfstate`) records what Terraform previously created
+  • Plan / Apply workflow: preview then execute
+
+COMMON COMMANDS
+  terraform init     Download providers / modules; prepare working directory
+  terraform plan     Show what will be created / changed / destroyed
+  terraform apply    Execute the plan (create/update/delete resources)
+  terraform destroy  Tear down resources tracked in state
+  terraform fmt      Format HCL files
+  terraform validate Check configuration syntax / basic validity
+
+MINIMAL CONCEPTUAL EXAMPLE (GCP firewall — Fancy Store style)
+-------------------------------------------------------------
+  # main.tf (conceptual)
+  provider "google" {
+    project = var.project_id
+    region  = var.region
+  }
+
+  resource "google_compute_firewall" "fw_fe" {
+    name    = "fw-fe"
+    network = "default"
+
+    allow {
+      protocol = "tcp"
+      ports    = ["8080"]
+    }
+
+    target_tags = ["frontend"]
+    source_ranges = ["0.0.0.0/0"]   # tighten in real designs!
+  }
+
+MAPPING LAB ACTIONS → TERRAFORM RESOURCES
+-----------------------------------------
+  Manual / gcloud step                 Typical Terraform resource
+  ─────────────────────────────────────────────────────────────────────────
+  Create Compute Engine VM             google_compute_instance
+  Firewall rule                        google_compute_firewall
+  Instance template / MIG              google_compute_instance_template /
+                                       google_compute_instance_group_manager
+  GKE cluster                          google_container_cluster
+  Cloud Storage bucket                 google_storage_bucket
+
+WHY STATE MATTERS
+  Terraform uses state to know which real cloud objects belong to which
+  configuration. Remote state (e.g., in a Cloud Storage bucket) with locking
+  prevents two people from applying conflicting changes at the same time.
+
+
+2.3  AWS CLOUDFORMATION
+-----------------------
+WHAT IT IS
+  AWS’s native IaC service. You write a template (JSON or YAML) that declares
+  AWS resources; CloudFormation creates and updates them as a stack.
+
+KEY TERMS
+  Template   The YAML/JSON file describing resources
+  Stack      A deployed set of resources managed together
+  Change set Preview of updates before they are applied (similar spirit to plan)
+
+STRENGTHS
+  • Deep AWS integration; no separate state file you manage yourself
+  • IAM, VPC, EC2, RDS, Lambda, etc. all modellable as resources
+  • Good when the organisation is AWS-only
+
+LIMITS (for comparison questions)
+  • AWS-only — not for GCP/Azure multi-cloud in one tool
+  • Templates can become large; nested stacks / modules help organise them
+
+CONCEPTUAL SNIPPET (YAML idea)
+------------------------------
+  Resources:
+    WebBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: my-cc2-demo-bucket
+
+
+2.4  ANSIBLE
+------------
+WHAT IT IS
+  An automation / configuration management tool. You write playbooks in YAML
+  that describe tasks (install package, copy file, start service). Ansible
+  typically pushes changes over SSH — agentless (no permanent agent required
+  on the target in the common SSH model).
+
+WHERE IT FITS vs TERRAFORM
+  • Terraform / CloudFormation excel at cloud resource provisioning
+  • Ansible excels at configuring the OS and applications on existing machines
+  • Common pattern: Terraform creates VMs → Ansible configures them
+
+CONCEPTUAL PLAYBOOK TASKS (server setup)
+----------------------------------------
+  - name: Install Node.js packages
+    apt:
+      name: ["nodejs", "npm"]
+      state: present
+
+  - name: Pull application from Cloud Storage / Git
+    ...
+
+  - name: Ensure app service is running
+    service:
+      name: myapp
+      state: started
+
+ANSIBLE vs “STARTUP SCRIPT”
+  A Compute Engine startup script that runs apt-get, installs Node, pulls code,
+  and configures Supervisor is the same idea as configuration management —
+  just expressed as a shell script instead of an Ansible playbook.
+
+
+2.5  CHOOSING A TOOL (QUICK GUIDE)
+---------------------------------
+  NEED                                      TYPICAL CHOICE
+  ─────────────────────────────────────────────────────────────────────────
+  Multi-cloud provisioning                  Terraform
+  AWS-only, native AWS tooling preferred    CloudFormation
+  Configure packages/services on VMs        Ansible (or startup scripts)
+  GCP lab / Practical 7                     Terraform
+  Mix of create + configure                 Terraform + Ansible together
+
+
+2.6  SIDE-BY-SIDE SUMMARY FOR LONG ANSWERS
+------------------------------------------
+  Aspect          Terraform           CloudFormation        Ansible
+  ─────────────────────────────────────────────────────────────────────────
+  Main job        Provision infra     Provision AWS infra   Configure servers
+  Language        HCL                 JSON / YAML           YAML playbooks
+  Cloud           Multi-cloud         AWS                   Multi / on-prem
+  Style           Declarative         Declarative           Task-oriented /
+                                                            procedural playbooks
+  State           State file          Stack (AWS managed)   Usually no infra
+                                                            state like TF
+  Typical use     VPC, VM, GKE, LB    VPC, EC2, S3, IAM     apt, users, app
+                                                            deploy, services
+
+
+================================================================================
+3. CONFIGURATION MANAGEMENT & AUTOMATION
+================================================================================
+
+3.1  WHAT IS CONFIGURATION MANAGEMENT?
+--------------------------------------
+Configuration Management (CM) is the practice of keeping a system’s software
+and settings in a known, desired state — packages installed, files present,
+services running, users configured — usually through automation.
+
+  Goal: every server of a given role looks the same and stays that way.
+
+
+3.2  PROVISIONING vs CONFIGURATION (EXAM DISTINCTION)
+-----------------------------------------------------
+  DIMENSION              INFRASTRUCTURE             SOFTWARE CONFIGURATION
+                         PROVISIONING               (CM)
+  ─────────────────────────────────────────────────────────────────────────
+  Question answered      “What cloud resources      “What is installed and
+                         exist?”                     running on the VM?”
+  Examples               VPC, subnet, VM, disk,     apt packages, Node.js,
+                         firewall, load balancer,   app files, Supervisor,
+                         managed DB instance         nginx config, users
+  Typical tools          Terraform, CloudFormation  Ansible, Chef, Puppet,
+                                                    startup scripts
+  When it runs           Create / update cloud      After the machine exists
+                         objects via APIs           (SSH / agent / metadata)
+
+Remember: creating a blank VM is provisioning; installing your Fancy Store
+Node app on that VM is configuration.
+
+
+3.3  AUTOMATION — WHY IT MATTERS
+--------------------------------
+Manual configuration leads to:
+  • Drift — one server got an emergency hotfix; others did not
+  • Slow scale-out — cannot add 20 identical nodes quickly
+  • Risky DR — rebuild steps are tribal knowledge
+
+Automation means a machine can be brought from “empty OS” to “serving traffic”
+with a playbook / script — the same way every time.
+
+
+3.4  COMMON CONFIGURATION MANAGEMENT TOOLS
+------------------------------------------
+  TOOL       MODEL (typical)              NOTES
+  ─────────────────────────────────────────────────────────────────────────
+  Ansible    Push over SSH; agentless     YAML playbooks; very common in labs
+  Chef       Recipes; often pull-based    Ruby DSL; enterprise history
+  Puppet     Declarative manifests        Agent-based model widely known
+  Salt       Remote execution / states    Fast at scale in some setups
+
+For CC-II exams, Ansible is the syllabus-named tool to emphasise.
+
+
+3.5  TYPICAL AUTOMATED SERVER SETUP STEPS
+-----------------------------------------
+A realistic sequence (matches lab-style startup scripts / Ansible roles):
+
+  1. Update package index / install base packages
+  2. Install runtime (e.g., Node.js, Java, Python)
+  3. Create a non-root application user
+  4. Pull application code or artifacts (Git, Cloud Storage, Artifact Registry)
+  5. Write config files (ports, env vars, DB connection via Secret Manager)
+  6. Configure a process manager (systemd, Supervisor)
+  7. Start and enable the service
+  8. Verify health (curl localhost:PORT / health endpoint)
+
+EXAMPLE — FANCY STORE STYLE STARTUP PATTERN
+-------------------------------------------
+  apt-get update && install tools
+  → install Node.js
+  → gsutil cp application from bucket
+  → configure Supervisor to keep the process alive
+  → run as user `nodeapp` (not root)
+
+This is configuration management even when written as Bash instead of Ansible.
+
+
+3.6  IDEMPOTENT CONFIGURATION
+-----------------------------
+Good CM tasks should be safe to re-run:
+  • “Ensure package nodejs is installed” — not “always download installer again”
+  • “Ensure service is started” — not “start service” blindly every time
+  • “File X must contain these lines” — not “append these lines forever”
+
+Ansible modules are designed with this mindset (state=present / started).
+
+
+3.7  PUSH vs PULL MODELS (SHORT)
+--------------------------------
+  Push  — control machine connects to targets and pushes config (Ansible SSH)
+  Pull  — each node periodically pulls desired config from a server (some
+          Chef/Puppet setups)
+
+Syllabus focus: understand that Ansible commonly uses a push model over SSH.
+
+
+================================================================================
+4. WRITING & MANAGING INFRASTRUCTURE AS CODE
+================================================================================
+
+4.1  THE STANDARD WORKFLOW (MEMORISE)
+-------------------------------------
+  Write → Version Control → Review → Plan → Apply → Verify
+
+  STEP              WHAT YOU DO
+  ─────────────────────────────────────────────────────────────────────────
+  Write             Author .tf / templates / playbooks that describe intent
+  Version Control   Commit to Git (feature branch)
+  Review            Pull request / peer review (catch open 0.0.0.0/0, etc.)
+  Plan              Preview changes (terraform plan / change set)
+  Apply             Execute approved changes (terraform apply / stack update)
+  Verify            Check resources, health checks, smoke tests, billing tags
+
+WHY “PLAN BEFORE APPLY” IS CRITICAL
+  Plan shows creates, updates, and destroys before anything irreversible
+  happens. Example: a one-line mistake could destroy a database resource —
+  plan makes that visible so humans can stop before apply.
+
+
+4.2  STRUCTURE OF A TYPICAL TERRAFORM PROJECT
+---------------------------------------------
+  my-infra/
+    providers.tf      Provider and required_version settings
+    main.tf           Primary resources
+    variables.tf      Input variables (project, region, size)
+    outputs.tf        Values useful after apply (LB IP, instance name)
+    terraform.tfvars  Environment-specific values (often not committed if secret)
+    modules/          Reusable building blocks (network, compute, db)
+
+Modules let you write “VPC + subnet + NAT” once and reuse it for many apps.
+
+
+4.3  VARIABLES, OUTPUTS, AND ENVIRONMENTS
+-----------------------------------------
+  • Variables parameterise code (instance_count, machine_type, region)
+  • Outputs expose useful results (load_balancer_ip)
+  • Separate environments:
+      - Different tfvars files (dev.tfvars / prod.tfvars)
+      - Terraform workspaces
+      - Separate state files / separate folders per environment
+
+Never hard-code production secrets into the repository.
+
+
+4.4  REMOTE STATE AND LOCKING
+-----------------------------
+Local state on a laptop is risky for teams:
+  • Easy to lose
+  • Two applies can conflict
+
+Better practice:
+  • Store state remotely (e.g., GCS / S3 backend)
+  • Enable state locking so only one apply runs at a time
+  • Restrict who can read state (state may contain sensitive data)
+
+
+4.5  SECRETS MANAGEMENT
+-----------------------
+Do NOT commit:
+  • API keys, passwords, private keys, service account JSON keys
+
+Prefer:
+  • Cloud Secret Manager / AWS Secrets Manager / Parameter Store
+  • CI/CD injected environment variables
+  • Short-lived credentials (workload identity / instance service accounts)
+
+IaC can reference secret resources without printing secret values in Git.
+
+
+4.6  CODE REVIEW FOR INFRASTRUCTURE
+-----------------------------------
+Reviewers should check:
+  • Overly open firewall / security group rules
+  • Public IPs where private would do
+  • Missing backups / deletion protection on databases
+  • Cost bombs (huge machine types, no autoscaling limits)
+  • Drift from naming / tagging standards
+  • Accidental destroy of stateful resources
+
+
+4.7  LINK TO CI/CD (PREVIEW OF UNIT 5)
+--------------------------------------
+IaC fits naturally into pipelines:
+
+  Developer opens PR with Terraform changes
+    → CI runs fmt / validate / plan
+    → Reviewer approves
+    → CD applies to staging automatically
+    → Production apply may require manual approval
+
+Unit 5 deepens Jenkins / GitHub Actions / GitLab CI / Cloud Build.
+
+
+4.8  MANAGING CHANGE SAFELY
+---------------------------
+  • Prefer small, reviewable diffs over giant “rewrite the world” PRs
+  • Use blue/green or rolling strategies for compute where possible
+  • Keep stateful resources (databases) changes extra careful
+  • Tag releases so you can roll back to a known Git commit and re-apply
+
+
+================================================================================
+5. BEST PRACTICES FOR VERSIONING & SCALING INFRASTRUCTURE
+================================================================================
+
+5.1  VERSIONING INFRASTRUCTURE CODE
+-----------------------------------
+  PRACTICE                         WHY
+  ─────────────────────────────────────────────────────────────────────────
+  Store everything in Git          Single source of truth; history & blame
+  Use meaningful commits / PRs     Explain intent for future readers
+  Tag releases (v1.0, v1.1)        Know which infra version matched which app
+  Prefer immutable artifacts       New instance template / image version
+                                   instead of silently mutating the old one
+  Pin provider / module versions   Avoid surprise breakages on init
+
+Immutable thinking (exam + industry):
+  Do not “SSH and hot-patch prod forever.” Build a new template / image /
+  container tag, deploy it, and retire the old one.
+
+
+5.2  SCALING WITH IaC
+---------------------
+IaC should make scale a parameter — not a copy-paste marathon.
+
+  TECHNIQUE                        EXAMPLE
+  ─────────────────────────────────────────────────────────────────────────
+  Parameterise counts              var.instance_count / MIG target_size
+  Encode autoscaling policy        CPU utilisation targets in Terraform
+  Horizontal scale out/in          More VMs / pods behind a load balancer
+  Vertical scale (carefully)       Larger machine_type via variable change
+  Multi-environment reuse          Same module; different sizes per env
+  Regional / multi-zone flags      Spread instances for HA (links to Unit 2)
+
+SCALING SCENARIO
+  Normal week:  MIG size = 2
+  Result day:   MIG size = 10 (same code, different variable / tfvars)
+  After event:  scale back down — cost control (FinOps mindset)
+
+
+5.3  ENVIRONMENT PROMOTION
+--------------------------
+  Dev  →  Staging  →  Production
+
+  • Promote the same module versions forward
+  • Only change inputs (size, replica count, domain names)
+  • Catch mistakes in cheaper environments before production apply
+
+
+5.4  TESTING AND VALIDATION
+---------------------------
+  • terraform validate / fmt in CI
+  • Static checks / policy as code (e.g., “deny 0.0.0.0/0 on SSH”)
+  • Plan output reviewed in PR comments
+  • Smoke tests after apply (hit health URL, check IAM bindings)
+
+
+5.5  OPERATIONAL BEST PRACTICES (CHECKLIST)
+-------------------------------------------
+  [ ] Git is the source of truth — avoid long-lived console drift
+  [ ] Always plan before apply in shared environments
+  [ ] Remote state + locking for teams
+  [ ] No secrets in Git
+  [ ] Modules for reuse; variables for differences
+  [ ] Tag resources (owner, env, cost-centre) via IaC defaults
+  [ ] Deletion protection / backups for stateful data stores
+  [ ] Document destroy implications (especially databases)
+  [ ] Align IaC with DR runbooks (Unit 2): rebuild is a first-class path
+
+
+5.6  ANTI-PATTERNS TO AVOID
+---------------------------
+  • Click in console, never update the code → drift
+  • One gigantic root module nobody understands
+  • Shared “god” credentials in plaintext tfvars committed to Git
+  • terraform apply on a laptop against prod with no plan review
+  • Using IaC only for create, then forever SSH snowflake management
+
+
+================================================================================
+6. EXAM QUICK-REVISION (IMPORTANT QUESTIONS)
+================================================================================
+
+Q1. What is Infrastructure as Code (IaC)?
+A1. Managing and provisioning infrastructure using machine-readable definition
+    files (code), instead of manual console clicks or one-off commands.
+
+Q2. Why is IaC preferred over manual cloud-console provisioning?
+A2. IaC gives repeatability, version history, peer review, automation, fewer
+    human errors, living documentation, and faster rebuilds for DR. Consoles
+    create undocumented, hard-to-reproduce snowflake environments.
+
+Q3. Give one practical scenario where IaC is highly useful.
+A3. Creating matching dev/staging/prod environments; scaling MIG size for a
+    peak event; rebuilding networking + compute after a zone failure from Git.
+
+Q4. Differentiate imperative and declarative IaC.
+A4. Imperative = step-by-step HOW (gcloud create…). Declarative = declare WHAT
+    desired state is; tool converges to it (Terraform / CloudFormation).
+
+Q5. Compare Terraform, AWS CloudFormation, and Ansible.
+A5. Terraform: multi-cloud provisioning, HCL, declarative, uses state.
+    CloudFormation: AWS-only provisioning, JSON/YAML templates, stacks.
+    Ansible: configuration management focus, YAML playbooks, often SSH push;
+    configures software on machines (can also automate some provisioning).
+
+Q6. Write a short conceptual example of creating a cloud resource with one tool.
+A6. Terraform google_compute_firewall / google_compute_instance block; or
+    CloudFormation AWS::S3::Bucket; or Ansible apt module ensuring nginx
+    installed — any one clear snippet with explanation is enough.
+
+Q7. What is Configuration Management? How is it different from provisioning?
+A7. CM keeps software/settings on servers in desired state (packages, services,
+    files). Provisioning creates the cloud resources themselves (VM, VPC, LB).
+    Terraform often provisions; Ansible often configures.
+
+Q8. Explain typical automated server setup steps (Ansible / startup script).
+A8. Install packages → install runtime → create app user → pull code/artifacts
+    → write config → configure process manager → start service → health check.
+
+Q9. Explain the Write → Version Control → Review → Plan → Apply → Verify workflow.
+A9. Author definitions; commit to Git; peer-review PR; preview with plan/change
+    set; apply approved changes; verify health and correctness.
+
+Q10. Why is “Plan before Apply” important?
+A10. It reveals creates/updates/destroys before execution, preventing accidental
+     deletion or costly misconfiguration in shared/production projects.
+
+Q11. List best practices for versioning and scaling infrastructure with IaC.
+A11. Git + tags/releases; immutable templates/images; pin versions; parameterise
+     counts; encode autoscaling; separate env tfvars/workspaces; remote state;
+     no secrets in Git; promote Dev→Staging→Prod.
+
+Q12. How does IaC support Disaster Recovery (link to Unit 2)?
+A12. Data returns from backups/snapshots; infrastructure shape returns by
+     re-applying IaC. Together they reduce RTO versus manual rebuild.
+
+
+================================================================================
+7. FUTURE SCOPE & INDUSTRY RELEVANCE
+================================================================================
+
+  • Policy as Code — enforce security/cost rules on every plan (OPA, Sentinel)
+  • GitOps — desired state in Git continuously reconciled to the cluster/cloud
+  • Platform engineering — internal modules so app teams self-serve safely
+  • Multi-cloud / hybrid — Terraform providers spanning data centre + cloud
+  • AI-assisted authoring — Copilot-style help writing HCL/YAML (still needs review)
+  • Career link — DevOps Engineer, Cloud Engineer, SRE, Platform Engineer roles
+    expect IaC fluency (especially Terraform) in interviews and daily work
+
+LAB CONNECTION
+--------------
+  Practical 7: Automating Infrastructure Deployment with Terraform
+  Use Unit 3 theory to explain why the lab replaces repeated gcloud clicks
+  with versioned, reviewable code.
+
+REMEMBER
+--------
+  If it is not in Git, it is not the source of truth.
+  Plan before you apply. Configure after you provision.
+  Parameterise scale; protect secrets; design for rebuild.
+
+================================================================================
+END OF UNIT III STUDY NOTES — Introduction to Infrastructure as Code (IaC)
+================================================================================
