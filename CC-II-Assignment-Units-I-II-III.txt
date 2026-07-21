@@ -1,0 +1,193 @@
+================================================================================
+          CLOUD COMPUTING – II (CC-II)  |  ASSIGNMENT
+          Units I, II & III
+          Institution: FIT & CS, Parul University
+================================================================================
+
+Instructions
+------------
+  • Attempt all units.
+  • Each unit has FOUR questions.
+  • Each question carries SEVEN (7) marks.
+  • Total marks: 84  (3 units × 4 questions × 7 marks).
+  • Write answers with definitions, explanation, comparison tables where useful,
+    and at least one practical / cloud example per question.
+  • Diagrams may be drawn where they strengthen the answer.
+
+
+================================================================================
+UNIT I — NETWORKING IN THE CLOUD
+================================================================================
+Syllabus focus: Introduction to cloud networking, LAN/WAN, VPC, Subnets,
+IP addressing, Routes & Firewall rules, Multiple VPCs, Hybrid Cloud,
+Load Balancing.
+
+--------------------------------------------------------------------------------
+Q1.  Virtual Private Cloud (VPC)                                        [7 Marks]
+--------------------------------------------------------------------------------
+(a) Define a Virtual Private Cloud (VPC) and explain how it differs from a
+    traditional private data-center network.                             [3]
+(b) With a neat labelled diagram, describe a VPC having:
+      • one public subnet and one private subnet
+      • VMs / resources placed in each subnet
+      • internet connectivity for the public tier
+    Briefly state the role of CIDR notation when creating subnets.      [4]
+
+--------------------------------------------------------------------------------
+Q2.  LAN, WAN, Subnets & IP Addressing                                  [7 Marks]
+--------------------------------------------------------------------------------
+(a) Differentiate between LAN and WAN with any four points. Explain how
+    each concept maps to a cloud environment (e.g., within a VPC vs across
+    regions / hybrid links).                                            [3]
+(b) Explain public IP vs private IP addressing in the cloud. Why are
+    private IPs preferred for application and database tiers? Give one
+    example of how a private VM reaches the internet when needed.       [4]
+
+--------------------------------------------------------------------------------
+Q3.  Routes, Firewall Rules & Multiple VPCs                             [7 Marks]
+--------------------------------------------------------------------------------
+(a) Explain the purpose of routes and firewall rules in a cloud VPC.
+    State any four important characteristics / behaviours of VPC
+    firewall rules (for example: ingress vs egress, stateful nature,
+    association with a single VPC, ALLOW/DENY action).                  [4]
+(b) Why might an organization use multiple VPC networks? Briefly explain
+    VPC peering and one limitation of sharing firewall rules across
+    peered VPCs.                                                        [3]
+
+--------------------------------------------------------------------------------
+Q4.  Hybrid Cloud & Load Balancing                                      [7 Marks]
+--------------------------------------------------------------------------------
+(a) What is hybrid cloud? List the typical strategy steps to set up a
+    hybrid environment and name two connectivity options between
+    on-premises and cloud (e.g., VPN vs dedicated interconnect).        [3]
+(b) Explain cloud load balancing. Differentiate Layer-4 and Layer-7 load
+    balancers with suitable use cases. How does a load balancer work
+    together with health checks for high availability?                  [4]
+
+
+================================================================================
+UNIT II — DISASTER RECOVERY IN THE CLOUD
+================================================================================
+Syllabus focus: Disaster Recovery in Cloud; Concepts of Backup & DR;
+High Availability & Fault Tolerance; DR Strategies (RPO & RTO);
+Cloud-Based Backup Solutions & Snapshots; Case Studies.
+
+--------------------------------------------------------------------------------
+Q1.  Backup vs Disaster Recovery vs Business Continuity                 [7 Marks]
+--------------------------------------------------------------------------------
+(a) Define the terms: Backup, Disaster, Disaster Recovery (DR), and
+    Business Continuity.                                                [3]
+(b) “Having backups is not the same as having a disaster recovery plan.”
+    Justify this statement. In your answer, mention runbooks, restore
+    testing, and infrastructure rebuild / failover.                     [4]
+
+--------------------------------------------------------------------------------
+Q2.  High Availability, Fault Tolerance & SPOF                          [7 Marks]
+--------------------------------------------------------------------------------
+(a) Differentiate High Availability (HA) and Fault Tolerance with clear
+    definitions and one cloud example for each.                         [3]
+(b) What is a Single Point of Failure (SPOF)? Describe how Managed
+    Instance Groups (MIG), load balancers, health checks, and
+    multi-zone deployment reduce SPOF risk for a web application.       [4]
+
+--------------------------------------------------------------------------------
+Q3.  RPO, RTO & Disaster Recovery Strategies                            [7 Marks]
+--------------------------------------------------------------------------------
+(a) Define Recovery Time Objective (RTO) and Recovery Point Objective
+    (RPO) with one practical example of each.                           [3]
+(b) Explain the DR strategy ladder from cold to hot:
+      Backup & Restore → Pilot Light → Warm Standby → Hot Standby →
+      Multi-site Active-Active.
+    For any two strategies, comment on relative cost and typical RTO/RPO. [4]
+
+--------------------------------------------------------------------------------
+Q4.  Cloud Backups, Snapshots & Case Study                              [7 Marks]
+--------------------------------------------------------------------------------
+(a) Describe cloud-based backup / recovery mechanisms you have studied
+    (Compute Engine snapshots, Cloud Storage versioning / dual-region
+    buckets, Cloud SQL automated backups & point-in-time recovery).
+    State why restore testing is essential.                             [4]
+(b) Discuss ANY ONE case study (e.g., e-commerce multi-region design,
+    payments/UPI-style system, campus exam portal on result day, or
+    GitLab 2017 backup lesson). Map the problem to a suitable DR tier
+    and justify your choice using RTO/RPO thinking.                     [3]
+
+
+================================================================================
+UNIT III — CLOUD-NATIVE DESIGN, IaC & CI/CD
+================================================================================
+Syllabus focus: Cloud principles & Well-Architected Framework;
+Shared responsibility; Cloud-native architecture; Infrastructure as Code;
+Configuration management; CI/CD concepts, pipelines & tools;
+Automated testing & deployment strategies.
+(Aligned with Topics 8, 10 & 11 of the CC-II lab / reference syllabus.)
+
+--------------------------------------------------------------------------------
+Q1.  Cloud Principles & Shared Responsibility                           [7 Marks]
+--------------------------------------------------------------------------------
+(a) Explain any five fundamental principles of cloud computing
+    (on-demand self-service, broad network access, resource pooling,
+    rapid elasticity, measured service — or related principles such as
+    automation and loose coupling).                                     [4]
+(b) Describe the Shared Responsibility Model. Compare customer vs
+    provider responsibilities for IaaS (e.g., Compute Engine) and PaaS
+    (e.g., App Engine).                                                 [3]
+
+--------------------------------------------------------------------------------
+Q2.  Well-Architected Framework & Cloud-Native Design                   [7 Marks]
+--------------------------------------------------------------------------------
+(a) List the pillars of the Well-Architected Framework (Operational
+    Excellence, Security, Reliability, Performance Efficiency, Cost
+    Optimization, and Sustainability where applicable). Explain ANY
+    THREE pillars with one concrete cloud practice for each.            [4]
+(b) What is cloud-native architecture? Mention microservices,
+    containers, managed services, and externalized state as design
+    ideas, with brief justification for each.                           [3]
+
+--------------------------------------------------------------------------------
+Q3.  Infrastructure as Code (IaC)                                       [7 Marks]
+--------------------------------------------------------------------------------
+(a) Define Infrastructure as Code. State four benefits of using IaC
+    instead of only manual console provisioning.                        [3]
+(b) Differentiate imperative vs declarative approaches with examples
+    (e.g., gcloud commands vs Terraform / Deployment Manager). Briefly
+    compare any two IaC / configuration tools (Terraform, Ansible,
+    CloudFormation, or Google Deployment Manager) and list two IaC
+    best practices (version control, plan-before-apply, secrets handling,
+    environment separation).                                            [4]
+
+--------------------------------------------------------------------------------
+Q4.  CI/CD Concepts, Pipelines & Tools                                  [7 Marks]
+--------------------------------------------------------------------------------
+(a) Explain DevOps culture briefly. Differentiate Continuous Integration,
+    Continuous Delivery, and Continuous Deployment.                     [3]
+(b) Draw / describe a typical CI/CD pipeline (Source → Build → Test →
+    Artifact → Deploy → Verify). Name any two CI/CD tools (Cloud Build,
+    Jenkins, GitHub Actions, GitLab CI, Cloud Deploy) and state one
+    deployment strategy for zero / low downtime (e.g., rolling update,
+    blue-green, or canary).                                             [4]
+
+
+================================================================================
+MARKING SCHEME (SUMMARY)
+================================================================================
+
+  Unit      Questions     Marks/Q     Unit Total
+  ──────────────────────────────────────────────
+  Unit I         4           7           28
+  Unit II        4           7           28
+  Unit III       4           7           28
+  ──────────────────────────────────────────────
+  GRAND TOTAL                             84
+
+Suggested depth for a 7-mark answer
+-----------------------------------
+  • Short definition / list alone is not enough.
+  • Prefer: definition → explanation / comparison → cloud example
+    (and a small diagram where asked).
+  • Aim for a structured answer of roughly ¾ to 1 page per question.
+
+
+================================================================================
+END OF ASSIGNMENT — CC-II Units I, II & III
+================================================================================
