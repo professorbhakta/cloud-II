@@ -16,6 +16,7 @@ syllabus/       Official syllabus (PDF + units + practicals)
 notes/unit-1/   Unit 1 study notes
 notes/unit-2/   Unit 2 Disaster Recovery notes + GCP lab reference
 notes/unit-3/   Unit 3 Infrastructure as Code (IaC) notes
+notes/unit-4/   Unit 4 Kubernetes & Container Orchestration notes
 ppt/            PowerPoint decks and regenerators
 assignments/    Mid-term / assignment question papers
 AGENTS.md       Guidance for Cursor / Cloud Agents
@@ -33,6 +34,7 @@ AGENTS.md       Guidance for Cursor / Cloud Agents
 - `notes/unit-2/CC-II-Unit-II-Disaster-Recovery-in-Cloud.txt` — **Unit 2 syllabus notes (DR)**
 - `notes/unit-2/CC-II-Unit-II-Networking-in-the-Cloud.txt` — extended GCP lab/reference guide
 - `notes/unit-3/CC-II-Unit-III-Infrastructure-as-Code.txt` — **Unit 3 syllabus notes (IaC)**
+- `notes/unit-4/CC-II-Unit-IV-Kubernetes-Container-Orchestration.txt` — **Unit 4 syllabus notes (Kubernetes)**
 
 ## Presentations
 

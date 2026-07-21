@@ -42,6 +42,7 @@ This repository holds **Cloud Computing – II** teaching materials (Parul Unive
 | `notes/unit-1/` | Unit 1 study notes |
 | `notes/unit-2/` | Unit 2 DR notes + GCP lab reference |
 | `notes/unit-3/` | Unit 3 Infrastructure as Code (IaC) notes |
+| `notes/unit-4/` | Unit 4 Kubernetes & Container Orchestration notes |
 | `ppt/` | Presentations and regenerators |
 | `assignments/` | Mid-term / assignment papers |
 
