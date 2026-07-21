@@ -1,0 +1,108 @@
+================================================================================
+                    CLOUD COMPUTING – II (CC-II)
+                        PRACTICALS LIST
+================================================================================
+Course        :  MCA (A.Y.-II)
+Semester      :  3
+Lab Hrs/Week  :  2
+Source        :  Official Syllabus — Cloud Computing – II
+================================================================================
+
+PRACTICALS
+----------
+Total Practicals: 11
+
+
+--------------------------------------------------------------------------------
+Practical 1
+--------------------------------------------------------------------------------
+Creating a Google Cloud Free Tier Account.
+Deploying a Linux VM on GCP
+
+
+--------------------------------------------------------------------------------
+Practical 2
+--------------------------------------------------------------------------------
+Deploying a Docker Container on GCP Compute Engine
+
+
+--------------------------------------------------------------------------------
+Practical 3
+--------------------------------------------------------------------------------
+Deploying a Containerized Application on Cloud Run
+
+
+--------------------------------------------------------------------------------
+Practical 4
+--------------------------------------------------------------------------------
+Setting Up Kubernetes Cluster and Deploying & Scaling an App on Kubernetes
+
+
+--------------------------------------------------------------------------------
+Practical 5
+--------------------------------------------------------------------------------
+Implementing Cloud Storage Backup & Snapshots
+
+
+--------------------------------------------------------------------------------
+Practical 6
+--------------------------------------------------------------------------------
+Creating a Cloud Function for Serverless Execution
+
+
+--------------------------------------------------------------------------------
+Practical 7
+--------------------------------------------------------------------------------
+Automating Infrastructure Deployment with Terraform
+
+
+--------------------------------------------------------------------------------
+Practical 8
+--------------------------------------------------------------------------------
+Implementing a CI/CD Pipeline with Cloud Build
+
+
+--------------------------------------------------------------------------------
+Practical 9
+--------------------------------------------------------------------------------
+API Gateway & Cloud Run for Microservices Communication and
+Cloud Pub/Sub for Event-Driven Messaging
+
+
+--------------------------------------------------------------------------------
+Practical 10
+--------------------------------------------------------------------------------
+Monitoring & Logging Kubernetes Workloads
+
+
+--------------------------------------------------------------------------------
+Practical 11
+--------------------------------------------------------------------------------
+Implementing a Disaster Recovery Plan (RPO & RTO Demo)
+
+
+================================================================================
+PRACTICALS SUMMARY
+================================================================================
+
+  Pract No.   Title
+  ---------------------------------------------------------------------------
+  1           Creating a Google Cloud Free Tier Account.
+              Deploying a Linux VM on GCP
+  2           Deploying a Docker Container on GCP Compute Engine
+  3           Deploying a Containerized Application on Cloud Run
+  4           Setting Up Kubernetes Cluster and Deploying & Scaling an App
+              on Kubernetes
+  5           Implementing Cloud Storage Backup & Snapshots
+  6           Creating a Cloud Function for Serverless Execution
+  7           Automating Infrastructure Deployment with Terraform
+  8           Implementing a CI/CD Pipeline with Cloud Build
+  9           API Gateway & Cloud Run for Microservices Communication and
+              Cloud Pub/Sub for Event-Driven Messaging
+  10          Monitoring & Logging Kubernetes Workloads
+  11          Implementing a Disaster Recovery Plan (RPO & RTO Demo)
+
+
+================================================================================
+END OF PRACTICALS — CLOUD COMPUTING – II
+================================================================================
