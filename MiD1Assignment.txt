@@ -1,198 +1,179 @@
 ================================================================================
-          CLOUD COMPUTING – II (CC-II)  |  MiD1 ASSIGNMENT
-          Units 1, 2 & 3
-          Course: MCA (A.Y.-II)  |  Semester: 3
-          Institution: FIT & CS, Parul University
+                         PARUL UNIVERSITY
+                    Faculty of IT & Computer Science
+                         MCA  |  Semester – III
+================================================================================
+Course        :  Cloud Computing – II (CC-II)
+Assessment    :  MiD1 Assignment
+Coverage      :  Unit 1, Unit 2 & Unit 3
+Total Marks   :  84
+Date          :  ____________________
+Student Name  :  ____________________     Enrollment No.: ______________
 ================================================================================
 
-Based On: Official CC-II syllabus — Units 1, 2 & 3
-
-Instructions
-------------
-  • Attempt all units.
-  • Each unit has FOUR questions.
-  • Each question carries SEVEN (7) marks.
-  • Total marks: 84  (3 units × 4 questions × 7 marks).
-  • Write answers with definitions, explanation, comparison tables where useful,
-    and at least one practical / cloud example per question.
-  • Diagrams may be drawn where they strengthen the answer.
+INSTRUCTIONS
+  1. Attempt all questions from all three units.
+  2. Each unit contains FOUR questions.
+  3. Each question carries SEVEN (7) marks.
+  4. Answers must be neat, well-structured and supported with suitable
+     examples / diagrams wherever necessary.
+  5. Marks for each sub-question are indicated in brackets.
 
 
 ================================================================================
-UNIT 1 — CLOUD PRINCIPLES & WELL-ARCHITECTED FRAMEWORK          (W: 15%, T: 7)
+UNIT – 1
+CLOUD PRINCIPLES & WELL-ARCHITECTED FRAMEWORK
 ================================================================================
-Syllabus content:
-  Fundamental Principles of Cloud Computing; Shared Responsibility Model;
-  Understanding Cloud-Native Architecture; Well-Architected Framework
-  (Security, Reliability, Performance, Cost, and Sustainability);
-  Best Practices for Designing Scalable Cloud Applications.
+[Fundamental Principles of Cloud Computing | Shared Responsibility Model |
+ Cloud-Native Architecture | Well-Architected Framework | Best Practices for
+ Designing Scalable Cloud Applications]
 
 --------------------------------------------------------------------------------
-Q1.  Fundamental Principles of Cloud Computing                      [7 Marks]
+Q.1                                                                      [7]
 --------------------------------------------------------------------------------
-(a) Explain the five fundamental principles of cloud computing:
-      on-demand self-service, broad network access, resource pooling,
-      rapid elasticity, and measured service.                           [4]
-(b) With suitable examples, discuss how rapid elasticity and measured
-    service help organizations achieve higher throughput and better
-    cost control compared to traditional on-premises IT.                [3]
+(a) Explain the fundamental principles of cloud computing:
+    On-demand Self-service, Broad Network Access, Resource Pooling,
+    Rapid Elasticity and Measured Service.                               [4]
+(b) Discuss how Rapid Elasticity and Measured Service help organizations
+    improve performance and control cost compared to traditional
+    on-premises computing.                                               [3]
 
 --------------------------------------------------------------------------------
-Q2.  Shared Responsibility Model                                    [7 Marks]
+Q.2                                                                      [7]
 --------------------------------------------------------------------------------
 (a) What is the Shared Responsibility Model in cloud computing?
-    Clearly distinguish what the cloud provider manages versus what
-    the customer manages.                                               [3]
-(b) Compare customer vs provider responsibilities for IaaS, PaaS, and
-    SaaS (or give a clear comparison for at least IaaS vs PaaS, e.g.
-    Compute Engine vs App Engine / similar platforms). Give one
-    security implication of misunderstanding this model.                [4]
+    Differentiate the responsibilities of the cloud service provider and
+    the customer.                                                        [3]
+(b) Compare the Shared Responsibility Model for IaaS, PaaS and SaaS with
+    suitable examples. Explain one security risk that arises if this
+    model is misunderstood.                                              [4]
 
 --------------------------------------------------------------------------------
-Q3.  Cloud-Native Architecture                                      [7 Marks]
+Q.3                                                                      [7]
 --------------------------------------------------------------------------------
-(a) Explain cloud-native architecture. Discuss any four characteristics
-    such as microservices, containers, managed services, API-driven
-    design, externalized state, or DevOps/CI-CD alignment.              [4]
-(b) How does cloud-native design differ from a traditional monolithic
-    application deployed on a single server? Mention scalability and
-    failure handling in your answer.                                    [3]
+(a) What is Cloud-Native Architecture? Explain any four of its important
+    characteristics (for example: microservices, containers, managed
+    services, API-driven design, externalized state, automation).        [4]
+(b) Differentiate between a traditional monolithic application and a
+    cloud-native application with respect to scalability and failure
+    handling.                                                            [3]
 
 --------------------------------------------------------------------------------
-Q4.  Well-Architected Framework & Scalable Design                   [7 Marks]
+Q.4                                                                      [7]
 --------------------------------------------------------------------------------
-(a) List the pillars of the Well-Architected Framework (Security,
-    Reliability, Performance, Cost, and Sustainability). Explain ANY
-    THREE pillars with one concrete cloud practice for each.            [4]
-(b) State any three best practices for designing scalable cloud
-    applications (e.g., horizontal scaling, load balancing, loose
-    coupling, health checks, managed services, design for failure).     [3]
+(a) List the pillars of the Well-Architected Framework — Security,
+    Reliability, Performance, Cost and Sustainability. Explain any three
+    pillars with one practical cloud example for each.                   [4]
+(b) Write any three best practices for designing scalable cloud
+    applications.                                                        [3]
 
 
 ================================================================================
-UNIT 2 — DISASTER RECOVERY IN CLOUD                             (W: 15%, T: 7)
+UNIT – 2
+DISASTER RECOVERY IN CLOUD
 ================================================================================
-Syllabus content:
-  Concepts of Backup & Disaster Recovery; High Availability & Fault
-  Tolerance in Cloud; Disaster Recovery Strategies (RPO & RTO
-  Considerations); Cloud-Based Backup Solutions & Snapshots;
-  Case Studies on Disaster Recovery Implementation.
+[Concepts of Backup & Disaster Recovery | High Availability & Fault
+ Tolerance | Disaster Recovery Strategies (RPO & RTO) | Cloud-Based Backup
+ Solutions & Snapshots | Case Studies on Disaster Recovery Implementation]
 
 --------------------------------------------------------------------------------
-Q1.  Concepts of Backup & Disaster Recovery                         [7 Marks]
+Q.5                                                                      [7]
 --------------------------------------------------------------------------------
-(a) Define the terms: Backup, Disaster, Disaster Recovery (DR), and
-    Business Continuity.                                                [3]
-(b) “Having backups is not the same as having a disaster recovery plan.”
-    Justify this statement. In your answer, mention runbooks, restore
-    testing, and infrastructure rebuild / failover.                     [4]
+(a) Define the following terms:
+    (i) Backup  (ii) Disaster  (iii) Disaster Recovery
+    (iv) Business Continuity                                             [3]
+(b) Justify the statement: “Backup alone is not Disaster Recovery.”
+    Support your answer with the need for runbooks, failover /
+    rebuild procedures and restore testing.                              [4]
 
 --------------------------------------------------------------------------------
-Q2.  High Availability, Fault Tolerance & SPOF                      [7 Marks]
+Q.6                                                                      [7]
 --------------------------------------------------------------------------------
-(a) Differentiate High Availability (HA) and Fault Tolerance with clear
-    definitions and one cloud example for each.                         [3]
-(b) What is a Single Point of Failure (SPOF)? Describe how redundancy,
-    load balancers, health checks, and multi-zone deployment reduce
-    SPOF risk for a cloud web application.                              [4]
+(a) Differentiate between High Availability and Fault Tolerance with
+    suitable cloud examples.                                             [3]
+(b) Explain Single Point of Failure (SPOF). How do redundancy, load
+    balancing, health checks and multi-zone deployment help in reducing
+    SPOF in a cloud application?                                         [4]
 
 --------------------------------------------------------------------------------
-Q3.  RPO, RTO & Disaster Recovery Strategies                        [7 Marks]
+Q.7                                                                      [7]
 --------------------------------------------------------------------------------
-(a) Define Recovery Time Objective (RTO) and Recovery Point Objective
-    (RPO) with one practical example of each.                           [3]
-(b) Explain the DR strategy ladder from cold to hot:
-      Backup & Restore → Pilot Light → Warm Standby → Hot Standby →
-      Multi-site Active-Active.
-    For any two strategies, comment on relative cost and typical RTO/RPO. [4]
+(a) Define RTO (Recovery Time Objective) and RPO (Recovery Point
+    Objective). Explain each with one real-life example.                 [3]
+(b) Explain the following Disaster Recovery strategies:
+    Backup & Restore, Pilot Light, Warm Standby, Hot Standby and
+    Multi-site Active-Active.
+    Compare any two strategies with respect to cost, RTO and RPO.        [4]
 
 --------------------------------------------------------------------------------
-Q4.  Cloud Backups, Snapshots & Case Study                          [7 Marks]
+Q.8                                                                      [7]
 --------------------------------------------------------------------------------
-(a) Describe cloud-based backup / recovery mechanisms you have studied
-    (e.g., VM/disk snapshots, object storage versioning / multi-region
-    buckets, managed database automated backups & point-in-time
-    recovery). State why restore testing is essential.                  [4]
-(b) Discuss ANY ONE case study on disaster recovery implementation
-    (e.g., e-commerce multi-region design, payments-style system,
-    campus exam portal on result day, or a known industry backup
-    failure lesson). Map the problem to a suitable DR tier and justify
-    using RTO/RPO thinking.                                             [3]
+(a) Describe cloud-based backup solutions and snapshots. Explain the
+    use of disk/VM snapshots, object-storage versioning and managed
+    database backups with point-in-time recovery. Why is restore
+    testing important?                                                   [4]
+(b) Discuss any one case study on Disaster Recovery implementation.
+    Identify the problem, suggest a suitable DR strategy and justify
+    it using RTO and RPO.                                                [3]
 
 
 ================================================================================
-UNIT 3 — INTRODUCTION TO INFRASTRUCTURE AS CODE (IaC)           (W: 20%, T: 10)
+UNIT – 3
+INTRODUCTION TO INFRASTRUCTURE AS CODE (IaC)
 ================================================================================
-Syllabus content:
-  Overview of Infrastructure as Code (IaC); Tools for IaC: Terraform,
-  AWS CloudFormation, Ansible; Configuration Management & Automation;
-  Writing & Managing Infrastructure as Code; Best Practices for
-  Versioning & Scaling Infrastructure.
+[Overview of IaC | Tools: Terraform, AWS CloudFormation, Ansible |
+ Configuration Management & Automation | Writing & Managing IaC |
+ Best Practices for Versioning & Scaling Infrastructure]
 
 --------------------------------------------------------------------------------
-Q1.  Overview of Infrastructure as Code                             [7 Marks]
+Q.9                                                                      [7]
 --------------------------------------------------------------------------------
-(a) Define Infrastructure as Code (IaC). Explain why managing
-    infrastructure through code is preferred over only manual
-    console / GUI provisioning.                                         [3]
-(b) State four benefits of IaC (e.g., repeatability, version control,
-    automation, reduced human error, documentation, faster DR rebuild).
-    Give one real-world scenario where IaC is especially valuable.      [4]
+(a) What is Infrastructure as Code (IaC)? Explain why IaC is preferred
+    over manual infrastructure provisioning using cloud consoles.        [3]
+(b) List and explain any four benefits of Infrastructure as Code.
+    Give one practical scenario where IaC is highly useful.              [4]
 
 --------------------------------------------------------------------------------
-Q2.  IaC Tools — Terraform, CloudFormation & Ansible                [7 Marks]
+Q.10                                                                     [7]
 --------------------------------------------------------------------------------
-(a) Compare Terraform, AWS CloudFormation, and Ansible under any four
-    of these heads: purpose, language/format, cloud support
-    (multi-cloud vs AWS-only), and declarative vs procedural style.     [4]
-(b) With a short conceptual example, show how Terraform (or similar)
-    can define a simple cloud resource such as a firewall rule, VM,
-    or storage bucket.                                                  [3]
+(a) Compare the following IaC tools under purpose, language/format,
+    cloud support and approach (declarative / procedural):
+    (i) Terraform  (ii) AWS CloudFormation  (iii) Ansible                [4]
+(b) Write a short conceptual example showing how Terraform (or any
+    similar IaC tool) can be used to create a cloud resource such as a
+    virtual machine, storage bucket or firewall rule.                    [3]
 
 --------------------------------------------------------------------------------
-Q3.  Configuration Management & Automation                          [7 Marks]
+Q.11                                                                     [7]
 --------------------------------------------------------------------------------
-(a) What is configuration management in cloud / DevOps? Differentiate
-    provisioning infrastructure (creating VMs, networks) from
-    configuring software on those servers.                              [3]
-(b) Explain how a tool such as Ansible (playbooks) or startup scripts /
-    process managers automate server setup. List typical steps
-    (install packages, deploy app code, configure services, run as
-    non-root user).                                                     [4]
+(a) What is Configuration Management? Differentiate between
+    infrastructure provisioning and software configuration on servers.   [3]
+(b) Explain how Ansible (or equivalent automation) is used for
+    configuration management and automation. Describe the typical steps
+    involved in automated server setup.                                  [4]
 
 --------------------------------------------------------------------------------
-Q4.  Writing, Versioning & Scaling Infrastructure as Code           [7 Marks]
+Q.12                                                                     [7]
 --------------------------------------------------------------------------------
-(a) Describe a recommended workflow for writing and managing IaC:
-      write code → version control (Git) → review → plan → apply → verify.
-    Why is “plan before apply” important?                               [3]
-(b) Explain best practices for versioning and scaling infrastructure
-    with IaC (any four): Git tagging, immutable templates, separate
-    environments (dev/staging/prod), remote state & locking,
-    parameterizing instance counts / autoscaling, never committing
-    secrets.                                                            [4]
+(a) Explain the workflow of writing and managing Infrastructure as Code:
+    Write → Version Control → Review → Plan → Apply → Verify.
+    Why is the “Plan before Apply” step important?                       [3]
+(b) Discuss any four best practices for versioning and scaling
+    infrastructure using IaC.                                            [4]
 
 
 ================================================================================
-MARKING SCHEME (SUMMARY)
+                              MARKING SCHEME
 ================================================================================
 
-  Unit      Topic                                      Qs    Marks/Q   Total
-  ──────────────────────────────────────────────────────────────────────────
-  Unit 1    Cloud Principles & Well-Architected         4       7        28
-  Unit 2    Disaster Recovery in Cloud                  4       7        28
-  Unit 3    Introduction to Infrastructure as Code      4       7        28
-  ──────────────────────────────────────────────────────────────────────────
-  GRAND TOTAL                                                     84
-
-Suggested depth for a 7-mark answer
------------------------------------
-  • Short definition / list alone is not enough.
-  • Prefer: definition → explanation / comparison → cloud example
-    (and a small diagram where asked).
-  • Aim for a structured answer of roughly ¾ to 1 page per question.
-
+   Unit     Content                                    Questions   Marks
+   ---------------------------------------------------------------------
+   Unit 1   Cloud Principles & Well-Architected        Q.1 – Q.4     28
+   Unit 2   Disaster Recovery in Cloud                 Q.5 – Q.8     28
+   Unit 3   Introduction to Infrastructure as Code     Q.9 – Q.12    28
+   ---------------------------------------------------------------------
+            TOTAL                                                    84
 
 ================================================================================
-END OF MiD1 ASSIGNMENT — CC-II Units 1, 2 & 3
+                         END OF MiD1 ASSIGNMENT
 ================================================================================
