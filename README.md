@@ -15,6 +15,7 @@ All Cloud Computing – II (CC-II) teaching materials for FIT & CS, Parul Univer
 syllabus/       Official syllabus (PDF + units + practicals)
 notes/unit-1/   Unit 1 study notes
 notes/unit-2/   Unit 2 Disaster Recovery notes + GCP lab reference
+notes/unit-3/   Unit 3 Infrastructure as Code (IaC) notes
 ppt/            PowerPoint decks and regenerators
 assignments/    Mid-term / assignment question papers
 AGENTS.md       Guidance for Cursor / Cloud Agents
