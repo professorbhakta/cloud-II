@@ -43,8 +43,10 @@ AGENTS.md       Guidance for Cursor / Cloud Agents
 - `ppt/CC-II-Unit-III-Infrastructure-as-Code.pptx` — Unit 3 expanded deck (~51 slides)
 - `ppt/build_unit3_ppt.py` — Unit 3 regenerator (`python3 ppt/build_unit3_ppt.py`)
 - `ppt/cc2-unit3-iac-example.tf` — Unit 3 Terraform example (VM + firewall + bucket)
-- `ppt/CC-II-Unit-IV-Kubernetes-Container-Orchestration.pptx` — Unit 4 expanded deck (~50 slides)
+- `ppt/CC-II-Unit-IV-Kubernetes-Container-Orchestration.pptx` — Unit 4 expanded deck (~59 slides, with concept diagrams + GIFs)
 - `ppt/build_unit4_ppt.py` — Unit 4 regenerator (`python3 ppt/build_unit4_ppt.py`)
+- `ppt/build_unit4_assets.py` — generates Unit 4 PNG/GIF teaching visuals
+- `ppt/unit4-assets/` — architecture, deploy, Service, Ingress, HPA, rolling-update visuals
 
 ### Unit 2 deck topics
 

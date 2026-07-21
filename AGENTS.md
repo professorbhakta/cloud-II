@@ -56,7 +56,8 @@ This repository holds **Cloud Computing – II** teaching materials (Parul Unive
 
 Canonical notes: `notes/unit-4/CC-II-Unit-IV-Kubernetes-Container-Orchestration.txt`  
 Canonical deck: `ppt/CC-II-Unit-IV-Kubernetes-Container-Orchestration.pptx`  
-Regenerator: `python3 ppt/build_unit4_ppt.py`  
+Regenerator: `python3 ppt/build_unit4_ppt.py` (assets first: `python3 ppt/build_unit4_assets.py`)  
+Visuals: `ppt/unit4-assets/` (PNG diagrams + GIF animations for key concepts)  
 Official syllabus text: `syllabus/CC-II-Units.txt`
 
 ### Unit 2 syllabus (authoritative for deck/notes titled Unit 2)
@@ -84,7 +85,8 @@ This is primarily documentation content (notes + PPT). There is no application s
 ```bash
 python3 ppt/build_unit2_ppt.py
 python3 ppt/build_unit3_ppt.py
+python3 ppt/build_unit4_assets.py   # PNG/GIF visuals for Unit 4
 python3 ppt/build_unit4_ppt.py
 ```
 
-(from the `cc2Material` branch, after `pip install python-pptx` if needed).
+(from the `cc2Material` branch, after `pip install python-pptx pillow` if needed).

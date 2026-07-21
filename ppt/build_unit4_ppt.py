@@ -32,6 +32,17 @@ prs.slide_width = SLIDE_W
 prs.slide_height = SLIDE_H
 PAGE = 0
 
+ASSET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "unit4-assets")
+
+
+def asset(name):
+    path = os.path.join(ASSET_DIR, name)
+    if not os.path.exists(path):
+        raise FileNotFoundError(
+            f"Missing asset {path}. Run: python3 ppt/build_unit4_assets.py"
+        )
+    return path
+
 
 def add_rect(slide, left, top, width, height, fill):
     shape = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, left, top, width, height)
@@ -139,6 +150,22 @@ def section_divider(section_no, title, bullets):
         tb(s, Inches(0.8), Inches(4.0 + i * 0.4), Inches(11.5), Inches(0.35),
            [(f"→  {b}", 14, False, SOFT)])
     footer(s)
+    return s
+
+
+def visual_slide(title, subtitle, filename):
+    """Concept diagram / GIF slide — image carries the teaching visual."""
+    s = blank()
+    # Slim top bar so GIFs/diagrams dominate the lecture screen
+    add_rect(s, Inches(0), Inches(0), SLIDE_W, Inches(0.55), NAVY)
+    add_rect(s, Inches(0), Inches(0.55), SLIDE_W, Inches(0.06), TEAL)
+    tb(s, Inches(0.4), Inches(0.1), Inches(10.5), Inches(0.35),
+       [(title, 16, True, WHITE)])
+    tb(s, Inches(10.8), Inches(0.12), Inches(2.2), Inches(0.3),
+       [("VISUAL", 11, True, TEAL)], align=PP_ALIGN.RIGHT)
+    footer(s)
+    s.shapes.add_picture(asset(filename), Inches(0.45), Inches(0.75),
+                         width=Inches(12.4), height=Inches(6.25))
     return s
 
 
@@ -320,6 +347,9 @@ for i, (t, d) in enumerate(wn):
     card(s, Inches(0.45 + i * 4.25), Inches(4.75), Inches(4.05), Inches(1.85),
          t, [d], accent=[GREEN, SKY, TEAL][i])
 
+visual_slide("Topic 1 · Architecture diagram", "Control plane + worker nodes",
+             "01-architecture.png")
+
 s = blank()
 header(s, "1.6  Must-know objects (vocabulary)", "Memorise names + one-line meaning")
 footer(s)
@@ -360,6 +390,11 @@ card(s, Inches(6.8), Inches(1.4), Inches(6.05), Inches(4.2), "Self-healing",
      accent=SKY)
 banner(s, Inches(5.9), "Link Unit III: Terraform declares cloud resources; Kubernetes declares app replicas.")
 
+visual_slide("Topic 1 · Desired vs actual", "Controllers reconcile · self-healing",
+             "02-desired-vs-actual.png")
+visual_slide("Topic 1 · Self-healing (GIF)", "Watch a crashed Pod get replaced",
+             "09-self-healing.gif")
+
 s = blank()
 header(s, "1.8  GKE — managed Kubernetes on Google Cloud", "Autopilot vs Standard (exam comparison)")
 footer(s)
@@ -383,6 +418,9 @@ card(s, Inches(6.8), Inches(2.85), Inches(6.05), Inches(3.6), "Standard",
       "",
       "gcloud container clusters create …"],
      accent=GOLD)
+
+visual_slide("Topic 1 · GKE modes", "Autopilot vs Standard at a glance",
+             "06-autopilot-vs-standard.png")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # TOPIC 2 — Setting Up & Managing Clusters
@@ -572,6 +610,9 @@ for i, (t, d) in enumerate(pipe):
     tb(s, left + Inches(0.25), top + Inches(0.95), Inches(3.55), Inches(1.1),
        [(d, 14, True, NAVY)])
 
+visual_slide("Topic 3 · Deploy pipeline", "Image → Registry → Deployment → Service",
+             "03-deploy-pipeline.png")
+
 s = blank()
 header(s, "3.2  Container images & Artifact Registry", "GKE pulls images from a registry")
 footer(s)
@@ -654,6 +695,9 @@ card(s, Inches(0.45), Inches(5.0), Inches(12.4), Inches(1.5), "Rollback if v2 is
      ["kubectl rollout undo deployment/hello-app",
       "kubectl rollout history deployment/hello-app  ·  Fast reverse without SSH into machines"],
      accent=CORAL)
+
+visual_slide("Topic 3 · Rolling update (GIF)", "v1 → v2 with near-zero downtime",
+             "07-rolling-update.gif")
 
 s = blank()
 header(s, "3.6  ConfigMaps, Secrets & health probes", "Config without rebuild · Ready before traffic")
@@ -744,6 +788,9 @@ for i, (t, reach, use) in enumerate(types):
     card(s, Inches(0.4 + i * 3.2), Inches(2.85), Inches(3.05), Inches(3.6),
          t, [reach, "", f"Use: {use}"], accent=[SKY, TEAL, CORAL, GOLD][i])
 
+visual_slide("Topic 4 · Service types", "ClusterIP · NodePort · LoadBalancer · ExternalName",
+             "04-service-types.png")
+
 s = blank()
 header(s, "4.3  Expose publicly + port mapping", "Lab classic LoadBalancer path")
 footer(s)
@@ -800,6 +847,9 @@ card(s, Inches(6.8), Inches(3.1), Inches(6.05), Inches(3.4), "Exam contrast",
       "Ingress → shared HTTP routing layer",
       "(microservices friendly)"],
      accent=CORAL)
+
+visual_slide("Topic 4 · Ingress routing", "One HTTPS entry · path-based services",
+             "05-ingress.png")
 
 s = blank()
 header(s, "4.6  NetworkPolicy & CE vs GKE networking", "Brief advanced note + Unit II lab memory")
@@ -918,6 +968,9 @@ card(s, Inches(6.8), Inches(3.2), Inches(6.05), Inches(3.3), "Peak events",
       "After peak: let HPA scale down",
       "(FinOps — avoid idle spend)"],
      accent=GOLD)
+
+visual_slide("Topic 5 · HPA scaling (GIF)", "Pods grow and shrink with CPU load",
+             "08-hpa-scale.gif")
 
 s = blank()
 header(s, "5.5  Cluster / node scaling & VPA", "When Pods are Pending — capacity problem")
