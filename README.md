@@ -40,6 +40,7 @@ AGENTS.md       Guidance for Cursor / Cloud Agents
 - `ppt/build_unit2_ppt.py` — Unit 2 regenerator (`python3 ppt/build_unit2_ppt.py`)
 - `ppt/CC-II-Unit-III-Infrastructure-as-Code.pptx` — Unit 3 expanded deck (~51 slides)
 - `ppt/build_unit3_ppt.py` — Unit 3 regenerator (`python3 ppt/build_unit3_ppt.py`)
+- `ppt/cc2-unit3-iac-example.tf` — Unit 3 Terraform example (VM + firewall + bucket)
 
 ### Unit 2 deck topics
 
