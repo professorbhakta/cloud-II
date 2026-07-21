@@ -7,8 +7,9 @@ Course Reference: CC-II (Cloud Computing – II)
 Document Purpose: Exam preparation + practical / future learning scope
 Based On: CC-II Unit-II syllabus — Disaster Recovery in Cloud
 Related Materials:
-  • Branch cc-ii-ppt  → Unit II PowerPoint deck
-  • Branch cc-ii-notes → mirrored study notes
+  • ppt/CC-II-Unit-II-Disaster-Recovery-in-Cloud.pptx — Unit II PowerPoint deck
+  • notes/unit-2/ — this folder (DR notes + GCP lab reference)
+  • syllabus/ — official CC-II units and practicals
   • Reference lab patterns from Fancy Store / GCE / Cloud SQL / GCS
 
 ================================================================================

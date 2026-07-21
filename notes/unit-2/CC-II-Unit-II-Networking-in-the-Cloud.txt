@@ -11,7 +11,7 @@ IMPORTANT — UNIT II SYLLABUS NOTE
   Cloud backups & snapshots, Case studies).
 
   Use the dedicated study notes file for Unit II exams:
-    CC-II-Unit-II-Disaster-Recovery-in-Cloud.txt
+    notes/unit-2/CC-II-Unit-II-Disaster-Recovery-in-Cloud.txt
 
   This file remains as an extended lab/reference guide. Topic 9 below is a
   short DR summary only — prefer the dedicated Unit II notes for full coverage.
@@ -1871,7 +1871,7 @@ TOPIC 9: DISASTER RECOVERY IN CLOUD  (SHORT SUMMARY)
 ================================================================================
 
   FULL UNIT II NOTES (recommended for exams):
-    → CC-II-Unit-II-Disaster-Recovery-in-Cloud.txt
+    → notes/unit-2/CC-II-Unit-II-Disaster-Recovery-in-Cloud.txt
 
   The section below is a compact checklist only.
 
@@ -2008,7 +2008,7 @@ CASE 4 — Batch analytics:
   Solution: Spot VMs + retry/checkpoint logic; state in Cloud Storage
   Level: Fault tolerant; longer RTO often acceptable
 
-(See CC-II-Unit-II-Disaster-Recovery-in-Cloud.txt for expanded industry
+(See notes/unit-2/CC-II-Unit-II-Disaster-Recovery-in-Cloud.txt for expanded industry
 cases: streaming spikes, payments/UPI, GitLab 2017 lesson, campus ERP.)
 
 ================================================================================
