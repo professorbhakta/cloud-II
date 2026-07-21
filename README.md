@@ -37,7 +37,9 @@ AGENTS.md       Guidance for Cursor / Cloud Agents
 ## Presentations
 
 - `ppt/CC-II-Unit-II-Disaster-Recovery-in-Cloud.pptx` — Unit 2 expanded deck (~58 slides)
-- `ppt/build_unit2_ppt.py` — regenerator (`python3 ppt/build_unit2_ppt.py`)
+- `ppt/build_unit2_ppt.py` — Unit 2 regenerator (`python3 ppt/build_unit2_ppt.py`)
+- `ppt/CC-II-Unit-III-Infrastructure-as-Code.pptx` — Unit 3 expanded deck (~51 slides)
+- `ppt/build_unit3_ppt.py` — Unit 3 regenerator (`python3 ppt/build_unit3_ppt.py`)
 
 ### Unit 2 deck topics
 
@@ -47,6 +49,15 @@ AGENTS.md       Guidance for Cursor / Cloud Agents
 4. Disaster Recovery Strategies (RPO & RTO)  
 5. Cloud-Based Backup Solutions & Snapshots  
 6. Case Studies on Disaster Recovery Implementation  
+
+### Unit 3 deck topics
+
+1. Overview of Infrastructure as Code (IaC)  
+2. Tools for IaC — Terraform, AWS CloudFormation, Ansible  
+3. Configuration Management & Automation  
+4. Writing & Managing Infrastructure as Code  
+5. Best Practices for Versioning & Scaling Infrastructure  
+6. Real-life case studies + exam revision  
 
 ## Assignments
 
