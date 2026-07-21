@@ -1,0 +1,198 @@
+================================================================================
+                    CLOUD COMPUTING – II (CC-II)
+                         COURSE UNITS
+================================================================================
+Course        :  MCA (A.Y.-II)
+Semester      :  3
+Prerequisite  :  Fundamental knowledge of Networking and Computing,
+                 Basic Knowledge of Web Services
+Source        :  Official Syllabus — Cloud Computing – II
+================================================================================
+
+COURSE OBJECTIVE
+----------------
+The key objectives of this course are:
+  • To provide an understanding of the basic concepts of parallel and
+    distributed computing and their role in cloud computing
+  • To study the concept of virtualization and relevant technologies
+    available in the market
+  • To understand the importance of cloud computing for higher throughput
+  • To make aware about availability of various cloud platforms
+  • To study different applications of cloud and cloud management
+    techniques
+
+TEACHING AND EXAMINATION SCHEME
+-------------------------------
+  Lecture Hrs/Week   :  3
+  Tutorial Hrs/Week  :  1
+  Lab Hrs/Week       :  2
+  Credits            :  5
+
+  Internal Marks     :  T = 20, CE = 20, P = 20
+  External Marks     :  T = 60, P = 30
+  Total Marks        :  150
+
+  SEE  - Semester End Examination
+  CIA  - Continuous Internal Assessment
+         (Assignments / Seminars / Presentations / MCQ Tests, etc.)
+
+  W = Weightage (%)    T = Teaching hours
+
+
+================================================================================
+UNIT 1 — CLOUD PRINCIPLES & WELL-ARCHITECTED FRAMEWORK
+================================================================================
+Weightage (W)     :  15%
+Teaching Hours (T):  7
+
+Contents
+--------
+  1. Fundamental Principles of Cloud Computing
+  2. Shared Responsibility Model in Cloud
+  3. Understanding Cloud-Native Architecture
+  4. Well-Architected Framework
+       • Security
+       • Reliability
+       • Performance
+       • Cost
+       • Sustainability
+  5. Best Practices for Designing Scalable Cloud Applications
+
+
+================================================================================
+UNIT 2 — DISASTER RECOVERY IN CLOUD
+================================================================================
+Weightage (W)     :  15%
+Teaching Hours (T):  7
+
+Contents
+--------
+  1. Concepts of Backup & Disaster Recovery
+  2. High Availability & Fault Tolerance in Cloud
+  3. Disaster Recovery Strategies (RPO & RTO Considerations)
+  4. Cloud-Based Backup Solutions & Snapshots
+  5. Case Studies on Disaster Recovery Implementation
+
+
+================================================================================
+UNIT 3 — INTRODUCTION TO INFRASTRUCTURE AS CODE (IaC)
+================================================================================
+Weightage (W)     :  20%
+Teaching Hours (T):  10
+
+Contents
+--------
+  1. Overview of Infrastructure as Code (IaC)
+  2. Tools for IaC
+       • Terraform
+       • AWS CloudFormation
+       • Ansible
+  3. Configuration Management & Automation
+  4. Writing & Managing Infrastructure as Code
+  5. Best Practices for Versioning & Scaling Infrastructure
+
+
+================================================================================
+UNIT 4 — KUBERNETES & CONTAINER ORCHESTRATION
+================================================================================
+Weightage (W)     :  15%
+Teaching Hours (T):  7
+
+Contents
+--------
+  1. Introduction to Kubernetes & its Architecture
+  2. Setting Up & Managing Kubernetes Clusters
+  3. Deploying Applications on Kubernetes
+  4. Kubernetes Networking & Load Balancing
+  5. Monitoring & Scaling Kubernetes Workloads
+
+
+================================================================================
+UNIT 5 — INTRODUCTION TO CI/CD
+================================================================================
+Weightage (W)     :  15%
+Teaching Hours (T):  7
+
+Contents
+--------
+  1. Understanding DevOps and CI/CD Concepts
+  2. CI/CD Pipelines: Overview & Implementation
+  3. Tools for CI/CD
+       • Jenkins
+       • GitHub / Git Co-Pilot Actions
+       • GitLab CI
+  4. Automated Testing & Deployment Strategies
+  5. Best Practices for Secure & Scalable CI/CD Pipelines
+
+
+================================================================================
+UNIT 6 — CLOUD APPLICATION INTEGRATION
+================================================================================
+Weightage (W)     :  20%
+Teaching Hours (T):  10
+
+Contents
+--------
+  1. Understanding Cloud Application Integration Concepts
+  2. API Gateway & Microservices Communication
+  3. Serverless Functions & Event-Driven Architecture
+  4. Cloud Messaging Services
+       • Pub/Sub
+       • Kafka
+       • RabbitMQ
+  5. Real-World Use Cases of Cloud Integration
+
+
+================================================================================
+UNITS SUMMARY
+================================================================================
+
+  Unit   Topic                                         W (%)   Hours
+  ---------------------------------------------------------------------
+  1      Cloud Principles & Well-Architected Framework   15      7
+  2      Disaster Recovery in Cloud                      15      7
+  3      Introduction to Infrastructure as Code (IaC)    20     10
+  4      Kubernetes & Container Orchestration            15      7
+  5      Introduction to CI/CD                           15      7
+  6      Cloud Application Integration                   20     10
+  ---------------------------------------------------------------------
+         TOTAL                                          100     48
+
+
+================================================================================
+REFERENCE BOOKS
+================================================================================
+  1. Cloud Computing - A practical approach for learning and implementation
+     By A. Srinivasan and J. Suresh | Pearson Publications
+
+  2. Cloud Computing: A practical approach
+     By Anthony T. Vetle | TMH
+
+  3. Cloud Computing For Dummies
+     By Judith Hurwitz, Robin Bloor, Marcia Kaufman, Fern Halper
+     | Wiley India Pvt Ltd
+
+  4. Cloud Computing: SaaS, PaaS, IaaS, Virtualization, Business Models,
+     Mobile, Security and More
+     By Kris Jamsa | Jones & Bartlett Learning
+
+  5. Cloud Computing Bible
+     By Barrie Sosinsky | Wiley India Pvt Ltd
+
+
+================================================================================
+COURSE OUTCOMES
+================================================================================
+After learning the course the students shall be able to:
+  • Define cloud computing and its applications
+  • Describe role of virtualization in establishing cloud
+  • Understand principles and service models of cloud computing
+  • Familiarize with various cloud computing platforms
+  • Conceptualize cloud storage management and data security
+  • Identify feasible cloud platforms for solutions to be provided
+  • Deploy services and resources on cloud platforms
+
+
+================================================================================
+END OF UNITS — CLOUD COMPUTING – II
+================================================================================
