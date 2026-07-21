@@ -43,6 +43,8 @@ AGENTS.md       Guidance for Cursor / Cloud Agents
 - `ppt/CC-II-Unit-III-Infrastructure-as-Code.pptx` — Unit 3 expanded deck (~51 slides)
 - `ppt/build_unit3_ppt.py` — Unit 3 regenerator (`python3 ppt/build_unit3_ppt.py`)
 - `ppt/cc2-unit3-iac-example.tf` — Unit 3 Terraform example (VM + firewall + bucket)
+- `ppt/CC-II-Unit-IV-Kubernetes-Container-Orchestration.pptx` — Unit 4 expanded deck (~50 slides)
+- `ppt/build_unit4_ppt.py` — Unit 4 regenerator (`python3 ppt/build_unit4_ppt.py`)
 
 ### Unit 2 deck topics
 
@@ -60,6 +62,15 @@ AGENTS.md       Guidance for Cursor / Cloud Agents
 3. Configuration Management & Automation  
 4. Writing & Managing Infrastructure as Code  
 5. Best Practices for Versioning & Scaling Infrastructure  
+6. Real-life case studies + exam revision  
+
+### Unit 4 deck topics
+
+1. Introduction to Kubernetes & its Architecture  
+2. Setting Up & Managing Kubernetes Clusters  
+3. Deploying Applications on Kubernetes  
+4. Kubernetes Networking & Load Balancing  
+5. Monitoring & Scaling Kubernetes Workloads  
 6. Real-life case studies + exam revision  
 
 ## Assignments

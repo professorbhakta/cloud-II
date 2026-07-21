@@ -46,6 +46,19 @@ This repository holds **Cloud Computing – II** teaching materials (Parul Unive
 | `ppt/` | Presentations and regenerators |
 | `assignments/` | Mid-term / assignment papers |
 
+### Unit 4 syllabus (authoritative for deck/notes titled Unit 4)
+
+1. Introduction to Kubernetes & its Architecture  
+2. Setting Up & Managing Kubernetes Clusters  
+3. Deploying Applications on Kubernetes  
+4. Kubernetes Networking & Load Balancing  
+5. Monitoring & Scaling Kubernetes Workloads  
+
+Canonical notes: `notes/unit-4/CC-II-Unit-IV-Kubernetes-Container-Orchestration.txt`  
+Canonical deck: `ppt/CC-II-Unit-IV-Kubernetes-Container-Orchestration.pptx`  
+Regenerator: `python3 ppt/build_unit4_ppt.py`  
+Official syllabus text: `syllabus/CC-II-Units.txt`
+
 ### Unit 2 syllabus (authoritative for deck/notes titled Unit 2)
 
 1. Disaster Recovery in Cloud  
@@ -66,10 +79,12 @@ For Unit 2 (and similar teaching PPTs), prefer **4–5+ content slides per sylla
 
 ### Commands / setup
 
-This is primarily documentation content (notes + PPT). There is no application server to run. Regenerate the Unit 2 deck with:
+This is primarily documentation content (notes + PPT). There is no application server to run. Regenerate decks with:
 
 ```bash
 python3 ppt/build_unit2_ppt.py
+python3 ppt/build_unit3_ppt.py
+python3 ppt/build_unit4_ppt.py
 ```
 
 (from the `cc2Material` branch, after `pip install python-pptx` if needed).

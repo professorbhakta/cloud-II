@@ -13,7 +13,8 @@ Related Materials:
                               Practical 10 (Monitoring & Logging K8s workloads)
   • notes/unit-3/ — IaC (often used to create GKE clusters with Terraform)
   • notes/unit-2/ — networking lab guide (GKE Topics 6–7 reference)
-  • ppt/ — Unit 4 deck can be added later
+  • ppt/CC-II-Unit-IV-Kubernetes-Container-Orchestration.pptx — Unit 4 lecture deck
+  • ppt/build_unit4_ppt.py — regenerator (`python3 ppt/build_unit4_ppt.py`)
 
 HOW TO USE THESE NOTES
 ----------------------
