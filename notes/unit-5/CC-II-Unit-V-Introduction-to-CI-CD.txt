@@ -18,8 +18,10 @@ Related Materials:
 HOW TO USE THESE NOTES
 ----------------------
   • Read sections 1–5 in order for classroom / self-study.
+  • Section 3 has writeable pipeline code examples (Jenkinsfile, GitHub
+    Actions, GitLab CI, Cloud Build) — practise rewriting them in exams.
   • Section 6 has ready-to-write exam answers (7-mark style).
-  • Section 8 has real-life case studies — quote these in long answers.
+  • Section 8 has detailed real-life case studies — quote these in long answers.
   • Section 9 is a last-night revision sheet.
 
 ================================================================================
@@ -315,6 +317,50 @@ Key ideas:
 Typical flow:
   Git webhook → Jenkins job → build → test → archive artifact → deploy
 
+CODE EXAMPLE — Declarative Jenkinsfile (conceptual, writeable in exams)
+-----------------------------------------------------------------------
+  // File: Jenkinsfile  (kept in the Git repo root)
+  pipeline {
+    agent any
+    environment {
+      IMAGE = "REGION-docker.pkg.dev/PROJECT/hello-repo/hello-app"
+    }
+    stages {
+      stage('Checkout') {
+        steps { checkout scm }
+      }
+      stage('Test') {
+        steps { sh 'npm test' }
+      }
+      stage('Build Image') {
+        steps {
+          sh 'docker build -t ${IMAGE}:${GIT_COMMIT} .'
+        }
+      }
+      stage('Push') {
+        steps {
+          sh 'docker push ${IMAGE}:${GIT_COMMIT}'
+        }
+      }
+      stage('Deploy Staging') {
+        when { branch 'main' }
+        steps {
+          sh 'kubectl set image deployment/hello-app hello-app=${IMAGE}:${GIT_COMMIT} -n staging'
+          sh 'kubectl rollout status deployment/hello-app -n staging'
+        }
+      }
+    }
+    post {
+      failure { echo 'Pipeline failed — do not promote to production' }
+    }
+  }
+
+Teaching note for this example:
+  • Pipeline-as-code lives in Git (reviewable like app code).
+  • Test stage runs before image push — fail fast.
+  • Image tagged with Git commit (immutable artifact idea).
+  • Deploy limited to staging here; Prod would add an approval step.
+
 Pros:
   • Extremely customisable; works with any SCM / cloud
   • Mature; many organisations already run it
@@ -341,31 +387,68 @@ Core vocabulary:
   Step       — individual command or action
   Action     — reusable unit (actions/checkout, …)
 
-Conceptual example:
+CODE EXAMPLE — .github/workflows/build-and-deploy.yml
+-----------------------------------------------------
+  name: build-and-deploy
 
-  name: build-and-push
   on:
     push:
       branches: [ main ]
+    pull_request:
+      branches: [ main ]
+
+  env:
+    IMAGE: REGION-docker.pkg.dev/PROJECT/hello-repo/hello-app
+
   jobs:
-    build:
+    test-and-build:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v4
-        - name: Build image
-          run: docker build -t hello-app:${{ github.sha }} .
-        - name: Run tests
-          run: npm test
-        - name: Push image
-          run: docker push …/hello-app:${{ github.sha }}
+
+        - name: Setup Node
+          uses: actions/setup-node@v4
+          with:
+            node-version: '20'
+            cache: 'npm'
+
+        - name: Install and test
+          run: |
+            npm ci
+            npm test
+
+        - name: Build Docker image
+          if: github.event_name == 'push'
+          run: docker build -t ${{ env.IMAGE }}:${{ github.sha }} .
+
+        - name: Push to Artifact Registry
+          if: github.event_name == 'push'
+          run: |
+            # Auth configured via workload identity / secrets in real labs
+            docker push ${{ env.IMAGE }}:${{ github.sha }}
+
+    deploy-staging:
+      needs: test-and-build
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      runs-on: ubuntu-latest
+      environment: staging
+      steps:
+        - name: Rolling update on GKE
+          run: |
+            kubectl set image deployment/hello-app \
+              hello-app=${{ env.IMAGE }}:${{ github.sha }} -n staging
+            kubectl rollout status deployment/hello-app -n staging
+
+What to say in exams about this YAML:
+  • Triggers on push and pull_request (CI on PRs).
+  • Tests run for every PR; image push/deploy only on main push.
+  • `environment: staging` can enforce protection rules / reviewers.
+  • Secrets would come from GitHub Secrets — never hard-coded.
 
 Pros:
-  • Lives next to code; excellent PR checks
-  • Marketplace of Actions
-  • Easy for student / open-source repos
+  • Lives next to code; excellent PR checks; marketplace of Actions
 Cons:
-  • Deepest integration is with GitHub (not GitLab/Bitbucket)
-  • Secrets and org policies must be set carefully
+  • Deepest integration is with GitHub; secrets/org policies need care
 
 
 3.4  GITHUB COPILOT & “GIT CO-PILOT ACTIONS” (SYLLABUS NOTE)
@@ -381,6 +464,20 @@ How to write this in exams:
   “GitHub Actions automates CI/CD via YAML workflows. GitHub Copilot assists
    developers in authoring those workflows and application code, improving
    productivity — but humans must still review security and correctness.”
+
+CODE / REVIEW EXAMPLE — unsafe Copilot suggestion vs fixed version
+------------------------------------------------------------------
+  UNSAFE (never do this):
+    - name: Deploy
+      run: |
+        export API_KEY=AIzaSyExampleHardCodedKey
+        ./deploy.sh
+
+  SAFE (after human review):
+    - name: Deploy
+      env:
+        API_KEY: ${{ secrets.API_KEY }}
+      run: ./deploy.sh
 
 Caution:
   Copilot suggestions can be wrong or insecure (hard-coded secrets, weak
@@ -399,38 +496,128 @@ Core vocabulary:
   artifacts:  files passed between stages
   environments: track deployments (staging/production)
 
-Conceptual sketch:
-
+CODE EXAMPLE — .gitlab-ci.yml (fuller teaching sample)
+------------------------------------------------------
   stages:
-    - build
     - test
+    - build
     - deploy
 
-  build-job:
-    stage: build
-    script:
-      - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
-      - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  variables:
+    IMAGE: $CI_REGISTRY_IMAGE/hello-app
 
-  test-job:
+  unit-test:
     stage: test
+    image: node:20
     script:
+      - npm ci
       - npm test
+    only:
+      - merge_requests
+      - main
+
+  build-image:
+    stage: build
+    image: docker:24
+    services:
+      - docker:24-dind
+    script:
+      - docker build -t $IMAGE:$CI_COMMIT_SHA .
+      - docker push $IMAGE:$CI_COMMIT_SHA
+    only:
+      - main
 
   deploy-staging:
     stage: deploy
     script:
-      - kubectl set image …
+      - kubectl set image deployment/hello-app
+          hello-app=$IMAGE:$CI_COMMIT_SHA -n staging
+      - kubectl rollout status deployment/hello-app -n staging
     environment:
       name: staging
+      url: https://staging.example.edu
     only:
       - main
 
-Pros:
-  • Single product for Git + issues + CI + registry
-  • Clear stage model for exams
-Cons:
-  • Best experience is inside the GitLab ecosystem
+  deploy-production:
+    stage: deploy
+    script:
+      - kubectl set image deployment/hello-app
+          hello-app=$IMAGE:$CI_COMMIT_SHA -n production
+      - kubectl rollout status deployment/hello-app -n production
+    environment:
+      name: production
+      url: https://portal.example.edu
+    when: manual          # Continuous Delivery — human approval
+    only:
+      - main
+
+Exam talking points:
+  • Clear stages: test → build → deploy.
+  • Production uses `when: manual` (Delivery, not auto Deployment).
+  • Same image digest/tag promoted — immutable artifact.
+
+
+3.5A  CLOUD BUILD (PRACTICAL 8 — GCP NATIVE)
+--------------------------------------------
+Cloud Build is Google Cloud’s serverless CI. You define steps in
+`cloudbuild.yaml`. Practical 8 asks you to implement a CI/CD pipeline with
+Cloud Build (often: connect repo → build image → push → deploy).
+
+CODE EXAMPLE — cloudbuild.yaml
+------------------------------
+  # File: cloudbuild.yaml
+  substitutions:
+    _REGION: asia-south1
+    _REPO: hello-repo
+    _SERVICE: hello-app
+
+  steps:
+    # Step 1 — run unit tests
+    - name: 'node:20'
+      entrypoint: bash
+      args:
+        - -c
+        - |
+          npm ci
+          npm test
+
+    # Step 2 — build container image
+    - name: 'gcr.io/cloud-builders/docker'
+      args:
+        - 'build'
+        - '-t'
+        - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA'
+        - '.'
+
+    # Step 3 — push to Artifact Registry
+    - name: 'gcr.io/cloud-builders/docker'
+      args:
+        - 'push'
+        - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA'
+
+    # Step 4 — deploy to Cloud Run (lab-friendly CD target)
+    - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+      entrypoint: gcloud
+      args:
+        - 'run'
+        - 'deploy'
+        - '${_SERVICE}'
+        - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA'
+        - '--region=${_REGION}'
+        - '--platform=managed'
+        - '--quiet'
+
+  images:
+    - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA'
+
+Trigger idea (lab):
+  Connect GitHub / Cloud Source Repositories → on push to main → Cloud Build
+  runs this file → new revision on Cloud Run (or adapt last step to GKE).
+
+Security note for labs:
+  Use a dedicated Cloud Build service account with least privilege
+  (deploy only to the target service / cluster namespace).
 
 
 3.6  WHEN TO CHOOSE WHICH TOOL
@@ -459,6 +646,7 @@ Cons:
 Startup on GitHub uses Actions + Copilot to draft workflows.
 Banking IT may still run Jenkins on internal network with strict runners.
 University GitLab campus edition uses GitLab CI for student projects.
+CC-II Practical 8 uses Cloud Build on GCP.
 
 
 ================================================================================
@@ -485,6 +673,26 @@ break critical behaviour — before users see it.
 Pipeline practice:
   Fail the build if unit/integration gates fail.
   Keep E2E smoke tests for staging after deploy.
+
+CODE EXAMPLE — tiny unit test (Node.js style, conceptual)
+---------------------------------------------------------
+  // File: discount.test.js
+  const { applyDiscount } = require('./discount');
+
+  test('10% discount on 1000 is 900', () => {
+    expect(applyDiscount(1000, 10)).toBe(900);
+  });
+
+  test('invalid percent throws', () => {
+    expect(() => applyDiscount(1000, -5)).toThrow();
+  });
+
+  // In CI (any tool):  npm test
+  // If this fails, pipeline must STOP before docker push / deploy.
+
+Why this matters in exams:
+  Automated tests are not “extra” — they are the quality gate that makes
+  Continuous Integration trustworthy.
 
 
 4.3  QUALITY GATES
@@ -792,86 +1000,157 @@ LAB CONNECTIONS
 --------------------------------------------------------------------------------
 CASE 1 — Campus Result Portal Release
 --------------------------------------------------------------------------------
+Context:
+  Parul-style university result portal. Result day traffic spikes; previously
+  two staff members copied files over SSH the night before.
+
 Problem:
-  Manual FTP/SSH releases fail on result morning; wrong files go live.
+  Wrong static files went live once; rollback took hours; no test proof that
+  the build even started.
 
 Approach:
-  GitHub Actions / Cloud Build: test → build image → deploy staging →
-  approve → rolling update production; rollback to previous image tag.
+  • Repo on GitHub; workflow like section 3.3 (test → image → staging)
+  • Cloud Build alternative (Practical 8) with cloudbuild.yaml
+  • Staging URL for faculty smoke-check
+  • Production deploy only after manual approval (Continuous Delivery)
+  • Previous image tag kept for kubectl rollout undo
+
+Outcome:
+  Release becomes a pipeline run + approval, not an all-night SSH session.
+  Failed tests block deploy before students ever see a break.
 
 Teaching point:
-  CI/CD turns a stressful manual release into a repeatable pipeline.
+  CI/CD turns a stressful manual release into a repeatable, auditable path.
+  Quote tools: GitHub Actions or Cloud Build + GKE/Cloud Run + approval gate.
 
 
 --------------------------------------------------------------------------------
 CASE 2 — Food Delivery Microservices
 --------------------------------------------------------------------------------
+Context:
+  Orders, restaurants, restaurants, restaurant catalogue — separate services,
+  separate teams, dinner peak every evening.
+
 Problem:
-  Many services; one broken service must not block all releases forever,
-  but shared standards are needed.
+  One shared “release train” blocked everyone when catalogue tests failed.
+  Checkout bugs reached 100% of users immediately.
 
 Approach:
-  Per-service pipelines; unit tests required; canary for checkout service;
-  feature flags for UI experiments.
+  • Per-service GitLab CI / Actions pipelines (independent .yml each)
+  • Required unit + contract tests on payments/checkout
+  • Canary 5% traffic for checkout image; expand if error rate flat
+  • Feature flags for UI promotions (deploy dark, enable later)
+
+Outcome:
+  Catalogue can ship without waiting on payments; checkout failures affect
+  a small canary slice first.
 
 Teaching point:
-  Microservices need independent CI/CD with stronger gates on critical paths.
+  Microservices need independent CI/CD with stronger gates on money paths.
+  Link Unit 4: each service is its own Deployment + pipeline.
 
 
 --------------------------------------------------------------------------------
 CASE 3 — UPI / Payments API
 --------------------------------------------------------------------------------
+Context:
+  Trust-critical payment APIs; regulators and users punish downtime and
+  bad releases.
+
 Problem:
-  Continuous Deployment to Prod without approval is too risky.
+  Team wanted Continuous Deployment (auto-Prod) for speed — risk too high.
 
 Approach:
-  Continuous Delivery with mandatory approvers; contract tests; canary;
-  automatic rollback on error-rate spike; secrets in Secret Manager only.
+  • Continuous Delivery: green pipeline builds immutable image
+  • Mandatory two-person approval before Prod environment
+  • Contract tests + canary; auto-rollback if 5xx spike
+  • Secrets only in Secret Manager; Cloud Build SA least privilege
+  • Blue environment retained for instant switch during incidents
+
+Outcome:
+  Fast delivery to staging; controlled, reviewed Prod releases; rollback
+  measured in minutes, not hours.
 
 Teaching point:
-  Choose Delivery vs Deployment based on risk — not hype.
+  Choose Delivery vs Deployment based on risk — not hype. Payments lean
+  Delivery + canary + practised rollback.
 
 
 --------------------------------------------------------------------------------
 CASE 4 — Jenkins Sprawl in Enterprise
 --------------------------------------------------------------------------------
+Context:
+  Large IT department; one Jenkins VM created years ago; dozens of freestyle
+  jobs; admin password shared on a wiki.
+
 Problem:
-  One unpatched Jenkins with admin creds on shared jobs — audit failure.
+  Audit finds unpatched Jenkins, jobs with cloud owner keys in plain text,
+  nobody can recreate the server (snowflake CI).
 
 Approach:
-  Jenkinsfile as code; immutable agents; least-privilege credentials;
-  or migrate standard apps to GitHub Actions / GitLab CI / Cloud Build.
+  • Convert critical jobs to Jenkinsfile in Git (pipeline-as-code)
+  • Ephemeral agents; credentials in a secret store
+  • Least-privilege deploy accounts per app
+  • Long-term: migrate standard web apps to GitHub Actions / GitLab CI /
+    Cloud Build; keep Jenkins only where custom agents are mandatory
+
+Outcome:
+  CI becomes rebuildable and reviewable; credential blast radius shrinks.
 
 Teaching point:
-  The CI server is production infrastructure — secure it like Prod.
+  The CI server is production infrastructure — secure and code it like Prod.
+  Freestyle-only Jenkins without Git history fails modern audits.
 
 
 --------------------------------------------------------------------------------
 CASE 5 — Copilot Drafts a Workflow with a Secret
 --------------------------------------------------------------------------------
+Context:
+  Student team uses GitHub Copilot to draft `.github/workflows/deploy.yml`
+  for a Cloud Run lab.
+
 Problem:
-  AI-suggested YAML hard-codes an API key.
+  Suggested YAML contained:
+    run: gcloud run deploy ... --set-env-vars API_KEY=AIzaSy...
+  Key was committed in PR.
 
 Approach:
-  PR review catches it; move secret to GitHub Secrets / Secret Manager;
-  add secret scanning; train team that Copilot output needs review.
+  • Reviewer blocks merge
+  • Move secret to GitHub Secrets / Secret Manager
+  • Enable secret scanning / push protection
+  • Team rule: “Copilot drafts; humans own security review”
+  • Fix shown in notes section 3.4 (unsafe vs safe env example)
+
+Outcome:
+  No key leaked to main; pipeline still deploys using injected secrets.
 
 Teaching point:
   Copilot accelerates writing Actions; it does not replace security review.
+  Syllabus “Git Co-Pilot Actions” = Actions product + Copilot assistance.
 
 
 --------------------------------------------------------------------------------
 CASE 6 — Festival Sale Performance Gate
 --------------------------------------------------------------------------------
+Context:
+  E-commerce festival sale; marketing wants a new checkout UI the same week.
+
 Problem:
-  New version passes unit tests but dies under load.
+  Unit tests pass; under Staging load the new version’s p95 latency triples;
+  would have melted Prod on sale morning.
 
 Approach:
-  Add load test job in Staging pipeline; block Prod promote if p95 latency
-  exceeds SLO; keep blue environment ready for instant switch.
+  • Add load-test job in CI/CD after Staging deploy (k6/JMeter conceptual)
+  • Quality gate: block Prod promote if p95 > SLO
+  • Keep blue-green target ready for instant switch
+  • Feature flag to disable new UI without full redeploy
+
+Outcome:
+  Bad build never reaches festival traffic; sale uses last known-good image.
 
 Teaching point:
-  Automated testing includes performance for scale-sensitive releases.
+  Automated testing includes performance for scale-sensitive releases —
+  unit tests alone are not enough before peak events.
 
 
 ================================================================================
