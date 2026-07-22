@@ -1188,6 +1188,17 @@ TEST CHEAT
 DEPLOY CHEAT
   Recreate (downtime) · Rolling · Blue-Green · Canary · Feature flags
 
+CODE EXAMPLES TO SKETCH IN EXAMS
+  Jenkinsfile stages: Checkout → Test → Build → Push → Deploy
+  Actions: on push/PR → npm test → docker build/push → kubectl set image
+  GitLab: stages test/build/deploy · production when: manual
+  Cloud Build: steps test → docker build → push → gcloud run deploy
+  Copilot: never hard-code secrets — use secrets.API_KEY
+
+CASE STUDIES TO QUOTE
+  Result portal · Food delivery · UPI Delivery+canary · Jenkins audit
+  Copilot secret leak caught in PR · Festival load-test gate
+
 MUST-SAY PHRASES
   • “DevOps is culture + automation; CI/CD is the automation backbone”
   • “Do not confuse Continuous Delivery with Continuous Deployment”
