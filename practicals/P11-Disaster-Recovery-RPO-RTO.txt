@@ -1,0 +1,181 @@
+================================================================================
+ PRACTICAL 11 — Disaster Recovery Plan (RPO & RTO Demo)
+================================================================================
+Syllabus : Implementing a Disaster Recovery Plan (RPO & RTO Demo)
+Duration : ~2–3 lab hours
+Related  : Unit 2 notes; Practical 5 (snapshots); Practical 7 (IaC rebuild idea)
+
+--------------------------------------------------------------------------------
+1. OBJECTIVE
+--------------------------------------------------------------------------------
+  • Define RPO and RTO for a simple lab application
+  • Deploy a small app with data on a persistent disk / GCS
+  • Simulate a disaster (delete VM / corrupt file)
+  • Recover using snapshot + rebuild; measure actual recovery time
+  • Write a mini DR runbook
+
+--------------------------------------------------------------------------------
+2. PREREQUISITES
+--------------------------------------------------------------------------------
+  • Notes: notes/unit-2/CC-II-Unit-II-Disaster-Recovery-in-Cloud.txt
+  • Skills from P01, P05 (and ideally P07)
+
+--------------------------------------------------------------------------------
+3. DEFINE OBJECTIVES (BEFORE TOUCHING CLOUD)
+--------------------------------------------------------------------------------
+  Fill this table in your journal FIRST:
+
+    Application      : cc2-dr-demo (nginx + marker file / simple data file)
+    RPO target       : e.g. 15 minutes (data loss tolerance)
+    RTO target       : e.g. 30 minutes (downtime tolerance)
+    DR strategy tier : Backup & Restore (cold) for this lab
+    Backup method    : Persistent disk snapshot every lab checkpoint + GCS copy
+    Owner            : your name / team
+
+--------------------------------------------------------------------------------
+4. PART A — BUILD PRIMARY SYSTEM
+--------------------------------------------------------------------------------
+  export PROJECT_ID=$(gcloud config get-value project)
+  export ZONE=asia-south1-a
+  export REGION=asia-south1
+  export BUCKET=${PROJECT_ID}-cc2-p11-dr
+
+  gcloud services enable compute.googleapis.com storage.googleapis.com
+
+  gcloud storage buckets create gs://$BUCKET --location=$REGION || true
+
+  gcloud compute instances create cc2-dr-primary \
+    --zone=$ZONE \
+    --machine-type=e2-micro \
+    --image-family=debian-12 \
+    --image-project=debian-cloud \
+    --tags=http-server \
+    --metadata=startup-script='#!/bin/bash
+      apt-get update -y
+      apt-get install -y nginx
+      mkdir -p /var/www/data
+      echo "order-1001" > /var/www/data/orders.txt
+      echo "<h1>CC-II DR Primary</h1>" > /var/www/html/index.html
+      systemctl enable nginx
+      systemctl restart nginx'
+
+  gcloud compute firewall-rules create allow-http-cc2-p11 \
+    --allow=tcp:80 --target-tags=http-server || true
+
+  # Data backup to GCS (application-level backup)
+  gcloud compute ssh cc2-dr-primary --zone=$ZONE --command="sudo cat /var/www/data/orders.txt"
+  # Copy via SSH pipe or upload from VM using gsutil if SA scopes allow.
+  # Simple approach — write same content to GCS from Cloud Shell as "backup":
+  echo "order-1001" > orders.txt
+  gcloud storage cp orders.txt gs://$BUCKET/orders.txt
+
+  # Disk snapshot (infrastructure backup)
+  gcloud compute disks snapshot cc2-dr-primary \
+    --snapshot-names=cc2-dr-snap-$(date +%Y%m%d-%H%M) \
+    --zone=$ZONE
+
+  export SNAP=$(gcloud compute snapshots list --filter="name~cc2-dr-snap" --sort-by=~creationTimestamp --limit=1 --format='value(name)')
+  echo "Using snapshot: $SNAP"
+
+--------------------------------------------------------------------------------
+5. PART B — SIMULATE DISASTER
+--------------------------------------------------------------------------------
+  # Record wall-clock start time for RTO measurement
+  date -u +"%Y-%m-%dT%H:%M:%SZ"
+  export DISASTER_START=$(date +%s)
+
+  # Disaster: delete the primary VM (site loss simulation)
+  gcloud compute instances delete cc2-dr-primary --zone=$ZONE --quiet
+
+  # Confirm service is down (EXTERNAL_IP should fail)
+  # curl http://OLD_IP/   → fails
+
+--------------------------------------------------------------------------------
+6. PART C — RECOVER (BACKUP & RESTORE STRATEGY)
+--------------------------------------------------------------------------------
+  # 1) Create disk from snapshot
+  gcloud compute disks create cc2-dr-recovered-disk \
+    --zone=$ZONE \
+    --source-snapshot=$SNAP
+
+  # 2) Create replacement VM
+  gcloud compute instances create cc2-dr-recovered \
+    --zone=$ZONE \
+    --machine-type=e2-micro \
+    --tags=http-server \
+    --disk=name=cc2-dr-recovered-disk,boot=yes
+
+  # 3) Verify web + data file
+  gcloud compute ssh cc2-dr-recovered --zone=$ZONE \
+    --command="sudo cat /var/www/data/orders.txt; curl -s http://127.0.0.1/"
+
+  # 4) If file missing, restore from GCS backup (RPO discussion)
+  gcloud storage cp gs://$BUCKET/orders.txt ./orders-restored.txt
+  cat orders-restored.txt
+
+  export DISASTER_END=$(date +%s)
+  echo "Approx recovery seconds: $((DISASTER_END-DISASTER_START))"
+  date -u +"%Y-%m-%dT%H:%M:%SZ"
+
+--------------------------------------------------------------------------------
+7. PART D — MEASURE & COMPARE
+--------------------------------------------------------------------------------
+  In journal:
+
+    Measured RTO  ≈ (recovery_end - disaster_start)
+    Met RTO target?  Yes/No
+    RPO for snapshot method ≈ time since last snapshot
+    RPO for GCS file copy ≈ time since last gsutil upload
+    If disaster happened 10 minutes after last snapshot, max data loss ≈ 10 min
+
+--------------------------------------------------------------------------------
+8. MINI RUNBOOK (DELIVERABLE TEMPLATE)
+--------------------------------------------------------------------------------
+  Title: CC2 DR Runbook — cc2-dr-demo
+  1. Detect: VM unreachable / HTTP health fail
+  2. Declare: Owner declares disaster
+  3. Restore disk from last known-good snapshot
+  4. Create VM from restored disk; apply firewall tags
+  5. Verify orders.txt + HTTP 200
+  6. If data gap: restore object from GCS versioning/copy
+  7. Record measured RTO; open post-incident notes
+  8. Schedule next restore test date
+
+--------------------------------------------------------------------------------
+9. VERIFY
+--------------------------------------------------------------------------------
+  [ ] Pre-disaster snapshot + GCS backup exist
+  [ ] Primary deleted (simulated outage)
+  [ ] Recovered VM serves app/data
+  [ ] Measured recovery time written
+  [ ] Runbook completed
+
+--------------------------------------------------------------------------------
+10. DELIVERABLES
+--------------------------------------------------------------------------------
+  1. Filled RPO/RTO table (before lab actions)
+  2. Screenshots: snapshot, delete (disaster), recovered VM, data verification
+  3. Measured RTO number + whether target met
+  4. Completed mini runbook
+  5. Reflection (8–10 lines): What would Pilot Light / Warm Standby change?
+
+--------------------------------------------------------------------------------
+11. VIVA QUESTIONS
+--------------------------------------------------------------------------------
+  • Define RPO and RTO with your lab numbers
+  • Why Backup & Restore is cheapest but slowest
+  • Backup ≠ DR — what else did your runbook include?
+  • How would Terraform (P07) reduce RTO for rebuild?
+
+--------------------------------------------------------------------------------
+12. CLEANUP
+--------------------------------------------------------------------------------
+  gcloud compute instances delete cc2-dr-recovered --zone=$ZONE --quiet
+  gcloud compute disks delete cc2-dr-recovered-disk --zone=$ZONE --quiet
+  gcloud compute snapshots delete $SNAP --quiet
+  gcloud compute firewall-rules delete allow-http-cc2-p11 --quiet
+  gcloud storage rm -r gs://$BUCKET
+
+================================================================================
+END OF PRACTICAL 11
+================================================================================

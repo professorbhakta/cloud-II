@@ -1,0 +1,71 @@
+================================================================================
+              CLOUD COMPUTING – II (CC-II) — PRACTICALS MANUAL
+================================================================================
+Course        :  MCA (A.Y.-II)  |  Semester 3  |  Lab Hrs/Week: 2
+Institution   :  FIT & CS, Parul University
+Source        :  Official Syllabus — Cloud Computing – II
+Branch        :  cc2Material / practicals/
+
+HOW TO USE
+----------
+  • Complete practicals in order when possible (later labs reuse GCP skills).
+  • Each file has: Objective, Pre-reqs, Steps, Verify, Deliverables, Viva, Cleanup.
+  • Record screenshots / command outputs in your lab journal for evaluation.
+  • Prefer a dedicated GCP project per student/team to avoid quota collisions.
+
+INDEX
+-----
+  P01  Creating a Google Cloud Free Tier Account & Deploying a Linux VM
+  P02  Deploying a Docker Container on GCP Compute Engine
+  P03  Deploying a Containerized Application on Cloud Run
+  P04  Setting Up Kubernetes Cluster and Deploying & Scaling an App
+  P05  Implementing Cloud Storage Backup & Snapshots
+  P06  Creating a Cloud Function for Serverless Execution
+  P07  Automating Infrastructure Deployment with Terraform
+  P08  Implementing a CI/CD Pipeline with Cloud Build
+  P09  API Gateway & Cloud Run + Cloud Pub/Sub Messaging
+  P10  Monitoring & Logging Kubernetes Workloads
+  P11  Implementing a Disaster Recovery Plan (RPO & RTO Demo)
+
+UNIT MAPPING
+------------
+  P01–P03     Foundations / compute & containers (supports Units 1, 4)
+  P04, P10    Kubernetes (Unit 4)
+  P05, P11    Backup, snapshots, DR (Unit 2)
+  P06, P09    Serverless, integration, messaging (Unit 6)
+  P07         Infrastructure as Code (Unit 3)
+  P08         CI/CD (Unit 5)
+
+COMMON SETUP (MOST LABS)
+------------------------
+  export PROJECT_ID=YOUR_PROJECT_ID
+  gcloud config set project $PROJECT_ID
+  gcloud config set compute/region asia-south1
+  gcloud config set compute/zone asia-south1-a
+
+  # Prefer Cloud Shell for labs (gcloud, docker, kubectl preinstalled)
+
+COST & SAFETY
+-------------
+  • Always run Cleanup at the end of each lab.
+  • Delete idle VMs, GKE clusters, and load balancers — they cost money.
+  • Free Tier / Always Free limits help but do not cover every resource.
+
+FILES IN THIS FOLDER
+--------------------
+  CC-II-Practicals-Index.txt          ← this file
+  P01-GCP-Account-and-Linux-VM.txt
+  P02-Docker-on-Compute-Engine.txt
+  P03-Cloud-Run-Container-Deploy.txt
+  P04-GKE-Deploy-and-Scale.txt
+  P05-Cloud-Storage-Backup-Snapshots.txt
+  P06-Cloud-Functions-Serverless.txt
+  P07-Terraform-IaC.txt
+  P08-Cloud-Build-CICD.txt
+  P09-API-Gateway-CloudRun-PubSub.txt
+  P10-GKE-Monitoring-Logging.txt
+  P11-Disaster-Recovery-RPO-RTO.txt
+
+================================================================================
+END OF INDEX
+================================================================================

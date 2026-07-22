@@ -1,0 +1,111 @@
+================================================================================
+ PRACTICAL 1 — GCP Free Tier Account & Deploying a Linux VM
+================================================================================
+Syllabus : Creating a Google Cloud Free Tier Account. Deploying a Linux VM on GCP
+Duration : ~2 lab hours
+Related  : Course foundation for all later practicals
+
+--------------------------------------------------------------------------------
+1. OBJECTIVE
+--------------------------------------------------------------------------------
+  • Create / sign in to a Google Cloud account and open a project
+  • Enable billing (Free Trial / Free Tier awareness)
+  • Deploy a Linux VM on Compute Engine
+  • SSH into the VM and run basic commands
+  • Open a firewall rule and verify connectivity
+
+--------------------------------------------------------------------------------
+2. PREREQUISITES
+--------------------------------------------------------------------------------
+  • Personal Google account (college email OK if permitted)
+  • Browser; Cloud Shell recommended after project exists
+  • Student ID ready for lab journal
+
+--------------------------------------------------------------------------------
+3. PART A — ACCOUNT & PROJECT
+--------------------------------------------------------------------------------
+  1. Go to https://console.cloud.google.com and sign in
+  2. Accept terms; start Free Trial if prompted (card may be required;
+     Free Trial credit is time-limited — read the console banner)
+  3. Create a project, e.g. cc2-lab-YOURNAME
+  4. Note Project ID (not only the display name)
+  5. In Cloud Shell:
+       gcloud config set project PROJECT_ID
+       gcloud config list
+
+--------------------------------------------------------------------------------
+4. PART B — ENABLE COMPUTE API & CREATE VM
+--------------------------------------------------------------------------------
+  gcloud services enable compute.googleapis.com
+
+  gcloud compute instances create cc2-vm-1 \
+    --zone=asia-south1-a \
+    --machine-type=e2-micro \
+    --image-family=debian-12 \
+    --image-project=debian-cloud \
+    --tags=http-server,https-server \
+    --metadata=startup-script='#!/bin/bash
+      apt-get update -y
+      apt-get install -y nginx
+      echo "<h1>CC-II Practical 1 — Linux VM</h1>" > /var/www/html/index.html
+      systemctl enable nginx
+      systemctl restart nginx'
+
+  gcloud compute instances list
+  gcloud compute instances describe cc2-vm-1 --zone=asia-south1-a
+
+--------------------------------------------------------------------------------
+5. PART C — FIREWALL & ACCESS
+--------------------------------------------------------------------------------
+  # Allow HTTP (if not already present for http-server tag)
+  gcloud compute firewall-rules create allow-http-cc2 \
+    --allow=tcp:80 \
+    --target-tags=http-server \
+    --description="CC2 P01 HTTP"
+
+  # SSH
+  gcloud compute ssh cc2-vm-1 --zone=asia-south1-a
+
+  # Inside VM:
+  hostname
+  cat /etc/os-release
+  systemctl status nginx --no-pager
+  curl -I http://127.0.0.1/
+  exit
+
+  # From Cloud Shell / browser — use EXTERNAL_IP from instances list
+  curl http://EXTERNAL_IP/
+
+--------------------------------------------------------------------------------
+6. VERIFY
+--------------------------------------------------------------------------------
+  [ ] Project ID configured in gcloud
+  [ ] VM status = RUNNING
+  [ ] SSH works
+  [ ] Browser/curl shows the HTML page on port 80
+
+--------------------------------------------------------------------------------
+7. DELIVERABLES (LAB JOURNAL)
+--------------------------------------------------------------------------------
+  1. Screenshot: GCP project dashboard with Project ID
+  2. Screenshot: VM list showing EXTERNAL_IP and RUNNING
+  3. Screenshot: browser/curl output of the nginx page
+  4. Short note (5–8 lines): What is a VM? Why e2-micro for labs?
+
+--------------------------------------------------------------------------------
+8. VIVA QUESTIONS
+--------------------------------------------------------------------------------
+  • Difference between Project Name and Project ID?
+  • What does a startup script do?
+  • What is a firewall target tag?
+  • Free Trial vs Always Free — are they the same?
+
+--------------------------------------------------------------------------------
+9. CLEANUP
+--------------------------------------------------------------------------------
+  gcloud compute instances delete cc2-vm-1 --zone=asia-south1-a --quiet
+  gcloud compute firewall-rules delete allow-http-cc2 --quiet
+
+================================================================================
+END OF PRACTICAL 1
+================================================================================

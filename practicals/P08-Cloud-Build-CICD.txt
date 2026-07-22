@@ -1,0 +1,132 @@
+================================================================================
+ PRACTICAL 8 — CI/CD Pipeline with Cloud Build
+================================================================================
+Syllabus : Implementing a CI/CD Pipeline with Cloud Build
+Duration : ~2 lab hours
+Related  : Unit 5 notes; builds on P03 Cloud Run / Artifact Registry
+
+--------------------------------------------------------------------------------
+1. OBJECTIVE
+--------------------------------------------------------------------------------
+  • Store app source in a connected repo (Cloud Source Repositories or GitHub)
+  • Define a cloudbuild.yaml pipeline
+  • Build a container image and deploy to Cloud Run automatically
+  • Explain CI vs CD using your pipeline stages
+
+--------------------------------------------------------------------------------
+2. PREREQUISITES
+--------------------------------------------------------------------------------
+  • Notes: notes/unit-5/CC-II-Unit-V-Introduction-to-CI-CD.txt
+  • APIs: cloudbuild, run, artifactregistry
+  • IAM: Cloud Build SA needs Run Admin + Service Account User (lab often grants)
+
+--------------------------------------------------------------------------------
+3. ENABLE APIs & VARIABLES
+--------------------------------------------------------------------------------
+  export PROJECT_ID=$(gcloud config get-value project)
+  export REGION=asia-south1
+  export REPO=cc2-repo
+  export SERVICE=cc2-cicd-hello
+
+  gcloud services enable \
+    cloudbuild.googleapis.com \
+    run.googleapis.com \
+    artifactregistry.googleapis.com
+
+  gcloud artifacts repositories create $REPO \
+    --repository-format=docker --location=$REGION || true
+
+--------------------------------------------------------------------------------
+4. CREATE APP + PIPELINE FILES
+--------------------------------------------------------------------------------
+  mkdir -p ~/cc2-cicd && cd ~/cc2-cicd
+
+  cat > Dockerfile <<'EOF'
+  FROM nginx:alpine
+  RUN echo "<h1>CC-II Practical 8 — Cloud Build CI/CD</h1>" > /usr/share/nginx/html/index.html
+  EXPOSE 8080
+  CMD ["sh", "-c", "sed -i 's/listen       80;/listen       8080;/' /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+  EOF
+
+  cat > cloudbuild.yaml <<EOF
+  steps:
+    - name: gcr.io/cloud-builders/docker
+      args:
+        - build
+        - "-t"
+        - "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${SERVICE}:\$SHORT_SHA"
+        - "."
+
+    - name: gcr.io/cloud-builders/docker
+      args:
+        - push
+        - "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${SERVICE}:\$SHORT_SHA"
+
+    - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+      entrypoint: gcloud
+      args:
+        - run
+        - deploy
+        - ${SERVICE}
+        - --image=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${SERVICE}:\$SHORT_SHA
+        - --region=${REGION}
+        - --platform=managed
+        - --allow-unauthenticated
+        - --port=8080
+
+  images:
+    - "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${SERVICE}:\$SHORT_SHA"
+  EOF
+
+--------------------------------------------------------------------------------
+5. RUN PIPELINE (MANUAL TRIGGER FROM SOURCE)
+--------------------------------------------------------------------------------
+  # Simplest lab path: submit local source to Cloud Build
+  gcloud builds submit --config=cloudbuild.yaml .
+
+  # Watch progress in Cloud Build console
+  gcloud run services describe $SERVICE --region=$REGION \
+    --format='value(status.url)'
+
+  curl -s "$(gcloud run services describe $SERVICE --region=$REGION --format='value(status.url)')"
+
+--------------------------------------------------------------------------------
+6. OPTIONAL — CONNECT REPO + AUTO TRIGGER ON PUSH
+--------------------------------------------------------------------------------
+  # In Console: Cloud Build → Triggers → Connect repository (GitHub or CSR)
+  # Create trigger: on push to main, config cloudbuild.yaml
+  # Push a commit that changes the HTML string; confirm new revision deploys
+
+--------------------------------------------------------------------------------
+7. VERIFY
+--------------------------------------------------------------------------------
+  [ ] Cloud Build history shows SUCCESS
+  [ ] Image in Artifact Registry
+  [ ] Cloud Run revision updated
+  [ ] URL returns expected HTML
+
+--------------------------------------------------------------------------------
+8. DELIVERABLES
+--------------------------------------------------------------------------------
+  1. Paste cloudbuild.yaml
+  2. Screenshot: successful build in Cloud Build
+  3. Screenshot: Cloud Run URL output
+  4. Note: Map your steps to CI vs CD
+
+--------------------------------------------------------------------------------
+9. VIVA QUESTIONS
+--------------------------------------------------------------------------------
+  • Continuous Integration vs Continuous Delivery vs Deployment?
+  • Why tag images with commit SHA?
+  • What secrets should never be hardcoded in cloudbuild.yaml?
+  • Jenkins vs Cloud Build — one difference?
+
+--------------------------------------------------------------------------------
+10. CLEANUP
+--------------------------------------------------------------------------------
+  gcloud run services delete $SERVICE --region=$REGION --quiet
+  # Delete old images / triggers if created
+
+================================================================================
+END OF PRACTICAL 8
+================================================================================

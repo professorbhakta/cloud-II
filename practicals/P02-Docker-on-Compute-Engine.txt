@@ -1,0 +1,119 @@
+================================================================================
+ PRACTICAL 2 — Deploying a Docker Container on GCP Compute Engine
+================================================================================
+Syllabus : Deploying a Docker Container on GCP Compute Engine
+Duration : ~2 lab hours
+Related  : Containers foundation for P03, P04, Unit 4
+
+--------------------------------------------------------------------------------
+1. OBJECTIVE
+--------------------------------------------------------------------------------
+  • Install Docker on a Compute Engine VM (or use Container-Optimized OS)
+  • Build or pull a container image
+  • Run the container and publish a port
+  • Verify the app from the internet
+
+--------------------------------------------------------------------------------
+2. PREREQUISITES
+--------------------------------------------------------------------------------
+  • Completed Practical 1 skills (project, gcloud, firewall basics)
+  • Compute Engine API enabled
+
+--------------------------------------------------------------------------------
+3. CREATE A VM FOR DOCKER
+--------------------------------------------------------------------------------
+  export ZONE=asia-south1-a
+
+  gcloud compute instances create cc2-docker-vm \
+    --zone=$ZONE \
+    --machine-type=e2-medium \
+    --image-family=debian-12 \
+    --image-project=debian-cloud \
+    --tags=http-server \
+    --scopes=https://www.googleapis.com/auth/cloud-platform
+
+  gcloud compute firewall-rules create allow-http-cc2-p02 \
+    --allow=tcp:80 \
+    --target-tags=http-server \
+    --description="CC2 P02 HTTP" || true
+
+  gcloud compute ssh cc2-docker-vm --zone=$ZONE
+
+--------------------------------------------------------------------------------
+4. INSTALL DOCKER (ON THE VM)
+--------------------------------------------------------------------------------
+  sudo apt-get update -y
+  sudo apt-get install -y docker.io
+  sudo systemctl enable docker
+  sudo systemctl start docker
+  sudo usermod -aG docker $USER
+  # Log out and SSH back in so docker group applies
+  exit
+  gcloud compute ssh cc2-docker-vm --zone=$ZONE
+
+  docker version
+  docker run hello-world
+
+--------------------------------------------------------------------------------
+5. RUN A WEB CONTAINER
+--------------------------------------------------------------------------------
+  # Official nginx image listening on container port 80
+  docker pull nginx:alpine
+  docker run -d --name cc2-web -p 80:80 nginx:alpine
+
+  docker ps
+  curl -I http://127.0.0.1/
+
+  # Optional: custom HTML
+  docker exec cc2-web sh -c 'echo "<h1>CC-II Practical 2 — Docker on GCE</h1>" > /usr/share/nginx/html/index.html'
+  curl http://127.0.0.1/
+
+--------------------------------------------------------------------------------
+6. (OPTIONAL) BUILD YOUR OWN IMAGE ON THE VM
+--------------------------------------------------------------------------------
+  mkdir -p ~/cc2app && cd ~/cc2app
+  cat > Dockerfile <<'EOF'
+  FROM nginx:alpine
+  RUN echo "<h1>Hello from my Dockerfile</h1>" > /usr/share/nginx/html/index.html
+  EOF
+
+  docker build -t cc2-hello:v1 .
+  docker stop cc2-web && docker rm cc2-web
+  docker run -d --name cc2-web -p 80:80 cc2-hello:v1
+
+--------------------------------------------------------------------------------
+7. VERIFY FROM OUTSIDE
+--------------------------------------------------------------------------------
+  # EXTERNAL_IP from:
+  gcloud compute instances describe cc2-docker-vm --zone=$ZONE \
+    --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
+
+  curl http://EXTERNAL_IP/
+  # or open in browser
+
+--------------------------------------------------------------------------------
+8. DELIVERABLES
+--------------------------------------------------------------------------------
+  1. Screenshot: docker ps showing running container
+  2. Screenshot: browser page served via VM EXTERNAL_IP
+  3. Note: Difference between a VM and a container (5–8 lines)
+  4. (Optional) Paste your Dockerfile
+
+--------------------------------------------------------------------------------
+9. VIVA QUESTIONS
+--------------------------------------------------------------------------------
+  • What does -p 80:80 mean?
+  • Why is docker group membership needed?
+  • Image vs container — difference?
+  • When would you choose Cloud Run instead of Docker on a VM? (preview P03)
+
+--------------------------------------------------------------------------------
+10. CLEANUP
+--------------------------------------------------------------------------------
+  # On VM: docker stop/rm as needed, then delete VM
+  gcloud compute instances delete cc2-docker-vm --zone=$ZONE --quiet
+  gcloud compute firewall-rules delete allow-http-cc2-p02 --quiet
+
+================================================================================
+END OF PRACTICAL 2
+================================================================================

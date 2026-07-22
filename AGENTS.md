@@ -47,6 +47,7 @@ Prefer committing teaching materials **directly on `cc2Material`**. Do not creat
 | `notes/unit-4/` | Unit 4 Kubernetes & Container Orchestration notes |
 | `notes/unit-5/` | Unit 5 Introduction to CI/CD notes |
 | `notes/unit-6/` | Unit 6 Cloud Application Integration notes |
+| `practicals/` | Lab manuals for syllabus Practicals 1–11 |
 | `ppt/` | PowerPoint decks + visual assets (no Python regenerators) |
 | `assignments/` | Mid-term / assignment papers |
 

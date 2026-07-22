@@ -1,0 +1,130 @@
+================================================================================
+ PRACTICAL 5 — Cloud Storage Backup & Snapshots
+================================================================================
+Syllabus : Implementing Cloud Storage Backup & Snapshots
+Duration : ~2 lab hours
+Related  : Unit 2 (Backup, snapshots, RPO)
+
+--------------------------------------------------------------------------------
+1. OBJECTIVE
+--------------------------------------------------------------------------------
+  • Create a Cloud Storage bucket with versioning
+  • Upload objects; simulate accidental overwrite/delete; restore a version
+  • Create a Compute Engine disk snapshot and restore a disk from it
+  • Relate actions to RPO thinking
+
+--------------------------------------------------------------------------------
+2. PREREQUISITES
+--------------------------------------------------------------------------------
+  • GCP project; Compute Engine + Storage APIs
+  • Notes: notes/unit-2/CC-II-Unit-II-Disaster-Recovery-in-Cloud.txt
+
+--------------------------------------------------------------------------------
+3. PART A — CLOUD STORAGE VERSIONING (OBJECT “BACKUP”)
+--------------------------------------------------------------------------------
+  export PROJECT_ID=$(gcloud config get-value project)
+  export REGION=asia-south1
+  export BUCKET=${PROJECT_ID}-cc2-p05-backup
+
+  gcloud services enable storage.googleapis.com compute.googleapis.com
+
+  gcloud storage buckets create gs://$BUCKET --location=$REGION
+  gcloud storage buckets update gs://$BUCKET --versioning
+
+  echo "version-1-content" > report.txt
+  gcloud storage cp report.txt gs://$BUCKET/report.txt
+
+  echo "version-2-OVERWRITE" > report.txt
+  gcloud storage cp report.txt gs://$BUCKET/report.txt
+
+  # List versions (JSON shows generation numbers)
+  gcloud storage ls -a gs://$BUCKET/report.txt
+
+  # Download a specific older generation if needed:
+  # gcloud storage cp gs://$BUCKET/report.txt#GENERATION ./report-restored.txt
+
+  # Soft-delete style demo: remove live object, then copy a generation back
+  gcloud storage rm gs://$BUCKET/report.txt
+  gcloud storage ls -a gs://$BUCKET/
+
+--------------------------------------------------------------------------------
+4. PART B — PERSISTENT DISK SNAPSHOT
+--------------------------------------------------------------------------------
+  export ZONE=asia-south1-a
+
+  gcloud compute instances create cc2-p05-vm \
+    --zone=$ZONE \
+    --machine-type=e2-micro \
+    --image-family=debian-12 \
+    --image-project=debian-cloud \
+    --boot-disk-size=10GB
+
+  # Identify boot disk name
+  gcloud compute instances describe cc2-p05-vm --zone=$ZONE \
+    --format='get(disks[0].source)'
+
+  export DISK=cc2-p05-vm   # often same as instance for default boot disk name
+  # If different, set DISK to the disk resource name from describe
+
+  # Write a marker file on the VM
+  gcloud compute ssh cc2-p05-vm --zone=$ZONE --command="echo 'important-lab-data' | sudo tee /root/backup-marker.txt"
+
+  # Snapshot the boot disk
+  gcloud compute disks snapshot $DISK \
+    --snapshot-names=cc2-p05-snap-1 \
+    --zone=$ZONE
+
+  gcloud compute snapshots list
+
+--------------------------------------------------------------------------------
+5. PART C — RESTORE FROM SNAPSHOT
+--------------------------------------------------------------------------------
+  # Create a new disk from snapshot
+  gcloud compute disks create cc2-p05-restored-disk \
+    --source-snapshot=cc2-p05-snap-1 \
+    --zone=$ZONE
+
+  # Create a new VM using restored disk as boot disk
+  gcloud compute instances create cc2-p05-restored-vm \
+    --zone=$ZONE \
+    --machine-type=e2-micro \
+    --disk=name=cc2-p05-restored-disk,boot=yes
+
+  gcloud compute ssh cc2-p05-restored-vm --zone=$ZONE \
+    --command="sudo cat /root/backup-marker.txt"
+
+--------------------------------------------------------------------------------
+6. VERIFY
+--------------------------------------------------------------------------------
+  [ ] Bucket versioning enabled
+  [ ] Multiple object generations visible
+  [ ] Snapshot listed
+  [ ] Restored VM contains backup-marker.txt
+
+--------------------------------------------------------------------------------
+7. DELIVERABLES
+--------------------------------------------------------------------------------
+  1. Screenshot: versioning on bucket + ls -a generations
+  2. Screenshot: snapshot list
+  3. Screenshot: restored file content on new VM
+  4. Note: How does this relate to RPO? (max data loss window)
+
+--------------------------------------------------------------------------------
+8. VIVA QUESTIONS
+--------------------------------------------------------------------------------
+  • Object versioning vs disk snapshot — what does each protect?
+  • Why is an untested backup dangerous?
+  • Crash-consistent vs application-consistent (DB) — basic idea?
+  • Dual-region buckets — why for regional DR?
+
+--------------------------------------------------------------------------------
+9. CLEANUP
+--------------------------------------------------------------------------------
+  gcloud compute instances delete cc2-p05-vm cc2-p05-restored-vm --zone=$ZONE --quiet
+  gcloud compute disks delete cc2-p05-restored-disk --zone=$ZONE --quiet
+  gcloud compute snapshots delete cc2-p05-snap-1 --quiet
+  gcloud storage rm -r gs://$BUCKET
+
+================================================================================
+END OF PRACTICAL 5
+================================================================================

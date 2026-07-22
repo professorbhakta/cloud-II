@@ -1,0 +1,206 @@
+================================================================================
+ PRACTICAL 9 — API Gateway / Cloud Run Microservices + Pub/Sub
+================================================================================
+Syllabus : API Gateway & Cloud Run for Microservices Communication and
+           Cloud Pub/Sub for Event-Driven Messaging
+Duration : ~2–3 lab hours
+Related  : Unit 6 (integration, messaging); builds on P03 Cloud Run
+
+--------------------------------------------------------------------------------
+1. OBJECTIVE
+--------------------------------------------------------------------------------
+  • Deploy two simple Cloud Run “microservices”
+  • Front them with API Gateway (or document HTTP load routing pattern)
+  • Create a Pub/Sub topic; publish and pull messages
+  • Explain sync (HTTP) vs async (Pub/Sub) communication
+
+--------------------------------------------------------------------------------
+2. PREREQUISITES
+--------------------------------------------------------------------------------
+  • Cloud Run experience (P03)
+  • APIs: run, pubsub, apigateway, servicecontrol, servicemanagement
+
+--------------------------------------------------------------------------------
+3. ENABLE APIs
+--------------------------------------------------------------------------------
+  export PROJECT_ID=$(gcloud config get-value project)
+  export REGION=asia-south1
+
+  gcloud services enable \
+    run.googleapis.com \
+    pubsub.googleapis.com \
+    apigateway.googleapis.com \
+    servicecontrol.googleapis.com \
+    servicemanagement.googleapis.com \
+    artifactregistry.googleapis.com \
+    cloudbuild.googleapis.com
+
+--------------------------------------------------------------------------------
+4. PART A — TWO CLOUD RUN SERVICES (ORDERS + PAYMENTS)
+--------------------------------------------------------------------------------
+  # --- orders service ---
+  mkdir -p ~/cc2-p09/orders && cd ~/cc2-p09/orders
+  cat > index.js <<'EOF'
+  const http = require('http');
+  const port = process.env.PORT || 8080;
+  http.createServer((req, res) => {
+    res.writeHead(200, {'Content-Type': 'application/json'});
+    res.end(JSON.stringify({ service: 'orders', status: 'ok', path: req.url }));
+  }).listen(port);
+  EOF
+  cat > Dockerfile <<'EOF'
+  FROM node:20-alpine
+  WORKDIR /app
+  COPY index.js .
+  EXPOSE 8080
+  CMD ["node", "index.js"]
+  EOF
+
+  gcloud run deploy cc2-orders \
+    --source=. \
+    --region=$REGION \
+    --allow-unauthenticated \
+    --quiet
+
+  # --- payments service ---
+  mkdir -p ~/cc2-p09/payments && cd ~/cc2-p09/payments
+  cat > index.js <<'EOF'
+  const http = require('http');
+  const port = process.env.PORT || 8080;
+  http.createServer((req, res) => {
+    res.writeHead(200, {'Content-Type': 'application/json'});
+    res.end(JSON.stringify({ service: 'payments', status: 'ok', path: req.url }));
+  }).listen(port);
+  EOF
+  cat > Dockerfile <<'EOF'
+  FROM node:20-alpine
+  WORKDIR /app
+  COPY index.js .
+  EXPOSE 8080
+  CMD ["node", "index.js"]
+  EOF
+
+  gcloud run deploy cc2-payments \
+    --source=. \
+    --region=$REGION \
+    --allow-unauthenticated \
+    --quiet
+
+  export ORDERS_URL=$(gcloud run services describe cc2-orders --region=$REGION --format='value(status.url)')
+  export PAYMENTS_URL=$(gcloud run services describe cc2-payments --region=$REGION --format='value(status.url)')
+  curl -s $ORDERS_URL
+  curl -s $PAYMENTS_URL
+
+--------------------------------------------------------------------------------
+5. PART B — API GATEWAY (OPENAPI)
+--------------------------------------------------------------------------------
+  # Capture backend URLs without https:// for OpenAPI address, or use full URL
+  # Minimal OpenAPI 2.0 style config for API Gateway + Cloud Run
+
+  cat > ~/cc2-p09/openapi.yaml <<EOF
+  swagger: "2.0"
+  info:
+    title: CC2 Practical 9 API
+    version: "1.0.0"
+  schemes:
+    - https
+  produces:
+    - application/json
+  x-google-endpoints:
+    - name: cc2-p09-gateway-${PROJECT_ID}.apigateway.${PROJECT_ID}.cloud.goog
+      allowCors: true
+  paths:
+    /orders:
+      get:
+        operationId: orders
+        x-google-backend:
+          address: ${ORDERS_URL}
+        responses:
+          "200":
+            description: OK
+    /payments:
+      get:
+        operationId: payments
+        x-google-backend:
+          address: ${PAYMENTS_URL}
+        responses:
+          "200":
+            description: OK
+  EOF
+
+  # Create API, config, and gateway (names must be unique; adjust if conflicts)
+  gcloud api-gateway apis create cc2-p09-api || true
+
+  gcloud api-gateway api-configs create cc2-p09-config \
+    --api=cc2-p09-api \
+    --openapi-spec=~/cc2-p09/openapi.yaml \
+    --project=$PROJECT_ID
+
+  gcloud api-gateway gateways create cc2-p09-gw \
+    --api=cc2-p09-api \
+    --api-config=cc2-p09-config \
+    --location=$REGION
+
+  gcloud api-gateway gateways describe cc2-p09-gw --location=$REGION \
+    --format='value(defaultHostname)'
+
+  # Test:
+  # curl https://DEFAULT_HOSTNAME/orders
+  # curl https://DEFAULT_HOSTNAME/payments
+
+  # If API Gateway setup hits org policy / IAM issues in free student projects,
+  # document the OpenAPI intent and demonstrate microservice calls via direct
+  # Cloud Run URLs + explain how a gateway would route /orders and /payments.
+
+--------------------------------------------------------------------------------
+6. PART C — PUB/SUB EVENT MESSAGING
+--------------------------------------------------------------------------------
+  gcloud pubsub topics create cc2-order-events || true
+  gcloud pubsub subscriptions create cc2-order-events-sub \
+    --topic=cc2-order-events || true
+
+  gcloud pubsub topics publish cc2-order-events \
+    --message='{"orderId":"1001","event":"CREATED"}'
+
+  gcloud pubsub subscriptions pull cc2-order-events-sub --auto-ack --limit=5
+
+  # Teaching point: orders service could publish events; email/worker subscribes
+  # asynchronously — decoupled microservices.
+
+--------------------------------------------------------------------------------
+7. VERIFY
+--------------------------------------------------------------------------------
+  [ ] Both Cloud Run services respond with JSON
+  [ ] API Gateway hostname routes /orders and /payments OR written fallback demo
+  [ ] Pub/Sub publish + pull succeeds
+
+--------------------------------------------------------------------------------
+8. DELIVERABLES
+--------------------------------------------------------------------------------
+  1. Screenshot: two Cloud Run services
+  2. Screenshot: gateway calls OR documented OpenAPI + direct curls
+  3. Screenshot: Pub/Sub pull showing message
+  4. Note: Synchronous HTTP vs asynchronous Pub/Sub (table)
+
+--------------------------------------------------------------------------------
+9. VIVA QUESTIONS
+--------------------------------------------------------------------------------
+  • Why use an API Gateway in front of microservices?
+  • What problem does Pub/Sub solve vs direct HTTP between services?
+  • Topic vs subscription?
+  • At-least-once delivery — what should consumers do?
+
+--------------------------------------------------------------------------------
+10. CLEANUP
+--------------------------------------------------------------------------------
+  gcloud api-gateway gateways delete cc2-p09-gw --location=$REGION --quiet || true
+  gcloud api-gateway api-configs delete cc2-p09-config --api=cc2-p09-api --quiet || true
+  gcloud api-gateway apis delete cc2-p09-api --quiet || true
+  gcloud run services delete cc2-orders --region=$REGION --quiet
+  gcloud run services delete cc2-payments --region=$REGION --quiet
+  gcloud pubsub subscriptions delete cc2-order-events-sub --quiet
+  gcloud pubsub topics delete cc2-order-events --quiet
+
+================================================================================
+END OF PRACTICAL 9
+================================================================================

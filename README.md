@@ -19,6 +19,7 @@ notes/unit-3/   Unit 3 Infrastructure as Code (IaC) notes
 notes/unit-4/   Unit 4 Kubernetes & Container Orchestration notes
 notes/unit-5/   Unit 5 Introduction to CI/CD notes
 notes/unit-6/   Unit 6 Cloud Application Integration notes
+practicals/     Lab manuals for syllabus Practicals 1–11
 ppt/            PowerPoint decks + Unit 4 visual assets
 assignments/    Mid-term / assignment question papers
 AGENTS.md       Guidance for Cursor / Cloud Agents
@@ -84,6 +85,25 @@ AGENTS.md       Guidance for Cursor / Cloud Agents
 4. Automated Testing & Deployment Strategies  
 5. Best Practices for Secure & Scalable CI/CD Pipelines  
 6. Real-life case studies + exam revision  
+
+## Practicals
+
+Lab manuals for all 11 official syllabus practicals:
+
+- `practicals/CC-II-Practicals-Index.txt` — index, unit mapping, common setup
+- `practicals/P01-GCP-Account-and-Linux-VM.txt`
+- `practicals/P02-Docker-on-Compute-Engine.txt`
+- `practicals/P03-Cloud-Run-Container-Deploy.txt`
+- `practicals/P04-GKE-Deploy-and-Scale.txt`
+- `practicals/P05-Cloud-Storage-Backup-Snapshots.txt`
+- `practicals/P06-Cloud-Functions-Serverless.txt`
+- `practicals/P07-Terraform-IaC.txt`
+- `practicals/P08-Cloud-Build-CICD.txt`
+- `practicals/P09-API-Gateway-CloudRun-PubSub.txt`
+- `practicals/P10-GKE-Monitoring-Logging.txt`
+- `practicals/P11-Disaster-Recovery-RPO-RTO.txt`
+
+Each practical includes objectives, commands, verification checklist, deliverables, viva questions, and cleanup.
 
 ## Assignments
 

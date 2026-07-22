@@ -1,0 +1,147 @@
+================================================================================
+ PRACTICAL 6 — Cloud Function for Serverless Execution
+================================================================================
+Syllabus : Creating a Cloud Function for Serverless Execution
+Duration : ~2 lab hours
+Related  : Unit 6 serverless / event-driven; Unit 5 deploy automation preview
+
+--------------------------------------------------------------------------------
+1. OBJECTIVE
+--------------------------------------------------------------------------------
+  • Deploy an HTTP Cloud Function (2nd gen recommended)
+  • Invoke it with a browser/curl
+  • (Optional) Trigger a function from a Cloud Storage event
+  • Explain cold start and scale-to-zero concepts
+
+--------------------------------------------------------------------------------
+2. PREREQUISITES
+--------------------------------------------------------------------------------
+  • GCP project; Cloud Shell
+  • Node.js or Python sample (Node used below)
+
+--------------------------------------------------------------------------------
+3. ENABLE APIs
+--------------------------------------------------------------------------------
+  export PROJECT_ID=$(gcloud config get-value project)
+  export REGION=asia-south1
+
+  gcloud services enable \
+    cloudfunctions.googleapis.com \
+    cloudbuild.googleapis.com \
+    run.googleapis.com \
+    eventarc.googleapis.com \
+    artifactregistry.googleapis.com
+
+--------------------------------------------------------------------------------
+4. CREATE HTTP FUNCTION (NODE.JS)
+--------------------------------------------------------------------------------
+  mkdir -p ~/cc2-fn/http-hello && cd ~/cc2-fn/http-hello
+
+  cat > package.json <<'EOF'
+  {
+    "name": "cc2-http-hello",
+    "version": "1.0.0",
+    "main": "index.js",
+    "dependencies": {
+      "@google-cloud/functions-framework": "^3.0.0"
+    }
+  }
+  EOF
+
+  cat > index.js <<'EOF'
+  const functions = require('@google-cloud/functions-framework');
+
+  functions.http('helloHttp', (req, res) => {
+    const name = req.query.name || req.body?.name || 'CC-II student';
+    res.status(200).send(`Hello ${name} from Practical 6 Cloud Function!`);
+  });
+  EOF
+
+  gcloud functions deploy cc2-hello-http \
+    --gen2 \
+    --runtime=nodejs20 \
+    --region=$REGION \
+    --source=. \
+    --entry-point=helloHttp \
+    --trigger-http \
+    --allow-unauthenticated
+
+  # URL:
+  gcloud functions describe cc2-hello-http --gen2 --region=$REGION \
+    --format='value(serviceConfig.uri)'
+
+  curl "$(gcloud functions describe cc2-hello-http --gen2 --region=$REGION --format='value(serviceConfig.uri)')?name=Parul"
+
+--------------------------------------------------------------------------------
+5. OPTIONAL — STORAGE TRIGGERED FUNCTION
+--------------------------------------------------------------------------------
+  export BUCKET=${PROJECT_ID}-cc2-p06-events
+  gcloud storage buckets create gs://$BUCKET --location=$REGION || true
+
+  mkdir -p ~/cc2-fn/gcs-fn && cd ~/cc2-fn/gcs-fn
+  cat > package.json <<'EOF'
+  {
+    "name": "cc2-gcs-fn",
+    "version": "1.0.0",
+    "main": "index.js",
+    "dependencies": {
+      "@google-cloud/functions-framework": "^3.0.0"
+    }
+  }
+  EOF
+
+  cat > index.js <<'EOF'
+  const functions = require('@google-cloud/functions-framework');
+
+  functions.cloudEvent('onObjectFinalize', (cloudEvent) => {
+    const data = cloudEvent.data;
+    console.log(`File: ${data.name} in bucket ${data.bucket}`);
+  });
+  EOF
+
+  # Deploy with Eventarc storage trigger (flags may vary slightly by gcloud version)
+  gcloud functions deploy cc2-on-upload \
+    --gen2 \
+    --runtime=nodejs20 \
+    --region=$REGION \
+    --source=. \
+    --entry-point=onObjectFinalize \
+    --trigger-event-filters="type=google.cloud.storage.object.v1.finalized" \
+    --trigger-event-filters="bucket=${BUCKET}"
+
+  echo "demo" > demo.txt
+  gcloud storage cp demo.txt gs://$BUCKET/
+  # Check logs in Cloud Logging for the function
+
+--------------------------------------------------------------------------------
+6. VERIFY
+--------------------------------------------------------------------------------
+  [ ] HTTP function returns greeting
+  [ ] Function listed in console (gen2)
+  [ ] (Optional) Upload triggers log line
+
+--------------------------------------------------------------------------------
+7. DELIVERABLES
+--------------------------------------------------------------------------------
+  1. Screenshot: deploy success + curl/browser response
+  2. Paste index.js (HTTP function)
+  3. Note: Function vs VM vs Cloud Run — when to use each (table OK)
+
+--------------------------------------------------------------------------------
+8. VIVA QUESTIONS
+--------------------------------------------------------------------------------
+  • What is serverless? Who patches the OS?
+  • Cold start — what is it?
+  • HTTP trigger vs event trigger?
+  • Why are functions expected to be short and stateless?
+
+--------------------------------------------------------------------------------
+9. CLEANUP
+--------------------------------------------------------------------------------
+  gcloud functions delete cc2-hello-http --gen2 --region=$REGION --quiet
+  gcloud functions delete cc2-on-upload --gen2 --region=$REGION --quiet || true
+  gcloud storage rm -r gs://$BUCKET || true
+
+================================================================================
+END OF PRACTICAL 6
+================================================================================

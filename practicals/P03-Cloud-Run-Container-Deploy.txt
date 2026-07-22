@@ -1,0 +1,108 @@
+================================================================================
+ PRACTICAL 3 — Deploying a Containerized Application on Cloud Run
+================================================================================
+Syllabus : Deploying a Containerized Application on Cloud Run
+Duration : ~2 lab hours
+Related  : Unit 4 containers; Unit 6 serverless-style hosting
+
+--------------------------------------------------------------------------------
+1. OBJECTIVE
+--------------------------------------------------------------------------------
+  • Build a container image and store it in Artifact Registry
+  • Deploy to Cloud Run (fully managed)
+  • Invoke the HTTPS service URL
+  • Observe scale-to-zero behaviour (concept)
+
+--------------------------------------------------------------------------------
+2. PREREQUISITES
+--------------------------------------------------------------------------------
+  • GCP project; Cloud Shell with docker + gcloud
+  • Billing enabled
+
+--------------------------------------------------------------------------------
+3. ENABLE APIs & PREPARE VARIABLES
+--------------------------------------------------------------------------------
+  export PROJECT_ID=$(gcloud config get-value project)
+  export REGION=asia-south1
+  export REPO=cc2-repo
+  export SERVICE=cc2-hello-run
+
+  gcloud services enable \
+    run.googleapis.com \
+    artifactregistry.googleapis.com \
+    cloudbuild.googleapis.com
+
+--------------------------------------------------------------------------------
+4. CREATE ARTIFACT REGISTRY & SAMPLE APP
+--------------------------------------------------------------------------------
+  gcloud artifacts repositories create $REPO \
+    --repository-format=docker \
+    --location=$REGION \
+    --description="CC2 Practical 3" || true
+
+  mkdir -p ~/cc2-cloudrun && cd ~/cc2-cloudrun
+
+  cat > Dockerfile <<'EOF'
+  FROM nginx:alpine
+  RUN echo "<h1>CC-II Practical 3 — Cloud Run</h1>" > /usr/share/nginx/html/index.html
+  EXPOSE 8080
+  # Cloud Run expects the container to listen on $PORT (default 8080)
+  CMD ["sh", "-c", "sed -i 's/listen       80;/listen       8080;/' /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+  EOF
+
+  # Configure docker auth for Artifact Registry
+  gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+
+  export IMAGE=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${SERVICE}:v1
+  docker build -t $IMAGE .
+  docker push $IMAGE
+
+--------------------------------------------------------------------------------
+5. DEPLOY TO CLOUD RUN
+--------------------------------------------------------------------------------
+  gcloud run deploy $SERVICE \
+    --image=$IMAGE \
+    --region=$REGION \
+    --platform=managed \
+    --allow-unauthenticated \
+    --port=8080
+
+  # Get URL
+  gcloud run services describe $SERVICE --region=$REGION \
+    --format='value(status.url)'
+
+  curl -s "$(gcloud run services describe $SERVICE --region=$REGION --format='value(status.url)')"
+
+--------------------------------------------------------------------------------
+6. VERIFY
+--------------------------------------------------------------------------------
+  [ ] Image exists in Artifact Registry
+  [ ] Cloud Run service status Ready
+  [ ] HTTPS URL returns your HTML
+  [ ] Cloud Run console shows revisions
+
+--------------------------------------------------------------------------------
+7. DELIVERABLES
+--------------------------------------------------------------------------------
+  1. Screenshot: Artifact Registry image
+  2. Screenshot: Cloud Run service URL + browser output
+  3. Note: Cloud Run vs Compute Engine VM — 3 differences
+  4. Note: What does scale-to-zero mean for cost?
+
+--------------------------------------------------------------------------------
+8. VIVA QUESTIONS
+--------------------------------------------------------------------------------
+  • Why must Cloud Run containers listen on port 8080 / $PORT?
+  • What is a revision in Cloud Run?
+  • Authenticated vs allow-unauthenticated — when to use which?
+  • Stateless requirement — why do local disk writes disappear?
+
+--------------------------------------------------------------------------------
+9. CLEANUP
+--------------------------------------------------------------------------------
+  gcloud run services delete $SERVICE --region=$REGION --quiet
+  # Optional: delete Artifact Registry images/repo if not reused later
+
+================================================================================
+END OF PRACTICAL 3
+================================================================================

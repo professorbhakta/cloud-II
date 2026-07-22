@@ -1,0 +1,129 @@
+================================================================================
+ PRACTICAL 10 — Monitoring & Logging Kubernetes Workloads
+================================================================================
+Syllabus : Monitoring & Logging Kubernetes Workloads
+Duration : ~2 lab hours
+Related  : Unit 4 §5; continues from Practical 4 (reuse or recreate cluster)
+
+--------------------------------------------------------------------------------
+1. OBJECTIVE
+--------------------------------------------------------------------------------
+  • Deploy a sample app on GKE
+  • Use kubectl to inspect logs, events, and resource usage
+  • View metrics/logs in Google Cloud Operations (Monitoring / Logging)
+  • Create a simple alerting policy idea (CPU / restart)
+  • Tie monitoring to HPA behaviour
+
+--------------------------------------------------------------------------------
+2. PREREQUISITES
+--------------------------------------------------------------------------------
+  • Practical 4 completed once (commands familiar)
+  • Prefer a small Autopilot cluster for the lab window only
+
+--------------------------------------------------------------------------------
+3. CLUSTER + SAMPLE APP (IF NEEDED)
+--------------------------------------------------------------------------------
+  export PROJECT_ID=$(gcloud config get-value project)
+  export REGION=asia-south1
+  export CLUSTER=cc2-obs-cluster
+  export APP=hello-obs
+
+  gcloud services enable \
+    container.googleapis.com \
+    logging.googleapis.com \
+    monitoring.googleapis.com
+
+  gcloud container clusters create-auto $CLUSTER --region=$REGION
+  gcloud container clusters get-credentials $CLUSTER --region=$REGION
+
+  kubectl create deployment $APP --image=nginx:alpine
+  kubectl scale deployment $APP --replicas=2
+  kubectl expose deployment $APP --name=${APP}-svc --type=LoadBalancer --port=80 --target-port=80
+  kubectl get pods,svc
+
+--------------------------------------------------------------------------------
+4. PART A — kubectl OBSERVABILITY
+--------------------------------------------------------------------------------
+  kubectl get pods -o wide
+  kubectl describe deployment $APP
+  kubectl describe pod $(kubectl get pod -l app=$APP -o jsonpath='{.items[0].metadata.name}')
+  # If label is not app=$APP (create deployment labels vary), use:
+  kubectl get pods --show-labels
+
+  kubectl logs deploy/$APP
+  kubectl logs deploy/$APP --tail=50
+
+  kubectl get events --sort-by=.lastTimestamp | tail -n 20
+
+  # Metrics (metrics-server is available on GKE)
+  kubectl top nodes
+  kubectl top pods
+
+--------------------------------------------------------------------------------
+5. PART B — GENERATE LOG TRAFFIC
+--------------------------------------------------------------------------------
+  export IP=$(kubectl get svc ${APP}-svc -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  # Wait until IP exists
+  for i in $(seq 1 30); do curl -s -o /dev/null -w "%{http_code}\n" http://$IP/; done
+
+  kubectl logs deploy/$APP --tail=20
+
+--------------------------------------------------------------------------------
+6. PART C — CLOUD LOGGING & MONITORING CONSOLE
+--------------------------------------------------------------------------------
+  1. Console → Logging → Logs Explorer
+     Query ideas:
+       resource.type="k8s_container"
+       resource.labels.cluster_name="$CLUSTER"
+  2. Console → Monitoring → Dashboards
+     Open GKE / Kubernetes dashboards (CPU, memory, restarts)
+  3. Note one chart that shows Pod CPU or container restarts
+
+--------------------------------------------------------------------------------
+7. PART D — HPA + WATCH (OPTIONAL)
+--------------------------------------------------------------------------------
+  kubectl autoscale deployment $APP --cpu-percent=50 --min=2 --max=8
+  kubectl get hpa -w
+  # In another shell, generate load to the EXTERNAL_IP (hey/ab/curl loops)
+  # Observe desired replicas change if load is sufficient
+
+--------------------------------------------------------------------------------
+8. PART E — ALERT POLICY (CONCEPTUAL / CONSOLE)
+--------------------------------------------------------------------------------
+  In Monitoring → Alerting → Create policy:
+  • Metric: Kubernetes container CPU or restart count
+  • Threshold + notification channel (email)
+  Screenshot the policy configuration even if notification is email-only
+
+--------------------------------------------------------------------------------
+9. VERIFY
+--------------------------------------------------------------------------------
+  [ ] kubectl logs show nginx access/error lines after curl loop
+  [ ] kubectl top pods shows CPU/memory numbers
+  [ ] Logs Explorer returns container logs for the cluster
+  [ ] (Optional) HPA object exists
+
+--------------------------------------------------------------------------------
+10. DELIVERABLES
+--------------------------------------------------------------------------------
+  1. Screenshot: kubectl top pods / describe events
+  2. Screenshot: Logs Explorer query results
+  3. Screenshot: Monitoring chart or alert policy
+  4. Note: Metrics vs logs — what each is used for
+
+--------------------------------------------------------------------------------
+11. VIVA QUESTIONS
+--------------------------------------------------------------------------------
+  • Liveness vs readiness probe — monitoring connection?
+  • What is CrashLoopBackOff?
+  • Why log to stdout in containers?
+  • HPA needs what kind of signal?
+
+--------------------------------------------------------------------------------
+12. CLEANUP
+--------------------------------------------------------------------------------
+  gcloud container clusters delete $CLUSTER --region=$REGION --quiet
+
+================================================================================
+END OF PRACTICAL 10
+================================================================================
