@@ -45,6 +45,7 @@ AGENTS.md       Guidance for Cursor / Cloud Agents
 - `ppt/cc2-unit3-iac-example.tf` — Unit 3 Terraform example (VM + firewall + bucket)
 - `ppt/CC-II-Unit-IV-Kubernetes-Container-Orchestration.pptx` — Unit 4 expanded deck (~59 slides, with concept diagrams + GIFs)
 - `ppt/unit4-assets/` — architecture, deploy, Service, Ingress, HPA, rolling-update visuals
+- `ppt/CC-II-Unit-V-Introduction-to-CI-CD.pptx` — Unit 5 lecture deck (~37 slides)
 
 ### Unit 2 deck topics
 
@@ -71,6 +72,15 @@ AGENTS.md       Guidance for Cursor / Cloud Agents
 3. Deploying Applications on Kubernetes  
 4. Kubernetes Networking & Load Balancing  
 5. Monitoring & Scaling Kubernetes Workloads  
+6. Real-life case studies + exam revision  
+
+### Unit 5 deck topics
+
+1. Understanding DevOps and CI/CD Concepts  
+2. CI/CD Pipelines: Overview & Implementation  
+3. Tools — Jenkins, GitHub Actions (+ Copilot), GitLab CI  
+4. Automated Testing & Deployment Strategies  
+5. Best Practices for Secure & Scalable CI/CD Pipelines  
 6. Real-life case studies + exam revision  
 
 ## Assignments

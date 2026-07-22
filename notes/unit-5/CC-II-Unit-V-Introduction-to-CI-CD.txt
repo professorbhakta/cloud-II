@@ -13,7 +13,8 @@ Related Materials:
   • notes/unit-3/ — IaC (pipelines often plan/apply Terraform)
   • notes/unit-4/ — Kubernetes (pipelines build images & roll out Deployments)
   • notes/unit-2/ — lab CI/CD preview (Topic 11) + DR link (safe releases)
-  • ppt/ — Unit 5 deck can be added later
+  • ppt/CC-II-Unit-V-Introduction-to-CI-CD.pptx — Unit 5 lecture deck (~37 slides)
+  • ppt/ — no Python regenerators (pptx only)
 
 HOW TO USE THESE NOTES
 ----------------------

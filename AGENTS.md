@@ -63,6 +63,7 @@ Prefer committing teaching materials **directly on `cc2Material`**. Do not creat
 5. Best Practices for Secure & Scalable CI/CD Pipelines  
 
 Canonical notes: `notes/unit-5/CC-II-Unit-V-Introduction-to-CI-CD.txt`  
+Canonical deck: `ppt/CC-II-Unit-V-Introduction-to-CI-CD.pptx` (~37 slides)  
 Lab link: Practical 8 (Cloud Build CI/CD)  
 Official syllabus text: `syllabus/CC-II-Units.txt`
 
