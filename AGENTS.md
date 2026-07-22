@@ -46,6 +46,7 @@ Prefer committing teaching materials **directly on `cc2Material`**. Do not creat
 | `notes/unit-3/` | Unit 3 Infrastructure as Code (IaC) notes |
 | `notes/unit-4/` | Unit 4 Kubernetes & Container Orchestration notes |
 | `notes/unit-5/` | Unit 5 Introduction to CI/CD notes |
+| `notes/unit-6/` | Unit 6 Cloud Application Integration notes |
 | `ppt/` | PowerPoint decks + visual assets (no Python regenerators) |
 | `assignments/` | Mid-term / assignment papers |
 
@@ -53,6 +54,18 @@ Prefer committing teaching materials **directly on `cc2Material`**. Do not creat
 
 - Ship **notes (`.txt`)**, **PowerPoint (`.pptx`)**, and **visual assets** (PNG/GIF) only.
 - **Do not add Python regenerator scripts** (`build_*.py`) for decks or assets.
+
+### Unit 6 syllabus (authoritative for notes titled Unit 6)
+
+1. Understanding Cloud Application Integration Concepts  
+2. API Gateway & Microservices Communication  
+3. Serverless Functions & Event-Driven Architecture  
+4. Cloud Messaging Services — Pub/Sub, Kafka, RabbitMQ  
+5. Real-World Use Cases of Cloud Integration  
+
+Canonical notes: `notes/unit-6/CC-II-Unit-VI-Cloud-Application-Integration.txt`  
+Lab links: Practical 6 (Cloud Functions), Practical 9 (API Gateway + Cloud Run + Pub/Sub)  
+Official syllabus text: `syllabus/CC-II-Units.txt`
 
 ### Unit 5 syllabus (authoritative for notes titled Unit 5)
 
