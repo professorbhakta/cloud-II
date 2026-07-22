@@ -45,6 +45,7 @@ Prefer committing teaching materials **directly on `cc2Material`**. Do not creat
 | `notes/unit-2/` | Unit 2 DR notes + GCP lab reference |
 | `notes/unit-3/` | Unit 3 Infrastructure as Code (IaC) notes |
 | `notes/unit-4/` | Unit 4 Kubernetes & Container Orchestration notes |
+| `notes/unit-5/` | Unit 5 Introduction to CI/CD notes |
 | `ppt/` | PowerPoint decks + visual assets (no Python regenerators) |
 | `assignments/` | Mid-term / assignment papers |
 
@@ -52,6 +53,18 @@ Prefer committing teaching materials **directly on `cc2Material`**. Do not creat
 
 - Ship **notes (`.txt`)**, **PowerPoint (`.pptx`)**, and **visual assets** (PNG/GIF) only.
 - **Do not add Python regenerator scripts** (`build_*.py`) for decks or assets.
+
+### Unit 5 syllabus (authoritative for notes titled Unit 5)
+
+1. Understanding DevOps and CI/CD Concepts  
+2. CI/CD Pipelines: Overview & Implementation  
+3. Tools for CI/CD — Jenkins, GitHub Actions (incl. Copilot), GitLab CI  
+4. Automated Testing & Deployment Strategies  
+5. Best Practices for Secure & Scalable CI/CD Pipelines  
+
+Canonical notes: `notes/unit-5/CC-II-Unit-V-Introduction-to-CI-CD.txt`  
+Lab link: Practical 8 (Cloud Build CI/CD)  
+Official syllabus text: `syllabus/CC-II-Units.txt`
 
 ### Unit 4 syllabus (authoritative for deck/notes titled Unit 4)
 
