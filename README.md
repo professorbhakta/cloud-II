@@ -45,7 +45,7 @@ AGENTS.md       Guidance for Cursor / Cloud Agents
 - `ppt/cc2-unit3-iac-example.tf` — Unit 3 Terraform example (VM + firewall + bucket)
 - `ppt/CC-II-Unit-IV-Kubernetes-Container-Orchestration.pptx` — Unit 4 expanded deck (~59 slides, with concept diagrams + GIFs)
 - `ppt/unit4-assets/` — architecture, deploy, Service, Ingress, HPA, rolling-update visuals
-- `ppt/CC-II-Unit-V-Introduction-to-CI-CD.pptx` — Unit 5 lecture deck (~37 slides)
+- `ppt/CC-II-Unit-V-Introduction-to-CI-CD.pptx` — Unit 5 lecture deck (~37 slides, expanded teaching notes)
 
 ### Unit 2 deck topics
 
